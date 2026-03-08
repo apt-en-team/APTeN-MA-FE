@@ -3,7 +3,7 @@ import {onMounted, ref} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/modules/auth.js'
 import axios from 'axios'
-import BaseModal from '@/components/Modal.vue'
+import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -77,7 +77,7 @@ async function linkHousehold() {
     </div>
 
     <!-- 세대 정보 입력 모달 -->
-    <BaseModal
+    <Modal
         v-if="showModal"
         title="세대 정보 입력"
         subtitle="거주 중인 동호수와 전화번호를 입력해주세요"
@@ -107,7 +107,7 @@ async function linkHousehold() {
       <template #footer>
         <button class="btn-confirm" @click="linkHousehold">확인</button>
       </template>
-    </BaseModal>
+    </Modal>
   </div>
 </template>
 

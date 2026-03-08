@@ -39,7 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
     // 새로고침 시 로그인 상태 복원용
     async function fetchMe() {
         try {
-            const res = await api.get('/auth/me')
+            const res = await api.get('/users/me')
             user.value = res.data.resultData
             isLoggedIn.value = true
         } catch (e) {
