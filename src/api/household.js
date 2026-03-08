@@ -7,11 +7,20 @@ import axios from './axios'
 export default {
 
   // ── API-014: 세대 목록 조회 (페이징) ─────────────────────────
-  // GET /api/admin/households?page=0&size=10
+  // GET /api/admin/households?page=1&size=10
   // 반환: { content, page, size, totalElements, totalPages }
-  getHouseholds(page = 0, size = 10) {
-    return axios.get('/admin/households', { params: { page, size } })
+  getHouseholds(page = 1, size = 10, dong = '', ho = '', status = '') {
+      return axios.get('/admin/households', { params: { page, size, dong, ho, status } })
   },
+  getMaxPage(size = 10, dong = '', ho = '', status = '') {
+      return axios.get('/admin/households/maxPage', { params: { size, dong, ho, status } })
+  },
+  getDongs() {
+      return axios.get('/admin/households/dongs')
+  },
+  getPendingUsers(householdId) {
+    return axios.get(`/admin/households/${householdId}/pending`)
+},
 
   // ── 통계 조회 (프론트 상단 카드용) ───────────────────────────
   // GET /api/admin/households/stats
@@ -52,4 +61,20 @@ export default {
   getHistory(id) {
     return axios.get(`/admin/households/${id}/history`)
   },
+  // ── 회원 승인 ─────────────────────────────────────────────────
+  // PATCH /api/admin/users/{userId}/approve
+  approveUser(userId) {
+      return axios.patch(`/admin/users/${userId}/approve`)
+  },
+
+  // ── 회원 거부 ─────────────────────────────────────────────────
+  // PATCH /api/admin/users/{userId}/reject
+  rejectUser(userId) {
+      return axios.patch(`/admin/users/${userId}/reject`)
+  },
+
+  // ── 세대 구성원 조회 ─────────────────────────────────────────────
+  getResidents(householdId) {
+    return axios.get(`/admin/households/${householdId}/residents`)
+  }
 }

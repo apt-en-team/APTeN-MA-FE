@@ -112,14 +112,14 @@ function handleAddHousehold() {
         </div>
         <div class="topbar-right">
           <!-- 알림 버튼 (항상 고정) -->
-          <button class="btn-bell">
+          <!-- <button class="btn-bell">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span class="bell-badge">5</span>
             <span class="bell-label">알림</span>
-          </button>
+          </button> -->
 
           <!-- 페이지별 액션 버튼 -->
-          <button v-if="route.name === 'HouseholdManage'" class="btn-action" @click="handleAddHousehold">+ 세대 추가</button>
+          <!-- <button v-if="route.name === 'HouseholdManage'" class="btn-action" @click="handleAddHousehold">+ 세대 추가</button> -->
           <button v-if="route.name === 'FacilityManage'"  class="btn-action">+ 시설 추가</button>
           <button v-if="route.name === 'AdminBoardList'"  class="btn-action">+ 공지 작성</button>
 
