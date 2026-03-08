@@ -10,6 +10,9 @@ const password = ref('')
 const errorMsg = ref('')
 const loading = ref(false)
 
+// 비밀번호 표시 여부
+const showPassword = ref(false)
+
 async function handleLogin() {
   loading.value = true
   errorMsg.value = ''
@@ -44,7 +47,18 @@ async function handleLogin() {
         </div>
         <div class="input-group">
           <label>비밀번호</label>
-          <input v-model="password" type="password" placeholder="비밀번호" required />
+          <div class="input-with-icon">
+            <input
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="비밀번호"
+                required
+            />
+            <!-- 눈 아이콘 클릭 시 비밀번호 표시/숨기기 토글 -->
+            <button type="button" class="btn-eye" @click="showPassword = !showPassword">
+              <i :class="showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+            </button>
+          </div>
         </div>
         <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
         <button type="submit" class="btn-login" :disabled="loading">
@@ -93,6 +107,20 @@ async function handleLogin() {
 }
 .input-group input:focus { outline: none; border-color: #4F6EF7; }
 .input-group input::placeholder { color: #5A5E6E; }
+.input-with-icon { position: relative; }
+.input-with-icon input { width: 100%; padding-right: 42px; box-sizing: border-box; }
+.btn-eye {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 15px; color: #999; padding: 0;
+}
+.btn-eye:hover { color: #333; }
+.error { color: #E05555; font-size: 13px; margin-bottom: 12px; }
+.btn-login {
+  width: 100%; padding: 12px; background: #4F6EF7; color: #fff;
+  border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
 .error { color: #E05555; font-size: 13px; margin-bottom: 12px; }
 .btn-login {
   width: 100%; padding: 12px; background: #4F6EF7; color: #fff;

@@ -1,7 +1,8 @@
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/modules/auth.js'
+import {ref, reactive} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthStore} from '@/stores/modules/auth.js'
+import api from '@/api/axios.js'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -9,14 +10,62 @@ const auth = useAuthStore()
 const form = reactive({
   email: '', password: '', name: '', phone: '', dong: '', ho: ''
 })
+
+// 비밀번호 확인
+const passwordConfirm = ref('')
+
+// 비밀번호 표시 여부
+const showPassword = ref(false)
+const showPasswordConfirm = ref(false)
+
+// 이메일 중복 확인 상태
+const emailChecked = ref(false)
+const emailCheckMsg = ref('')
+const emailCheckOk = ref(false)
+
 const errorMsg = ref('')
 const successMsg = ref('')
 const loading = ref(false)
 
+// 이메일 중복 확인
+async function checkEmail() {
+  emailCheckMsg.value = ''
+  emailCheckOk.value = false
+  emailChecked.value = false
+
+  if (!form.email) {
+    emailCheckMsg.value = '이메일을 입력해주세요'
+    return
+  }
+
+  try {
+    await api.get(`/auth/check-email?email=${form.email}`)
+    emailCheckMsg.value = '사용 가능한 이메일입니다'
+    emailCheckOk.value = true
+    emailChecked.value = true
+  } catch (e) {
+    emailCheckMsg.value = e.response?.data?.resultMessage || '이미 사용 중인 이메일입니다'
+    emailCheckOk.value = false
+  }
+}
+
 async function handleRegister() {
-  loading.value = true
   errorMsg.value = ''
   successMsg.value = ''
+
+  // 이메일 중복 확인 여부 체크
+  if (!emailChecked.value) {
+    errorMsg.value = '이메일 중복 확인을 해주세요'
+    return
+  }
+
+  // 비밀번호 확인 체크
+  if (form.password !== passwordConfirm.value) {
+    errorMsg.value = '비밀번호가 일치하지 않습니다'
+    return
+  }
+
+  loading.value = true
   try {
     await auth.register(form)
     successMsg.value = '회원가입 성공! 로그인 페이지로 이동합니다'
@@ -38,30 +87,76 @@ async function handleRegister() {
       </div>
 
       <form @submit.prevent="handleRegister" class="register-form">
+
+        <!-- 이메일 + 중복확인 -->
         <div class="input-group">
           <label>이메일</label>
-          <input v-model="form.email" type="email" placeholder="이메일" required />
+          <div class="input-with-btn">
+            <input v-model="form.email" type="email" placeholder="이메일" required @input="emailChecked = false"/>
+            <button type="button" class="btn-check" @click="checkEmail">중복확인</button>
+          </div>
+          <p v-if="emailCheckMsg" :class="emailCheckOk ? 'msg-ok' : 'msg-err'">{{ emailCheckMsg }}</p>
         </div>
+
+        <!-- 비밀번호 -->
         <div class="input-group">
           <label>비밀번호</label>
-          <input v-model="form.password" type="password" placeholder="8자 이상, 영문+숫자" required />
+          <div class="input-with-icon">
+            <input
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="8자 이상, 영문+숫자"
+                required
+            />
+            <!-- 눈 아이콘 클릭 시 비밀번호 표시/숨기기 토글 -->
+            <button type="button" class="btn-eye" @click="showPassword = !showPassword">
+              <i :class="showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+            </button>
+          </div>
         </div>
+
+        <!-- 비밀번호 확인 -->
+        <div class="input-group">
+          <label>비밀번호 확인</label>
+          <div class="input-with-icon">
+            <input
+                v-model="passwordConfirm"
+                :type="showPasswordConfirm ? 'text' : 'password'"
+                placeholder="비밀번호 재입력"
+                required
+            />
+            <!-- 눈 아이콘 클릭 시 비밀번호 표시/숨기기 토글 -->
+            <button type="button" class="btn-eye" @click="showPasswordConfirm = !showPasswordConfirm">
+              <i :class="showPasswordConfirm ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+            </button>
+          </div>
+          <!-- 비밀번호 일치 여부 실시간 표시 -->
+          <p v-if="passwordConfirm" :class="form.password === passwordConfirm ? 'msg-ok' : 'msg-err'">
+            {{ form.password === passwordConfirm ? '비밀번호가 일치합니다' : '비밀번호가 일치하지 않습니다' }}
+          </p>
+        </div>
+
+        <!-- 이름 -->
         <div class="input-group">
           <label>이름</label>
-          <input v-model="form.name" type="text" placeholder="이름" required />
+          <input v-model="form.name" type="text" placeholder="이름" required/>
         </div>
+
+        <!-- 휴대폰 -->
         <div class="input-group">
           <label>휴대폰</label>
-          <input v-model="form.phone" type="text" placeholder="010-0000-0000" />
+          <input v-model="form.phone" type="text" placeholder="010-0000-0000"/>
         </div>
+
+        <!-- 동/호 -->
         <div class="input-row">
           <div class="input-group">
             <label>동</label>
-            <input v-model="form.dong" type="text" placeholder="101동" required />
+            <input v-model="form.dong" type="text" placeholder="101동" required/>
           </div>
           <div class="input-group">
             <label>호</label>
-            <input v-model="form.ho" type="text" placeholder="1201호" required />
+            <input v-model="form.ho" type="text" placeholder="101호" required/>
           </div>
         </div>
 
@@ -74,7 +169,8 @@ async function handleRegister() {
       </form>
 
       <p class="login-link">
-        이미 계정이 있으신가요? <router-link to="/login">로그인</router-link>
+        이미 계정이 있으신가요?
+        <router-link to="/login">로그인</router-link>
       </p>
     </div>
   </div>
@@ -88,37 +184,192 @@ async function handleRegister() {
   justify-content: center;
   background: #F5F6FA;
 }
+
 .register-card {
   background: #fff;
   border-radius: 16px;
   padding: 40px;
   width: 420px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
-.logo { text-align: center; margin-bottom: 28px; }
+
+.logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
 .logo-icon {
-  width: 48px; height: 48px; border-radius: 12px;
-  background: #4F6EF7; color: #fff; font-size: 20px; font-weight: bold;
-  display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #4F6EF7;
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
 }
-.logo h1 { font-size: 22px; color: #1A1A2E; margin: 0; }
-.logo p { font-size: 13px; color: #999; margin-top: 4px; }
-.input-group { margin-bottom: 14px; }
-.input-group label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+
+.logo h1 {
+  font-size: 22px;
+  color: #1A1A2E;
+  margin: 0;
+}
+
+.logo p {
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.input-group {
+  margin-bottom: 14px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
 .input-group input {
-  width: 100%; padding: 10px 14px; border: 1px solid #E0E3EB;
-  border-radius: 8px; font-size: 14px; box-sizing: border-box;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E0E3EB;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
 }
-.input-group input:focus { outline: none; border-color: #4F6EF7; }
-.input-row { display: flex; gap: 12px; }
-.input-row .input-group { flex: 1; }
-.error { color: #E05555; font-size: 13px; margin-bottom: 12px; }
-.success { color: #2EAD5C; font-size: 13px; margin-bottom: 12px; }
+
+.input-group input:focus {
+  outline: none;
+  border-color: #4F6EF7;
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+}
+
+.input-row .input-group {
+  flex: 1;
+}
+
+/* 이메일 중복확인 */
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-btn input {
+  flex: 1;
+}
+
+.btn-check {
+  padding: 10px 14px;
+  background: #4F6EF7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-check:hover {
+  background: #3a5bd9;
+}
+
+/* 비밀번호 눈 아이콘 */
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding-right: 42px;
+  box-sizing: border-box;
+}
+
+.btn-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  color: #999;
+  padding: 0;
+}
+
+.btn-eye:hover {
+  color: #333;
+}
+
+.error {
+  color: #E05555;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* 메시지 */
+.msg-ok {
+  color: #2EAD5C;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.msg-err {
+  color: #E05555;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.error {
+  color: #E05555;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.success {
+  color: #2EAD5C;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
 .btn-register {
-  width: 100%; padding: 12px; background: #4F6EF7; color: #fff;
-  border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+  width: 100%;
+  padding: 12px;
+  background: #4F6EF7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
 }
-.btn-register:disabled { opacity: 0.6; }
-.login-link { text-align: center; margin-top: 20px; font-size: 13px; color: #999; }
-.login-link a { color: #4F6EF7; text-decoration: none; font-weight: 600; }
+
+.btn-register:disabled {
+  opacity: 0.6;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: #999;
+}
+
+.login-link a {
+  color: #4F6EF7;
+  text-decoration: none;
+  font-weight: 600;
+}
 </style>
