@@ -137,8 +137,8 @@ async function handleLogout() {
 
 .layout {
   display: flex;
-  width: 1440px;
-  height: 1024px;
+  width: 100vw;
+  min-height: 100vh;
   overflow: hidden;
   font-family: 'Noto Sans KR', sans-serif;
   color: #333333;
