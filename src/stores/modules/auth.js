@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
     // 회원가입 (POST /api/auth/register)
     async function register(form) {
         await api.post('/auth/register', form)
-    }
+    }   
 
     // 로그아웃 (POST /api/auth/logout)
     async function logout() {

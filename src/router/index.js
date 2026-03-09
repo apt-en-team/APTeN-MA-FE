@@ -102,10 +102,10 @@ router.beforeEach(async (to) => {
     }
 
     // role이 맞지 않으면 해당 역할의 대시보드로 리다이렉트
-    if (to.meta.role && auth.user?.role !== to.meta.role) {
-        if (auth.user?.role === 'ADMIN') return '/admin/dashboard'
-        return '/resident/dashboard'
-    }
+if (to.meta.role && auth.user && auth.user.role !== to.meta.role) {
+    if (auth.user.role === 'ADMIN') return '/admin/dashboard'
+    return '/resident/dashboard'
+}
 
 })
 
