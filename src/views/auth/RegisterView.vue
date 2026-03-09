@@ -7,27 +7,34 @@ import api from '@/api/axios.js'
 const router = useRouter()
 const auth = useAuthStore()
 
+// 회원가입 폼 데이터
 const form = reactive({
   email: '', password: '', name: '', phone: '', dong: '', ho: ''
 })
 
-// 비밀번호 확인
+// 비밀번호 확인 입력값 (form.password와 일치 여부 검사용)
 const passwordConfirm = ref('')
 
-// 비밀번호 표시 여부
+// 비밀번호 / 비밀번호 확인 표시 여부 토글
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
 
-// 이메일 중복 확인 상태
+// 이메일 중복 확인 완료 여부 (회원가입 전 반드시 확인해야 함)
 const emailChecked = ref(false)
+// 이메일 중복 확인 결과 메시지
 const emailCheckMsg = ref('')
+// 이메일 사용 가능 여부 (true: 사용 가능, false: 중복)
 const emailCheckOk = ref(false)
 
+// 최종 에러 / 성공 메시지
 const errorMsg = ref('')
 const successMsg = ref('')
+
+// 회원가입 요청 로딩 상태
 const loading = ref(false)
 
-// 이메일 중복 확인
+// 이메일 중복 확인 (GET /api/auth/check-email)
+// 200 → 사용 가능, 409 → 이미 사용 중
 async function checkEmail() {
   emailCheckMsg.value = ''
   emailCheckOk.value = false
@@ -49,17 +56,19 @@ async function checkEmail() {
   }
 }
 
+// 회원가입 처리 (POST /api/auth/register)
+// 성공 시 1.5초 후 로그인 페이지로 이동
 async function handleRegister() {
   errorMsg.value = ''
   successMsg.value = ''
 
-  // 이메일 중복 확인 여부 체크
+  // 이메일 중복 확인을 먼저 해야 진행 가능
   if (!emailChecked.value) {
     errorMsg.value = '이메일 중복 확인을 해주세요'
     return
   }
 
-  // 비밀번호 확인 체크
+  // 비밀번호 일치 여부 검사
   if (form.password !== passwordConfirm.value) {
     errorMsg.value = '비밀번호가 일치하지 않습니다'
     return
@@ -202,7 +211,7 @@ async function handleRegister() {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: #4F6EF7;
+  background: #4973E5;
   color: #fff;
   font-size: 20px;
   font-weight: bold;
@@ -247,7 +256,7 @@ async function handleRegister() {
 
 .input-group input:focus {
   outline: none;
-  border-color: #4F6EF7;
+  border-color: #4973E5;
 }
 
 .input-row {
@@ -271,7 +280,7 @@ async function handleRegister() {
 
 .btn-check {
   padding: 10px 14px;
-  background: #4F6EF7;
+  background: #4973E5;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -347,7 +356,7 @@ async function handleRegister() {
 .btn-register {
   width: 100%;
   padding: 12px;
-  background: #4F6EF7;
+  background: #4973E5;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -368,7 +377,7 @@ async function handleRegister() {
 }
 
 .login-link a {
-  color: #4F6EF7;
+  color: #4973E5;
   text-decoration: none;
   font-weight: 600;
 }

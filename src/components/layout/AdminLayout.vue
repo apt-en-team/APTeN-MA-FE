@@ -143,18 +143,14 @@ function handleAddHousehold() {
 
 .layout {
   display: flex;
-  width: 1440px;
-  height: 1024px;
+  /* width: 1440px; */
   overflow: hidden;
-  font-family: 'Noto Sans KR', sans-serif;
-  color: #333333;
   background: #F5F6F8;
 }
 
 /* ── 사이드바 ── */
 .sidebar {
   width: 240px;
-  height: 1024px;
   background: #1E2A3E;
   display: flex;
   flex-direction: column;
@@ -254,7 +250,6 @@ function handleAddHousehold() {
   height: 36px; padding: 0 14px;
   border: 1px solid #E2E8F0; border-radius: 8px;
   background: #fff; cursor: pointer; color: #555;
-  font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
 }
 
 .bell-badge {
@@ -272,7 +267,6 @@ function handleAddHousehold() {
   background: #2B3A55; color: #fff;
   border: none; border-radius: 7px;
   font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
 }
 .btn-action:hover { background: #1E2A3E; }
 
@@ -280,7 +274,7 @@ function handleAddHousehold() {
   height: 36px; padding: 0 16px;
   border: 1px solid #E2E8F0; border-radius: 6px;
   background: #fff; font-size: 13px; color: #666;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
 }
 .btn-logout:hover { background: #eee; }
 

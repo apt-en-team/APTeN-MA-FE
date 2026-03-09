@@ -55,5 +55,12 @@ export const useAuthStore = defineStore('auth', () => {
         isLoggedIn.value = false
     }
 
-    return { user, isLoggedIn, login, register, logout, deactivate, fetchMe }
+    // 내 정보 수정 (PUT /api/users/me)
+    async function updateMe(form) {
+        const res = await api.put('/users/me', form)
+        await fetchMe() // 수정 후 사용자 정보 갱신
+    }
+
+    return { user, isLoggedIn, login, register, logout, deactivate, fetchMe, updateMe }
+
 })

@@ -417,7 +417,6 @@ onMounted(() => {
 
 .household-page {
   display: flex; flex-direction: column; gap: 20px;
-  font-family: 'Noto Sans KR', sans-serif; color: #333333;
 }
 
 /* ── 통계 카드 ── */
@@ -454,7 +453,6 @@ onMounted(() => {
 .search-icon { color: #A0AEC0; flex-shrink: 0; }
 .search-input {
   border: none; background: transparent; font-size: 13px;
-  outline: none; color: #333; width: 150px; font-family: 'Noto Sans KR', sans-serif;
 }
 .search-input::placeholder { color: #CBD5E0; }
 
@@ -462,20 +460,17 @@ onMounted(() => {
   border: 1px solid #E2E8F0; border-radius: 7px;
   padding: 7px 28px 7px 12px; font-size: 13px; color: #333;
   background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A0AEC0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
-  appearance: none; cursor: pointer; outline: none; font-family: 'Noto Sans KR', sans-serif;
+  appearance: none; cursor: pointer; outline: none;;
 }
 
 .btn-reset {
   display: flex; align-items: center; gap: 5px;
   padding: 7px 12px; border: 1px solid #E2E8F0; border-radius: 7px;
   background: #fff; font-size: 12px; color: #718096; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
 }
 .btn-excel {
   display: flex; align-items: center; gap: 6px;
   padding: 7px 14px; border: 1px solid #E2E8F0; border-radius: 7px;
-  background: #fff; font-size: 13px; color: #333; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
 }
 .excel-icon {
   background: #4D8B5A; color: #fff; width: 18px; height: 18px;
@@ -506,7 +501,7 @@ onMounted(() => {
 .btn-register {
   padding: 4px 14px; background: #EBF5EE; color: #4D8B5A;
   border: 1px solid #C6E6CC; border-radius: 6px;
-  font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 600; cursor: pointer;
 }
 
 /* ── 페이지네이션 ── */
@@ -520,7 +515,7 @@ onMounted(() => {
 .page-btn {
   width: 30px; height: 30px; border: 1px solid #E2E8F0; border-radius: 6px;
   background: #fff; font-size: 12px; color: #718096; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; font-family: 'Noto Sans KR', sans-serif;
+  display: flex; align-items: center; justify-content: center;
 }
 .page-btn:hover:not(:disabled) { background: #F5F6F8; }
 .page-btn:disabled { opacity: 0.4; cursor: default; }
@@ -555,7 +550,7 @@ onMounted(() => {
 .form-input {
   border: 1px solid #E2E8F0; border-radius: 7px; padding: 10px 14px;
   font-size: 13px; color: #333; outline: none;
-  font-family: 'Noto Sans KR', sans-serif; transition: border-color 0.15s;
+  transition: border-color 0.15s;
   width: 100%;
 }
 .form-input:focus  { border-color: #2B3A55; }
@@ -566,7 +561,6 @@ onMounted(() => {
 
 .form-textarea {
   resize: none;
-  font-family: 'Noto Sans KR', sans-serif;
   font-size: 13px;
 }
 
@@ -578,13 +572,12 @@ onMounted(() => {
 .btn-cancel {
   padding: 9px 20px; border: 1px solid #E2E8F0; border-radius: 7px;
   background: #fff; font-size: 13px; color: #718096; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
 }
 .btn-cancel:hover { background: #F5F6F8; }
 .btn-submit {
   padding: 9px 24px; background: #2B3A55; color: #fff;
   border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
 }
 .btn-submit:hover:not(:disabled) { background: #1E2A3E; }
 .btn-submit:disabled { opacity: 0.5; cursor: default; }

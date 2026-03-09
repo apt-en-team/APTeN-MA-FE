@@ -9,17 +9,22 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
-// 모달 표시 여부
+// 세대 정보 입력 모달 표시 여부
+// 소셜 로그인 신규 유저는 status = PENDING 이므로 모달 띄워서 동호수 입력 받음
 const showModal = ref(false)
 
 // 세대 정보 입력값
-const dong = ref('')
-const ho = ref('')
-const phone = ref('')
+const dong = ref('')  // 동 (예: 101동)
+const ho = ref('')    // 호수 (예: 101호)
+const phone = ref('') // 전화번호 (예: 010-1234-5678)
 
 // 에러 메시지
 const errorMsg = ref('')
 
+// 컴포넌트 마운트 시 로그인 상태 확인 후 분기 처리
+// - 로그인 O + PENDING → 세대 정보 입력 모달 표시
+// - 로그인 O + APPROVED → 대시보드로 이동
+// - 로그인 X → 로그인 페이지로 이동
 onMounted(async () => {
   await auth.fetchMe()
 
@@ -35,6 +40,7 @@ onMounted(async () => {
 })
 
 // role에 따라 대시보드로 이동
+// query.role이 있으면 우선 사용 (OAuth2 콜백에서 넘겨주는 경우)
 function redirectToDashboard() {
   const role = route.query.role || auth.user?.role
   if (role === 'ADMIN') {
@@ -44,7 +50,8 @@ function redirectToDashboard() {
   }
 }
 
-// 동호수 + 전화번호 연결 API 호출
+// 동호수 + 전화번호로 세대 연결 (PATCH /api/auth/link-household)
+// 성공 시 status PENDING → APPROVED 로 변경되고 대시보드로 이동
 async function linkHousehold() {
   errorMsg.value = ''
 
@@ -60,7 +67,7 @@ async function linkHousehold() {
       phone: phone.value
     }, {withCredentials: true})
 
-    await auth.fetchMe()
+    await auth.fetchMe() // 세대 연결 후 유저 정보 갱신 (status APPROVED 반영)
     showModal.value = false
     redirectToDashboard()
   } catch (e) {
@@ -134,7 +141,7 @@ async function linkHousehold() {
   width: 40px;
   height: 40px;
   border: 3px solid #E8EBF0;
-  border-top-color: #4F6EF7;
+  border-top-color: #4973E5;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto;
@@ -149,10 +156,12 @@ async function linkHousehold() {
 .input-group {
   display: flex;
   gap: 12px;
+  overflow: hidden;
 }
 
 .input-item {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -179,7 +188,7 @@ async function linkHousehold() {
 }
 
 .input-item input:focus {
-  border-color: #4F6EF7;
+  border-color: #4973E5;
 }
 
 .error-msg {

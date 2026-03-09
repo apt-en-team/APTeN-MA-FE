@@ -142,7 +142,7 @@ function socialLogin(provider) {
 }
 
 .logo-icon.resident {
-  background: #4F6EF7;
+  background: #4973E5;
 }
 
 .logo h1 {
@@ -180,7 +180,7 @@ function socialLogin(provider) {
 
 .input-group input:focus {
   outline: none;
-  border-color: #4F6EF7;
+  border-color: #4973E5;
 }
 
 .input-with-icon {
@@ -219,7 +219,7 @@ function socialLogin(provider) {
 .btn-login {
   width: 100%;
   padding: 12px;
-  background: #4F6EF7;
+  background: #4973E5;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -301,7 +301,7 @@ function socialLogin(provider) {
 }
 
 .bottom-links a {
-  color: #4F6EF7;
+  color: #4973E5;
   text-decoration: none;
   font-weight: 600;
 }

@@ -22,6 +22,7 @@ import ReservationCalendarView from '@/views/resident/ReservationCalendarView.vu
 import MyReservationView from '@/views/resident/MyReservationView.vue'
 import MyVehicleView from '@/views/resident/MyVehicleView.vue'
 import MyPageView from '@/views/resident/MyPageView.vue'
+import MyPageEditView from '@/views/resident/MyPageEditView.vue'
 
 // 관리자 페이지
 import AdminDashboard from '@/views/admin/AdminDashboardView.vue'
@@ -46,15 +47,16 @@ const routes = [
         component: ResidentLayout,
         meta: { requiresAuth: true, role: 'RESIDENT' },
         children: [
-            { path: 'dashboard',      name: 'ResidentDashboard',   component: ResidentDashboard },
-            { path: 'board',          name: 'BoardList',           component: BoardListView },
-            { path: 'board/:id',      name: 'BoardDetail',         component: BoardDetailView },
-            { path: 'board/form',     name: 'BoardForm',           component: BoardFormView },
-            { path: 'facility',       name: 'FacilityList',        component: FacilityListView },
-            { path: 'reservation',    name: 'ReservationCalendar', component: ReservationCalendarView },
-            { path: 'my-reservation', name: 'MyReservation',       component: MyReservationView },
-            { path: 'my-vehicle',     name: 'MyVehicle',           component: MyVehicleView },
-            { path: 'mypage',         name: 'MyPage',              component: MyPageView },
+            { path: 'dashboard', name: 'ResidentDashboard', component: ResidentDashboard, meta: { title: '대시보드' } },
+            { path: 'board', name: 'BoardList', component: BoardListView, meta: { title: '게시판' } },
+            { path: 'board/:id', name: 'BoardDetail', component: BoardDetailView, meta: { title: '게시판' } },
+            { path: 'board/form', name: 'BoardForm', component: BoardFormView, meta: { title: '게시판 작성' } },
+            { path: 'facility', name: 'FacilityList', component: FacilityListView, meta: { title: '시설' } },
+            { path: 'reservation', name: 'ReservationCalendar', component: ReservationCalendarView, meta: { title: '시설 예약' } },
+            { path: 'my-reservation', name: 'MyReservation', component: MyReservationView, meta: { title: '내 예약' } },
+            { path: 'my-vehicle', name: 'MyVehicle', component: MyVehicleView, meta: { title: '내 차량' } },
+            { path: 'mypage', name: 'MyPage', component: MyPageView, meta: { title: '마이페이지' } },
+            { path: 'mypage/edit', name: 'MyPageEdit', component: MyPageEditView, meta: { title: '마이페이지 수정' } },
         ]
     },
 
