@@ -14,7 +14,7 @@ const router = useRouter()
 const isLoading = ref(false)
 const hasError  = ref(false)
 
-// ── 요약 카드 (null = 데이터 없음 → "-" 표시) ──────────
+// 요약 카드 (null = 데이터 없음 → "-" 표시)
 const summary = reactive({
   pendingCount:   null,  // 승인 대기 건수
   parkingUsed:    null,  // 주차 사용 면수
