@@ -28,18 +28,6 @@ const state = reactive({
   maxPage:     0,
 })
 
-// 세대 등록 모달 (AdminLayout "+ 세대 추가" 버튼에서 열림)
-const modal = reactive({
-  show:    false,
-  dong:    '',
-  ho:      '',
-  status:  '공실',
-  regDate: '',
-  memo:    '',
-  error:   '',
-  loading: false,
-})
-
 // 세대 상세 모달
 const detailModal = reactive({
   show:      false,
@@ -120,6 +108,13 @@ const doSearch = () => {
   goToList()
 }
 
+const isNeedCare = (item) => {
+  if (item.status !== '퇴거' && item.status !== '공실') return false
+  const oneMonthAgo = new Date()
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+  return new Date(item.createdAt) <= oneMonthAgo
+}
+
 
 // ─────────────────────────────────────────────
 //  API 통신 함수
@@ -165,22 +160,6 @@ const up     = () => { if (state.currentPage >= state.maxPage) return; goToPage(
 const down   = () => { if (state.currentPage <= 1) return; goToPage(state.currentPage - 1) }
 const endup  = () => goToPage(state.maxPage)
 const stdown = () => goToPage(1)
-
-// 세대 등록
-const submitCreate = async () => {
-  if (!modal.dong.trim() || !modal.ho.trim()) { modal.error = '동과 호수를 모두 입력해주세요'; return }
-  modal.loading = true; modal.error = ''
-  try {
-    const res   = await householdAPI.createHousehold({ dong: modal.dong, ho: modal.ho })
-    const newId = res.data.resultData?.householdId
-    if (modal.status !== '공실' && newId) {
-      await householdAPI.createHistory(newId, { status: modal.status })
-    }
-    closeModal(); fetchStats(); fetchDongs(); getMaxPage(); goToList()
-  } catch (e) {
-    modal.error = e.response?.data?.resultMessage || '세대 등록에 실패했습니다'
-  } finally { modal.loading = false }
-}
 
 // 입주상태 수정 → household_history 에 이력 등록
 const submitEdit = async () => {
@@ -367,8 +346,12 @@ const closeConfirmModal = () => { confirmModal.show = false }
             <td><span :class="['status-badge', statusClass(item.status)]">{{ item.status ?? '-' }}</span></td>
             <td>{{ item.carCount != null ? item.carCount + '대' : '-' }}</td>
             <td>
-              <button v-if="item.pendingCount > 0" class="btn-register" @click.stop="openConfirmModal($event, item)">
+              <button v-if="item.pendingCount > 0" class="btn-register"
+                @click.stop="openConfirmModal($event, item)">
                 승인요청 ({{ item.pendingCount }})
+              </button>
+              <button v-else-if="isNeedCare(item)" class="btn-warning">
+                장기공실
               </button>
               <span v-else class="col-empty">-</span>
             </td>
@@ -390,44 +373,6 @@ const closeConfirmModal = () => { confirmModal.show = false }
         <div class="pagination-spacer"></div>
       </div>
     </div>
-
-
-    <!-- ── 세대 등록 모달 ── -->
-    <BaseModal v-if="modal.show" title="세대 등록" subtitle="새 세대 정보를 입력해주세요" @close="closeModal">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">동 <span class="required">*</span></label>
-          <input class="form-input" type="text" placeholder="예: 101동" v-model="modal.dong" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">호수 <span class="required">*</span></label>
-          <input class="form-input" type="text" placeholder="예: 601호" v-model="modal.ho" />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">입주 상태</label>
-          <select class="form-input form-select" v-model="modal.status">
-            <option value="공실">공실</option>
-            <option value="입주">입주</option>
-            <option value="퇴거">퇴거</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">등록일</label>
-          <input class="form-input" type="text" v-model="modal.regDate" disabled />
-        </div>
-      </div>
-      <p class="form-hint">* 표시는 필수 입력 항목입니다.</p>
-      <p v-if="modal.error" class="form-error">{{ modal.error }}</p>
-      <template #footer>
-        <button class="btn-cancel" @click="closeModal">취소</button>
-        <button class="btn-submit" @click="submitCreate" :disabled="modal.loading">
-          {{ modal.loading ? '등록 중...' : '등록하기' }}
-        </button>
-      </template>
-    </BaseModal>
-
 
     <!-- ── 세대 상세 모달  ── -->
     <BaseModal v-if="detailModal.show" title="세대 상세 정보" :subtitle="'ID #' + detailModal.item?.householdId" @close="closeDetailModal">
@@ -593,8 +538,8 @@ const closeConfirmModal = () => { confirmModal.show = false }
 .household-page { display: flex; flex-direction: column; gap: 20px; font-family: 'Noto Sans KR', sans-serif; color: #333; }
 
 /* 통계 카드 */
-.stats-grid { display: grid; grid-template-columns: repeat(4, 273px); gap: 14px; }
-.stat-card { width: 273px; height: 139px; background: #fff; border-radius: 10px; padding: 22px 24px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; justify-content: space-between; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.stat-card { height: 139px; background: #fff; border-radius: 10px; padding: 22px 24px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; justify-content: space-between; }
 .stat-label { font-size: 12px; color: #718096; font-weight: 500; }
 .stat-value { font-size: 32px; font-weight: 700; color: #1A202C; line-height: 1; }
 .stat-unit  { font-size: 14px; font-weight: 400; color: #A0AEC0; }
@@ -688,6 +633,7 @@ const closeConfirmModal = () => { confirmModal.show = false }
 .btn-submit    { padding: 9px 24px; background: #2B3A55; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-submit:hover:not(:disabled) { background: #1E2A3E; }
 .btn-submit:disabled { opacity: 0.5; cursor: default; }
+.btn-warning { padding: 4px 14px; background: #FFF7E6; color: #C08B2D; border: 1px solid #F6D98A; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: default; font-family: 'Noto Sans KR', sans-serif; }
 
 /* 승인 모달 */
 .confirm-message { font-size: 15px; font-weight: 500; text-align: center; padding: 12px 0; color: #1A202C; line-height: 1.6; }

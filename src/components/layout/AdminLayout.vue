@@ -143,7 +143,6 @@ function handleAddHousehold() {
 
 .layout {
   display: flex;
-  width: 1440px;
   height: 1024px;
   overflow: hidden;
   font-family: 'Noto Sans KR', sans-serif;

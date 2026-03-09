@@ -29,26 +29,6 @@ export default {
     return axios.get('/admin/households/stats')
   },
 
-  // ── API-015: 세대 등록 ────────────────────────────────────────
-  // POST /api/admin/households
-  // Body: { dong, ho }
-  createHousehold(data) {
-    return axios.post('/admin/households', data)
-  },
-
-  // ── API-016: 세대 수정 ────────────────────────────────────────
-  // PUT /api/admin/households/:id
-  // Body: { dong, ho }
-  updateHousehold(id, data) {
-    return axios.put(`/admin/households/${id}`, data)
-  },
-
-  // ── API-017: 세대 삭제 ────────────────────────────────────────
-  // DELETE /api/admin/households/:id
-  deleteHousehold(id) {
-    return axios.delete(`/admin/households/${id}`)
-  },
-
   // ── API-018: 입주/퇴거 이력 등록 ─────────────────────────────
   // POST /api/admin/households/:id/history
   // Body: { userId, status("입주" | "퇴거") }

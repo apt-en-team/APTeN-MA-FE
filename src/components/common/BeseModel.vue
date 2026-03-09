@@ -99,5 +99,6 @@ const emit = defineEmits(['close'])
   border: none;
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
 }
 </style>
