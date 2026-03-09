@@ -7,7 +7,7 @@ import AdminLayout from '@/components/layout/AdminLayout.vue'
 
 // 공통 페이지
 import LandingView from '@/views/LandingView.vue'
-import LoginView from '@/views/auth/LoginView.vue'
+import LoginView from '@/views/auth/ResidentLoginView.vue'
 import AdminLoginView from '@/views/auth/AdminLoginView.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
 import OAuth2CallbackView from '@/views/auth/OAuth2CallbackView.vue'
@@ -22,6 +22,7 @@ import ReservationCalendarView from '@/views/resident/ReservationCalendarView.vu
 import MyReservationView from '@/views/resident/MyReservationView.vue'
 import MyVehicleView from '@/views/resident/MyVehicleView.vue'
 import MyPageView from '@/views/resident/MyPageView.vue'
+import MyPageEditView from '@/views/resident/MyPageEditView.vue'
 
 // 관리자 페이지
 import AdminDashboard from '@/views/admin/AdminDashboardView.vue'
@@ -46,15 +47,16 @@ const routes = [
         component: ResidentLayout,
         meta: { requiresAuth: true, role: 'RESIDENT' },
         children: [
-            { path: 'dashboard',      name: 'ResidentDashboard',   component: ResidentDashboard },
-            { path: 'board',          name: 'BoardList',           component: BoardListView },
-            { path: 'board/:id',      name: 'BoardDetail',         component: BoardDetailView },
-            { path: 'board/form',     name: 'BoardForm',           component: BoardFormView },
-            { path: 'facility',       name: 'FacilityList',        component: FacilityListView },
-            { path: 'reservation',    name: 'ReservationCalendar', component: ReservationCalendarView },
-            { path: 'my-reservation', name: 'MyReservation',       component: MyReservationView },
-            { path: 'my-vehicle',     name: 'MyVehicle',           component: MyVehicleView },
-            { path: 'mypage',         name: 'MyPage',              component: MyPageView },
+            { path: 'dashboard', name: 'ResidentDashboard', component: ResidentDashboard, meta: { title: '대시보드' } },
+            { path: 'board', name: 'BoardList', component: BoardListView, meta: { title: '게시판' } },
+            { path: 'board/:id', name: 'BoardDetail', component: BoardDetailView, meta: { title: '게시판' } },
+            { path: 'board/form', name: 'BoardForm', component: BoardFormView, meta: { title: '게시판 작성' } },
+            { path: 'facility', name: 'FacilityList', component: FacilityListView, meta: { title: '시설' } },
+            { path: 'reservation', name: 'ReservationCalendar', component: ReservationCalendarView, meta: { title: '시설 예약' } },
+            { path: 'my-reservation', name: 'MyReservation', component: MyReservationView, meta: { title: '내 예약' } },
+            { path: 'my-vehicle', name: 'MyVehicle', component: MyVehicleView, meta: { title: '내 차량' } },
+            { path: 'mypage', name: 'MyPage', component: MyPageView, meta: { title: '마이페이지' } },
+            { path: 'mypage/edit', name: 'MyPageEdit', component: MyPageEditView, meta: { title: '마이페이지 수정' } },
         ]
     },
 
@@ -63,6 +65,7 @@ const routes = [
         path: '/admin',
         component: AdminLayout,
         meta: { requiresAuth: true, role: 'ADMIN' },
+<<<<<<< HEAD
     children: [
         { path: 'dashboard',  name: 'AdminDashboard',  component: AdminDashboard,       meta: { title: '대시보드' } },
         { path: 'households', name: 'HouseholdManage', component: HouseholdManageView,  meta: { title: '세대 관리' } },
@@ -71,6 +74,16 @@ const routes = [
         { path: 'visitor',    name: 'VisitorApproval', component: VisitorApprovalView,  meta: { title: '방문차량 승인' } },
         { path: 'parking',    name: 'ParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
     ]
+=======
+        children: [
+            { path: 'dashboard',  name: 'AdminDashboard',  component: AdminDashboard,       meta: { title: '대시보드' } },
+            { path: 'households', name: 'HouseholdManage', component: HouseholdManageView,  meta: { title: '세대 관리' } },
+            { path: 'board',      name: 'AdminBoardList',  component: AdminBoardListView,   meta: { title: '게시판 관리' } },
+            { path: 'facility',   name: 'FacilityManage',  component: FacilityManageView,   meta: { title: '시설 관리' } },
+            { path: 'visitor',    name: 'VisitorApproval', component: VisitorApprovalView,  meta: { title: '방문차량 승인' } },
+            { path: 'parking',    name: 'ParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
+        ]
+>>>>>>> d7de98d1541750e1e589f99ba614fcbcfd06ca2d
     }
 
 ]
@@ -100,10 +113,10 @@ router.beforeEach(async (to) => {
     }
 
     // role이 맞지 않으면 해당 역할의 대시보드로 리다이렉트
-    if (to.meta.role && auth.user?.role !== to.meta.role) {
-        if (auth.user?.role === 'ADMIN') return '/admin/dashboard'
-        return '/resident/dashboard'
-    }
+if (to.meta.role && auth.user && auth.user.role !== to.meta.role) {
+    if (auth.user.role === 'ADMIN') return '/admin/dashboard'
+    return '/resident/dashboard'
+}
 
 })
 

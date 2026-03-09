@@ -28,6 +28,7 @@ async function handleLogout() {
 <template>
   <div class="layout">
     <!-- 사이드바 -->
+    <!-- 사이드바 -->
     <aside class="sidebar">
       <div class="sidebar-logo">
         <div class="logo-icon">A</div>
@@ -47,8 +48,20 @@ async function handleLogout() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           세대 관리
         </router-link>
+        <router-link to="/admin/dashboard" class="nav-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          대시보드
+        </router-link>
+        <router-link to="/admin/households" class="nav-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          세대 관리
+        </router-link>
 
         <div class="nav-group">COMMUNITY</div>
+        <router-link to="/admin/boards" class="nav-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          게시판 관리
+        </router-link>
         <router-link to="/admin/boards" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           게시판 관리
@@ -77,6 +90,14 @@ async function handleLogout() {
         </router-link>
 
         <div class="nav-group">FACILITY / RESERVATION</div>
+        <router-link to="/admin/facilities" class="nav-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          시설 관리
+        </router-link>
+        <router-link to="/admin/reservations" class="nav-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          전체 예약 현황
+        </router-link>
         <router-link to="/admin/facilities" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
           시설 관리
@@ -128,6 +149,7 @@ async function handleLogout() {
         </div>
       </header>
 
+
       <main class="content">
         <router-view />
       </main>
@@ -173,6 +195,9 @@ async function handleLogout() {
   width: 36px; height: 36px;
   border-radius: 8px; background: #2B3A55;
   color: #fff; font-size: 16px; font-weight: 700;
+  width: 36px; height: 36px;
+  border-radius: 8px; background: #2B3A55;
+  color: #fff; font-size: 16px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -181,12 +206,19 @@ async function handleLogout() {
 
 .sidebar-nav { flex: 1; padding: 12px; overflow-y: auto; }
 
+
 .nav-group {
   font-size: 10px; font-weight: 600; color: #4A5568;
   letter-spacing: 0.08em; padding: 14px 10px 5px;
 }
 
+
 .nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; border-radius: 7px;
+  font-size: 13px; color: #8B9AB0;
+  text-decoration: none; margin-bottom: 1px;
+  transition: all 0.15s; position: relative;
   display: flex; align-items: center; gap: 8px;
   padding: 9px 10px; border-radius: 7px;
   font-size: 13px; color: #8B9AB0;
@@ -202,8 +234,11 @@ async function handleLogout() {
 .sidebar-profile {
   padding: 16px 20px; flex-shrink: 0;
   border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 16px 20px; flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
   display: flex; align-items: center; gap: 10px;
 }
+
 
 .profile-avatar {
   width: 32px; height: 32px; border-radius: 50%;

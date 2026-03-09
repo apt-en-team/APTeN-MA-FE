@@ -5,11 +5,22 @@ import { useAuthStore } from '@/stores/modules/auth.js'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+// 입력값
 const email = ref('')
 const password = ref('')
+
+// 에러 메시지
 const errorMsg = ref('')
+
+// 로그인 요청 로딩 상태
 const loading = ref(false)
 
+// 비밀번호 표시 여부 토글
+const showPassword = ref(false)
+
+// 관리자 로그인 처리 (POST /api/auth/login)
+// ADMIN 계정만 허용, RESIDENT 계정으로 시도 시 로그아웃 후 에러 표시
 async function handleLogin() {
   loading.value = true
   errorMsg.value = ''
@@ -44,7 +55,18 @@ async function handleLogin() {
         </div>
         <div class="input-group">
           <label>비밀번호</label>
-          <input v-model="password" type="password" placeholder="비밀번호" required />
+          <div class="input-with-icon">
+            <input
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="비밀번호"
+                required
+            />
+            <!-- 눈 아이콘 클릭 시 비밀번호 표시/숨기기 토글 -->
+            <button type="button" class="btn-eye" @click="showPassword = !showPassword">
+              <i :class="showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+            </button>
+          </div>
         </div>
         <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
         <button type="submit" class="btn-login" :disabled="loading">
@@ -91,15 +113,29 @@ async function handleLogin() {
   border-radius: 8px; font-size: 14px; box-sizing: border-box;
   background: #1A1A2E; color: #fff;
 }
-.input-group input:focus { outline: none; border-color: #4F6EF7; }
+.input-group input:focus { outline: none; border-color: #4973E5; }
 .input-group input::placeholder { color: #5A5E6E; }
+.input-with-icon { position: relative; }
+.input-with-icon input { width: 100%; padding-right: 42px; box-sizing: border-box; }
+.btn-eye {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 15px; color: #999; padding: 0;
+}
+.btn-eye:hover { color: #333; }
 .error { color: #E05555; font-size: 13px; margin-bottom: 12px; }
 .btn-login {
-  width: 100%; padding: 12px; background: #4F6EF7; color: #fff;
+  width: 100%; padding: 12px; background: #4973E5; color: #fff;
+  border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.error { color: #E05555; font-size: 13px; margin-bottom: 12px; }
+.btn-login {
+  width: 100%; padding: 12px; background: #4973E5; color: #fff;
   border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
 }
 .btn-login:disabled { opacity: 0.6; }
 .bottom-links { text-align: center; margin-top: 24px; font-size: 13px; }
 .bottom-links a { color: #7B7F8E; text-decoration: none; }
-.bottom-links a:hover { color: #4F6EF7; }
+.bottom-links a:hover { color: #4973E5; }
 </style>
