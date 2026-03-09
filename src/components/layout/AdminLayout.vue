@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'  
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/modules/auth.js'
 
@@ -7,7 +7,6 @@ const route  = useRoute()
 const router = useRouter()
 const auth   = useAuthStore()
 
-const currentView = ref(null)
 const currentTitle = computed(() => route.meta.title || '관리자 대시보드')
 
 const todayStr = computed(() => {
@@ -23,10 +22,6 @@ const todayStr = computed(() => {
 async function handleLogout() {
   await auth.logout()
   router.push('/login')
-}
-
-function handleAddHousehold() {
-  currentView.value?.openModal()
 }
 </script>
 
@@ -51,7 +46,7 @@ function handleAddHousehold() {
         <router-link to="/admin/households" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           세대 관리
-        </router-link>
+        </router-link>      
 
         <div class="nav-group">COMMUNITY</div>
         <router-link to="/admin/boards" class="nav-item">
@@ -66,8 +61,7 @@ function handleAddHousehold() {
         </router-link>
         <router-link to="/admin/visitor-vehicles" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          방문차량 승인
-          <span class="nav-badge">3</span>
+          방문차량 목록
         </router-link>
         <router-link to="/admin/parking-logs" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -93,13 +87,20 @@ function handleAddHousehold() {
         </router-link>
       </nav>
 
+      <!-- 프로필 + 로그아웃 아이콘 -->
       <div class="sidebar-profile">
         <div class="profile-avatar">관</div>
         <div class="profile-info-wrap">
           <div class="profile-name">{{ auth.user?.name || '관리자' }}</div>
           <div class="profile-email">{{ auth.user?.email }}</div>
         </div>
-        <div class="profile-dot"></div>
+        <button class="btn-logout-icon" @click="handleLogout" title="로그아웃">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
       </div>
     </aside>
 
@@ -111,39 +112,37 @@ function handleAddHousehold() {
           <p class="topbar-sub">{{ todayStr }} · APTEN 아파트</p>
         </div>
         <div class="topbar-right">
-          <!-- 알림 버튼 (항상 고정) -->
-          <!-- <button class="btn-bell">
+          <!-- 알림 버튼 -->
+          <button class="btn-bell">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span class="bell-badge">5</span>
             <span class="bell-label">알림</span>
-          </button> -->
+          </button>
+
+          <!-- 공지 작성 (btn-bell 밖 독립 버튼) -->
+          <button class="btn-notice">+ 공지 작성</button>
 
           <!-- 페이지별 액션 버튼 -->
-          <!-- <button v-if="route.name === 'HouseholdManage'" class="btn-action" @click="handleAddHousehold">+ 세대 추가</button> -->
+          <button v-if="route.name === 'HouseholdManage'" class="btn-action">+ 세대 추가</button>
           <button v-if="route.name === 'FacilityManage'"  class="btn-action">+ 시설 추가</button>
           <button v-if="route.name === 'AdminBoardList'"  class="btn-action">+ 공지 작성</button>
-
-          <!-- 로그아웃: 대시보드에서만 표시 -->
-          <button v-if="route.name === 'AdminDashboard'" @click="handleLogout" class="btn-logout">로그아웃</button>
         </div>
       </header>
 
+
       <main class="content">
-        <router-view v-slot="{ Component }">
-          <component :is="Component" ref="currentView" />
-        </router-view>
+        <router-view />
       </main>
     </div>
   </div>
 </template>
-
 
 <style scoped>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 .layout {
   display: flex;
-  height: 1024px;
+  width: 100vw;
+  min-height: 100vh;
   overflow: hidden;
   font-family: 'Noto Sans KR', sans-serif;
   color: #333333;
@@ -190,18 +189,21 @@ function handleAddHousehold() {
 .nav-item {
   display: flex; align-items: center; gap: 8px;
   padding: 9px 10px; border-radius: 7px;
-  font-size: 13px; color: #8B9AB0;
+  font-size: 13px; 
+  color: #8B9AB0;
   text-decoration: none; margin-bottom: 1px;
   transition: all 0.15s; position: relative;
 }
+
 .nav-item:hover { background: rgba(255,255,255,0.06); color: #cbd5e0; }
 .nav-item.router-link-active { background: #2B3A55; color: #fff; font-weight: 600; }
 
-.nav-badge {
-  margin-left: auto; background: #E53E3E; color: #fff;
-  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px;
+.nav-item svg {
+   stroke: #8B9AB0 !important;
 }
 
+
+/* 프로필 영역 */
 .sidebar-profile {
   padding: 16px 20px; flex-shrink: 0;
   border-top: 1px solid rgba(255,255,255,0.07);
@@ -218,7 +220,34 @@ function handleAddHousehold() {
 .profile-info-wrap { flex: 1; min-width: 0; }
 .profile-name  { font-size: 13px; font-weight: 600; color: #fff; }
 .profile-email { font-size: 11px; color: #7B8EA8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.profile-dot   { width: 7px; height: 7px; border-radius: 50%; background: #4D8B5A; flex-shrink: 0; }
+
+/* 로그아웃 아이콘 버튼 */
+.btn-logout-icon {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-logout-icon:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: red !important;
+}
+
+.btn-logout-icon svg {
+  color: #7B8EA8 !important;
+  stroke: #7B8EA8 !important;
+}
+
+.btn-logout-icon:hover svg {
+  color: red !important;
+  stroke: red !important;
+}
 
 /* ── 메인 ── */
 .main {
@@ -238,7 +267,7 @@ function handleAddHousehold() {
   border-bottom: 1px solid #E2E8F0;
   display: flex; align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 32px; /* content와 동일하게 맞춤 */
 }
 
 .topbar-left { display: flex; flex-direction: column; gap: 4px; }
@@ -252,7 +281,7 @@ function handleAddHousehold() {
   position: relative;
   height: 36px; padding: 0 14px;
   border: 1px solid #E2E8F0; border-radius: 8px;
-  background: #fff; cursor: pointer; color: #555;
+  background: #fff; cursor: pointer; color: #6B7280;
   font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
 }
 
@@ -264,8 +293,20 @@ function handleAddHousehold() {
   display: flex; align-items: center; justify-content: center;
 }
 
-.bell-label { font-size: 13px; color: #555; }
+.bell-label { font-size: 13px; color: #6B7280; }
 
+/* 공지 작성 */
+.btn-notice {
+  height: 36px; padding: 0 16px;
+  background: #2B3A55; color: #fff;
+  border: none; border-radius: 7px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  transition: background 0.15s;
+}
+.btn-notice:hover { background: #1E2A3E; }
+
+/* 페이지별 액션 */
 .btn-action {
   height: 36px; padding: 0 18px;
   background: #2B3A55; color: #fff;
@@ -274,14 +315,6 @@ function handleAddHousehold() {
   cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
 }
 .btn-action:hover { background: #1E2A3E; }
-
-.btn-logout {
-  height: 36px; padding: 0 16px;
-  border: 1px solid #E2E8F0; border-radius: 6px;
-  background: #fff; font-size: 13px; color: #666;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
-}
-.btn-logout:hover { background: #eee; }
 
 /* ── 콘텐츠 ── */
 .content {
