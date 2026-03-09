@@ -48,9 +48,9 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // 회원 탈퇴 (PATCH /api/auth/deactivate)
+    // 회원 탈퇴 (PATCH /api/users/deactivate)
     async function deactivate() {
-        await api.patch('/auth/deactivate')
+        await api.patch('/users/deactivate')
         user.value = null
         isLoggedIn.value = false
     }
