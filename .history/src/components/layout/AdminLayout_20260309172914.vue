@@ -1,99 +1,3 @@
-<script setup>
-import { reactive, ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-// API 모듈 임포트 (named export 방식)
-import * as visitorVehicleApi from '@/api/visitorVehicle'
-import * as facilityApi       from '@/api/facility'
-import * as parkingApi        from '@/api/parking'
-import * as boardApi          from '@/api/board'
-
-const router = useRouter()
-
-// 로딩 / 에러 상태
-const isLoading = ref(false)
-const hasError  = ref(false)
-
-// 요약 카드 (null = 데이터 없음 → "-" 표시)
-const summary = reactive({
-  pendingCount:   null,  // 승인 대기 건수
-  parkingUsed:    null,  // 주차 사용 면수
-  parkingTotal:   null,  // 주차 전체 면수
-  todayReserve:   null,  // 오늘 예약 건수
-  reserveDiff:    null,  // 전일 대비 증감
-  householdCount: null,  // 전체 세대 수
-  memberCount:    null,  // 등록 회원 수
-})
-
-// 주차 점유율 (%)
-const parkingPercent = computed(() => {
-  if (summary.parkingUsed === null || summary.parkingTotal === null || summary.parkingTotal === 0) return null
-  return Math.round((summary.parkingUsed / summary.parkingTotal) * 100)
-})
-
-// 전일 대비 표시 문자열  ex) "+3건" | "-1건"
-const reserveDiffLabel = computed(() => {
-  if (summary.reserveDiff === null) return null
-  return (summary.reserveDiff >= 0 ? '+' : '') + summary.reserveDiff + '건'
-})
-
-// 패널 목록
-const dashboardState = reactive({
-  visitors:   [],
-  facilities: [],
-  records:    [],
-  posts:      [],
-})
-
-
-/**
- * 모든 데이터를 한 번에 가져오는 함수
- * API 연결 후: TODO 블록 주석 해제, 임시 블록 삭제
- */
-const fetchDashboardData = async () => {
-  isLoading.value = true
-  hasError.value  = false
-
-  try {
-    // ── TODO: API 연결 후 아래 주석 해제 ──────────────────
-    // const [visitorsRes, facilitiesRes, recordsRes, postsRes, summaryRes] = await Promise.all([
-    //   visitorVehicleApi.getVisitorVehicles(),
-    //   facilityApi.getFacilitiesToday(),
-    //   parkingApi.getRecentRecords(),
-    //   boardApi.getRecentPosts(),
-    //   parkingApi.getParkingSummary(),
-    // ])
-    // dashboardState.visitors   = visitorsRes.data
-    // dashboardState.facilities = facilitiesRes.data
-    // dashboardState.records    = recordsRes.data
-    // dashboardState.posts      = postsRes.data
-    // const s = summaryRes.data
-    // summary.pendingCount   = s.pendingCount   ?? null
-    // summary.parkingUsed    = s.parkingUsed    ?? null
-    // summary.parkingTotal   = s.parkingTotal   ?? null
-    // summary.todayReserve   = s.todayReserve   ?? null
-    // summary.reserveDiff    = s.reserveDiff    ?? null
-    // summary.householdCount = s.householdCount ?? null
-    // summary.memberCount    = s.memberCount    ?? null
-
-    // 임시: API 미연결 → 빈 데이터로 화면 표시
-    dashboardState.visitors   = []
-    dashboardState.facilities = []
-    dashboardState.records    = []
-    dashboardState.posts      = []
-    // summary 는 null 유지 → 요약 카드 "-" 표시
-
-  } catch (error) {
-    console.error('대시보드 데이터를 불러오는 중 오류 발생:', error)
-    hasError.value = true
-  } finally {
-    isLoading.value = false
-  }
-}
-
-onMounted(fetchDashboardData)
-</script>
-
 <template>
   <div class="admin-dashboard">
 
@@ -117,11 +21,11 @@ onMounted(fetchDashboardData)
     <!-- 대시보드 본문 -->
     <div v-else class="dashboard-wrapper">
 
-      <!-- 요약 카드 4개 -->
+      <!-- ── 요약 카드 4개 ───────────────────────────── -->
       <section class="summary-grid">
 
         <!-- 승인 대기 -->
-        <div class="summary-card card-clickable" @click="router.push({ name: 'VisitorApproval' })">
+        <div class="summary-card card-clickable" @click="router.push('/admin/vehicles')">
           <div class="card-info">
             <span class="card-label">승인 대기</span>
             <div class="card-value">
@@ -220,13 +124,13 @@ onMounted(fetchDashboardData)
         </div>
       </section>
 
-      <!-- 중간 행: 방문차량 / 시설 예약 -->
+      <!-- ── 중간 행: 방문차량 / 시설 예약 ─────────────── -->
       <section class="middle-grid">
 
         <!-- 방문차량 관리 패널 -->
         <div class="panel">
           <div class="panel-header">
-            <h2 class="panel-title">방문차량 목록</h2>
+            <h2 class="panel-title">방문차량 관리</h2>
             <router-link :to="{ name: 'VisitorApproval' }" class="panel-more">전체보기 →</router-link>
           </div>
           <div v-if="dashboardState.visitors.length > 0" class="visitor-list">
@@ -258,7 +162,7 @@ onMounted(fetchDashboardData)
               <circle cx="7" cy="18" r="2"/>
               <circle cx="17" cy="18" r="2"/>
             </svg>
-            <span class="empty-text">방문차량 기록이 없습니다</span>
+            <span class="empty-text">등록된 방문차량이 없습니다</span>
           </div>
         </div>
 
@@ -307,7 +211,7 @@ onMounted(fetchDashboardData)
 
       </section>
 
-      <!-- 하단 행: 입출차 기록 / 게시판 활동 -->
+      <!-- ── 하단 행: 입출차 기록 / 게시판 활동 ─────────── -->
       <section class="bottom-grid">
 
         <!-- 최근 입출차 기록 패널 -->
@@ -400,7 +304,101 @@ onMounted(fetchDashboardData)
   </div>
 </template>
 
+<script setup>
+import { reactive, ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+// API 모듈 임포트 (named export 방식)
+import * as visitorVehicleApi from '@/api/visitorVehicle'
+import * as facilityApi       from '@/api/facility'
+import * as parkingApi        from '@/api/parking'
+import * as boardApi          from '@/api/board'
+
+const router = useRouter()
+
+// 로딩 / 에러 상태
+const isLoading = ref(false)
+const hasError  = ref(false)
+
+// ── 요약 카드 (null = 데이터 없음 → "-" 표시) ──────────
+const summary = reactive({
+  pendingCount:   null,  // 승인 대기 건수
+  parkingUsed:    null,  // 주차 사용 면수
+  parkingTotal:   null,  // 주차 전체 면수
+  todayReserve:   null,  // 오늘 예약 건수
+  reserveDiff:    null,  // 전일 대비 증감
+  householdCount: null,  // 전체 세대 수
+  memberCount:    null,  // 등록 회원 수
+})
+
+// 주차 점유율 (%)
+const parkingPercent = computed(() => {
+  if (summary.parkingUsed === null || summary.parkingTotal === null || summary.parkingTotal === 0) return null
+  return Math.round((summary.parkingUsed / summary.parkingTotal) * 100)
+})
+
+// 전일 대비 표시 문자열  ex) "+3건" | "-1건"
+const reserveDiffLabel = computed(() => {
+  if (summary.reserveDiff === null) return null
+  return (summary.reserveDiff >= 0 ? '+' : '') + summary.reserveDiff + '건'
+})
+
+// ── 패널 목록 ──────────────────────────────────────────
+const dashboardState = reactive({
+  visitors:   [],
+  facilities: [],
+  records:    [],
+  posts:      [],
+})
+
+
+/**
+ * 모든 데이터를 한 번에 가져오는 함수
+ * API 연결 후: TODO 블록 주석 해제, 임시 블록 삭제
+ */
+const fetchDashboardData = async () => {
+  isLoading.value = true
+  hasError.value  = false
+
+  try {
+    // ── TODO: API 연결 후 아래 주석 해제 ──────────────────
+    // const [visitorsRes, facilitiesRes, recordsRes, postsRes, summaryRes] = await Promise.all([
+    //   visitorVehicleApi.getVisitorVehicles(),
+    //   facilityApi.getFacilitiesToday(),
+    //   parkingApi.getRecentRecords(),
+    //   boardApi.getRecentPosts(),
+    //   parkingApi.getParkingSummary(),
+    // ])
+    // dashboardState.visitors   = visitorsRes.data
+    // dashboardState.facilities = facilitiesRes.data
+    // dashboardState.records    = recordsRes.data
+    // dashboardState.posts      = postsRes.data
+    // const s = summaryRes.data
+    // summary.pendingCount   = s.pendingCount   ?? null
+    // summary.parkingUsed    = s.parkingUsed    ?? null
+    // summary.parkingTotal   = s.parkingTotal   ?? null
+    // summary.todayReserve   = s.todayReserve   ?? null
+    // summary.reserveDiff    = s.reserveDiff    ?? null
+    // summary.householdCount = s.householdCount ?? null
+    // summary.memberCount    = s.memberCount    ?? null
+
+    // ── 임시: API 미연결 → 빈 데이터로 화면 표시 ──────────
+    dashboardState.visitors   = []
+    dashboardState.facilities = []
+    dashboardState.records    = []
+    dashboardState.posts      = []
+    // summary 는 null 유지 → 요약 카드 "-" 표시
+
+  } catch (error) {
+    console.error('대시보드 데이터를 불러오는 중 오류 발생:', error)
+    hasError.value = true
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchDashboardData)
+</script>
 
 <style scoped>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -451,7 +449,6 @@ onMounted(fetchDashboardData)
 /* 대시보드 래퍼 */
 .dashboard-wrapper {
   width: 100%;
-  padding: 0 32px;
 }
 
 /* 클릭 가능 공통 */
@@ -465,7 +462,7 @@ onMounted(fetchDashboardData)
   transform: translateY(-1px);
 }
 
-/* 요약 카드 */
+/* ── 요약 카드 ───────────────────────────────── */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -535,7 +532,7 @@ onMounted(fetchDashboardData)
 .progress-fill.dark   { background: #2B3A55; }
 .progress-fill.yellow { background: #C08B2D; }
 
-/* 패널 그리드 */
+/* ── 패널 그리드 ─────────────────────────────── */
 .middle-grid,
 .bottom-grid {
   display: grid;
@@ -563,7 +560,7 @@ onMounted(fetchDashboardData)
   padding-bottom: 10px;
 }
 
-.panel-title { font-size: 18px; font-weight: 700; color: #333333; }
+.panel-title { font-size: 19px; font-weight: 700; color: #333333; }
 
 .panel-more { font-size: 13px; color: #3D5170; text-decoration: none; }
 .panel-more:hover { color: #3b6ef8; }

@@ -65,16 +65,6 @@ const routes = [
         path: '/admin',
         component: AdminLayout,
         meta: { requiresAuth: true, role: 'ADMIN' },
-<<<<<<< HEAD
-    children: [
-        { path: 'dashboard',  name: 'AdminDashboard',  component: AdminDashboard,       meta: { title: '대시보드' } },
-        { path: 'households', name: 'HouseholdManage', component: HouseholdManageView,  meta: { title: '세대 관리' } },
-        { path: 'board',      name: 'AdminBoardList',  component: AdminBoardListView,   meta: { title: '게시판 관리' } },
-        { path: 'facility',   name: 'FacilityManage',  component: FacilityManageView,   meta: { title: '시설 관리' } },
-        { path: 'visitor',    name: 'VisitorApproval', component: VisitorApprovalView,  meta: { title: '방문차량 승인' } },
-        { path: 'parking',    name: 'ParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
-    ]
-=======
         children: [
             { path: 'dashboard',  name: 'AdminDashboard',  component: AdminDashboard,       meta: { title: '대시보드' } },
             { path: 'households', name: 'HouseholdManage', component: HouseholdManageView,  meta: { title: '세대 관리' } },
@@ -83,7 +73,6 @@ const routes = [
             { path: 'visitor',    name: 'VisitorApproval', component: VisitorApprovalView,  meta: { title: '방문차량 승인' } },
             { path: 'parking',    name: 'ParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
         ]
->>>>>>> d7de98d1541750e1e589f99ba614fcbcfd06ca2d
     }
 
 ]
