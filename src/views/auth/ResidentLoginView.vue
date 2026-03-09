@@ -206,8 +206,12 @@ function socialLogin(provider) {
   padding: 0;
 }
 
-.btn-eye:hover {
-  color: #333;
+.btn-eye i {
+  color: #999;
+}
+
+.btn-eye i :hover {
+  color: #999;  
 }
 
 .error {

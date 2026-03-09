@@ -226,7 +226,7 @@ onMounted(fetchDashboardData)
         <!-- 방문차량 관리 패널 -->
         <div class="panel">
           <div class="panel-header">
-            <h2 class="panel-title">방문차량 관리</h2>
+            <h2 class="panel-title">방문차량 목록</h2>
             <router-link :to="{ name: 'VisitorApproval' }" class="panel-more">전체보기 →</router-link>
           </div>
           <div v-if="dashboardState.visitors.length > 0" class="visitor-list">
@@ -258,7 +258,7 @@ onMounted(fetchDashboardData)
               <circle cx="7" cy="18" r="2"/>
               <circle cx="17" cy="18" r="2"/>
             </svg>
-            <span class="empty-text">등록된 방문차량이 없습니다</span>
+            <span class="empty-text">방문차량 기록이 없습니다</span>
           </div>
         </div>
 
@@ -563,7 +563,7 @@ onMounted(fetchDashboardData)
   padding-bottom: 10px;
 }
 
-.panel-title { font-size: 19px; font-weight: 700; color: #333333; }
+.panel-title { font-size: 18px; font-weight: 700; color: #333333; }
 
 .panel-more { font-size: 13px; color: #3D5170; text-decoration: none; }
 .panel-more:hover { color: #3b6ef8; }

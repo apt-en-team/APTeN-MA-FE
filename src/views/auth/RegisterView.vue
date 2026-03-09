@@ -305,6 +305,10 @@ async function handleRegister() {
   box-sizing: border-box;
 }
 
+.btn-eye i {
+  color: #999;
+}
+
 .btn-eye {
   position: absolute;
   right: 12px;

@@ -28,7 +28,6 @@ async function handleLogout() {
 <template>
   <div class="layout">
     <!-- 사이드바 -->
-    <!-- 사이드바 -->
     <aside class="sidebar">
       <div class="sidebar-logo">
         <div class="logo-icon">A</div>
@@ -47,21 +46,9 @@ async function handleLogout() {
         <router-link to="/admin/households" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           세대 관리
-        </router-link>
-        <router-link to="/admin/dashboard" class="nav-item">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          대시보드
-        </router-link>
-        <router-link to="/admin/households" class="nav-item">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          세대 관리
-        </router-link>
+        </router-link>      
 
         <div class="nav-group">COMMUNITY</div>
-        <router-link to="/admin/boards" class="nav-item">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          게시판 관리
-        </router-link>
         <router-link to="/admin/boards" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           게시판 관리
@@ -74,7 +61,7 @@ async function handleLogout() {
         </router-link>
         <router-link to="/admin/visitor-vehicles" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          방문차량 승인
+          방문차량 목록
         </router-link>
         <router-link to="/admin/parking-logs" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -157,7 +144,6 @@ async function handleLogout() {
   </div>
 </template>
 
-
 <style scoped>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -195,9 +181,6 @@ async function handleLogout() {
   width: 36px; height: 36px;
   border-radius: 8px; background: #2B3A55;
   color: #fff; font-size: 16px; font-weight: 700;
-  width: 36px; height: 36px;
-  border-radius: 8px; background: #2B3A55;
-  color: #fff; font-size: 16px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -206,39 +189,34 @@ async function handleLogout() {
 
 .sidebar-nav { flex: 1; padding: 12px; overflow-y: auto; }
 
-
 .nav-group {
   font-size: 10px; font-weight: 600; color: #4A5568;
   letter-spacing: 0.08em; padding: 14px 10px 5px;
 }
 
-
 .nav-item {
   display: flex; align-items: center; gap: 8px;
   padding: 9px 10px; border-radius: 7px;
-  font-size: 13px; color: #8B9AB0;
-  text-decoration: none; margin-bottom: 1px;
-  transition: all 0.15s; position: relative;
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 10px; border-radius: 7px;
-  font-size: 13px; color: #8B9AB0;
+  font-size: 13px; 
+  color: #8B9AB0;
   text-decoration: none; margin-bottom: 1px;
   transition: all 0.15s; position: relative;
 }
+
 .nav-item:hover { background: rgba(255,255,255,0.06); color: #cbd5e0; }
 .nav-item.router-link-active { background: #2B3A55; color: #fff; font-weight: 600; }
 
+.nav-item svg {
+   stroke: #8B9AB0 !important;
+}
 
 
 /* 프로필 영역 */
 .sidebar-profile {
   padding: 16px 20px; flex-shrink: 0;
   border-top: 1px solid rgba(255,255,255,0.07);
-  padding: 16px 20px; flex-shrink: 0;
-  border-top: 1px solid rgba(255,255,255,0.07);
   display: flex; align-items: center; gap: 10px;
 }
-
 
 .profile-avatar {
   width: 32px; height: 32px; border-radius: 50%;
@@ -256,17 +234,27 @@ async function handleLogout() {
   width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   background: transparent;
-  border: 1px solid #7B8EA8;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
-  color: #7B8EA8;
+
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
+
 .btn-logout-icon:hover {
   background: rgba(255,255,255,0.08);
-  color: red;
-  border: 1px solid red;
+  border-color: red !important;
+}
+
+.btn-logout-icon svg {
+  color: #7B8EA8 !important;
+  stroke: #7B8EA8 !important;
+}
+
+.btn-logout-icon:hover svg {
+  color: red !important;
+  stroke: red !important;
 }
 
 /* ── 메인 ── */
@@ -287,7 +275,7 @@ async function handleLogout() {
   border-bottom: 1px solid #E2E8F0;
   display: flex; align-items: center;
   justify-content: space-between;
-  padding: 0 64px;
+  padding: 0 32px; /* content와 동일하게 맞춤 */
 }
 
 .topbar-left { display: flex; flex-direction: column; gap: 4px; }
@@ -303,6 +291,14 @@ async function handleLogout() {
   border: 1px solid #E2E8F0; border-radius: 8px;
   background: #fff; cursor: pointer; color: #6B7280;
   font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+}
+
+.bell-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: #E53E3E; color: #fff;
+  font-size: 9px; font-weight: 700;
+  width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
 }
 
 .bell-label { font-size: 13px; color: #6B7280; }
