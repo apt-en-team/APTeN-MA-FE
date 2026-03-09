@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
     // 회원가입 (POST /api/auth/register)
     async function register(form) {
         await api.post('/auth/register', form)
-    }
+    }   
 
     // 로그아웃 (POST /api/auth/logout)
     async function logout() {
@@ -39,7 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
     // 새로고침 시 로그인 상태 복원용
     async function fetchMe() {
         try {
-            const res = await api.get('/auth/me')
+            const res = await api.get('/users/me')
             user.value = res.data.resultData
             isLoggedIn.value = true
         } catch (e) {
@@ -55,5 +55,12 @@ export const useAuthStore = defineStore('auth', () => {
         isLoggedIn.value = false
     }
 
-    return { user, isLoggedIn, login, register, logout, deactivate, fetchMe }
+    // 내 정보 수정 (PUT /api/users/me)
+    async function updateMe(form) {
+        const res = await api.put('/users/me', form)
+        await fetchMe() // 수정 후 사용자 정보 갱신
+    }
+
+    return { user, isLoggedIn, login, register, logout, deactivate, fetchMe, updateMe }
+
 })

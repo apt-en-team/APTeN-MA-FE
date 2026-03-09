@@ -106,7 +106,7 @@ function goTo(path) {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #4F6EF7;
+  background: #4973E5;
   color: #fff;
   font-size: 14px;
   font-weight: bold;
@@ -175,7 +175,7 @@ function goTo(path) {
 }
 
 .resident-card {
-  background: linear-gradient(135deg, #4F6EF7 0%, #3B5BDB 100%);
+  background: linear-gradient(135deg, #4973E5 0%, #3B5BDB 100%);
   border: 1px solid rgba(255,255,255,0.12);
 }
 .admin-card {

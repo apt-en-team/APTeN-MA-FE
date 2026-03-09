@@ -13,8 +13,8 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config
 
-        // AT 만료(401) + 아직 재시도 안 했으면
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // AT 만료(401) + 아직 재시도 안 했으면 + 로그인 요청이 아닐 때만
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/auth/login')) {
             originalRequest._retry = true
 
             try {

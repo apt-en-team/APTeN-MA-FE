@@ -20,7 +20,7 @@ const notices = ref([])
 const reservations = ref([])
 
 onMounted(async () => {
-  const { data } = await axios.get('/api/dashboard')
+  const { data } = await axios.get('/dashboard')
   stats.value = data.stats
   notices.value = data.notices
   reservations.value = data.reservations

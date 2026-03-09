@@ -1,36 +1,26 @@
-import axios from 'axios'
+// src/api/auth.js
+import api from './axios'
 
-// Axios 기본 설정
-// withCredentials: true → 쿠키(AT/RT)를 자동으로 포함해서 요청
-const api = axios.create({
-    baseURL: '/api',
-    withCredentials: true
-})
+// 로그인
+export const login = (data) => api.post('/auth/login', data)
 
-// 401 에러(AT 만료) 시 자동으로 RT로 재발급 시도
-api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config
+// 회원가입
+export const register = (data) => api.post('/auth/register', data)
 
-        // AT 만료(401) + 아직 재시도 안 했으면
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true
+// 로그아웃
+export const logout = () => api.post('/auth/logout')
 
-            try {
-                // RT로 AT 재발급 요청
-                await axios.post('/api/auth/refresh', null, { withCredentials: true })
-                // 재발급 성공 → 원래 요청 다시 실행
-                return api(originalRequest)
-            } catch (refreshError) {
-                // RT도 만료 → 로그인 페이지로 이동
-                window.location.href = '/login'
-                return Promise.reject(refreshError)
-            }
-        }
+// 내 정보 조회
+export const getMe = () => api.get('/users/me')
 
-        return Promise.reject(error)
-    }
-)
+// 내 정보 수정
+export const updateMe = (data) => api.put('/users/me', data)
 
-export default api
+// 회원 탈퇴
+export const deactivate = () => api.patch('/users/deactivate')
+
+// 이메일 중복 확인
+export const checkEmail = (email) => api.get(`/auth/check-email?email=${email}`)
+
+// 토큰 재발급
+export const refresh = () => api.post('/auth/refresh')

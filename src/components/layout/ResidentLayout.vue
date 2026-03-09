@@ -1,3 +1,20 @@
+<script setup>
+import {computed} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useAuthStore} from '@/stores/modules/auth.js'
+
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+
+const currentTitle = computed(() => route.meta.title || '대시보드')
+
+async function handleLogout() {
+  await auth.logout()
+  router.push('/login')
+}
+</script>
+
 <template>
   <div class="layout">
     <aside class="sidebar">
@@ -33,7 +50,7 @@
         </router-link>
 
         <div class="nav-group">차량</div>
-        <router-link to="/resident/vehicles" class="nav-item">
+        <router-link to="/resident/my-vehicle" class="nav-item">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-3h10l2 3h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
             <circle cx="7.5" cy="17.5" r="2.5"/>
@@ -74,7 +91,7 @@
           시설 목록
         </router-link>
 
-        <router-link to="/resident/reservations" class="nav-item">
+        <router-link to="/resident/my-reservation" class="nav-item">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <rect x="3" y="4" width="18" height="18" rx="2"/>
             <line x1="16" y1="2" x2="16" y2="6"/>
@@ -85,7 +102,7 @@
         </router-link>
 
         <div class="nav-group">커뮤니티</div>
-        <router-link to="/resident/boards/notice" class="nav-item">
+        <router-link to="/resident/board/notice" class="nav-item">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
@@ -94,7 +111,7 @@
           <span v-if="noticeBadge > 0" class="badge">{{ noticeBadge }}</span>
         </router-link>
 
-        <router-link to="/resident/boards" class="nav-item">
+        <router-link to="/resident/board" class="nav-item">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
@@ -125,21 +142,15 @@
     </aside>
 
     <div class="main">
+      <header class="topbar">
+        <div class="topbar-title">{{ currentTitle }}</div>
+      </header>
       <main class="content">
-        <router-view />
+        <router-view/>
       </main>
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref } from 'vue'
-import { useAuthStore } from '@/stores/modules/auth.js'
-
-const auth = useAuthStore()
-const visitorBadge = ref(1)
-const noticeBadge = ref(7)
-</script>
 
 <style scoped>
 /* 전체 레이아웃 */
@@ -250,6 +261,21 @@ const noticeBadge = ref(7)
   background: #EEF3FB;
   overflow-y: auto;
 }
+
+.topbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+}
+
+.topbar-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1A1A2E;
+}
+
 .content {
   width: 100%;
   max-width: 1400px;
