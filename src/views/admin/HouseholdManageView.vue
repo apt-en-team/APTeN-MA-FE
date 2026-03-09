@@ -166,28 +166,35 @@ const submitEdit = async () => {
   if (!editModal.status) { editModal.error = '입주 상태를 선택해주세요'; return }
   if (editModal.status === editModal.item?.status) { editModal.error = '현재와 동일한 상태입니다'; return }
 
-  if (editModal.status === '퇴거' && editModal.selectedUserIds.length === 0) {
-    editModal.error = '퇴거할 입주민을 1명 이상 선택해주세요'
-    return
-  }
+  // if (editModal.status === '퇴거' && editModal.selectedUserIds.length === 0) {
+  //   editModal.error = '퇴거할 입주민을 1명 이상 선택해주세요'
+  //   return
+  // }
 
   editModal.loading = true; editModal.error = ''
   try {
-    if (editModal.status === '퇴거') {
-      // 선택한 인원 수만큼 이력 등록 (각각 따로 호출)
-      for (const userId of editModal.selectedUserIds) {
-        console.log('퇴거 처리 userId:', userId) 
-        await householdAPI.createHistory(editModal.item.householdId, {
-          status: '퇴거',
-          userId: userId
-        })
-      }
-    } else {
+if (editModal.status === '퇴거') {
+  if (editModal.selectedUserIds.length > 0) {
+    // 입주민 있으면 선택한 사람 각각 퇴거 처리
+    for (const userId of editModal.selectedUserIds) {
       await householdAPI.createHistory(editModal.item.householdId, {
-        status: editModal.status,
-        userId: null
+        status: '퇴거',
+        userId: userId
       })
     }
+  } else {
+    // 입주민 없으면 userId null 로 이력만 등록
+    await householdAPI.createHistory(editModal.item.householdId, {
+      status: '퇴거',
+      userId: null
+    })
+  }
+} else {
+  await householdAPI.createHistory(editModal.item.householdId, {
+    status: editModal.status,
+    userId: null
+  })
+}
     closeEditModal(); fetchStats(); goToList()
   } catch (e) {
     editModal.error = e.response?.data?.resultMessage || '수정에 실패했습니다'

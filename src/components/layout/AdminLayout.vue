@@ -21,7 +21,7 @@ const todayStr = computed(() => {
 
 async function handleLogout() {
   await auth.logout()
-  router.push('/login')
+  router.push('/')
 }
 </script>
 
@@ -267,7 +267,7 @@ async function handleLogout() {
   border-bottom: 1px solid #E2E8F0;
   display: flex; align-items: center;
   justify-content: space-between;
-  padding: 0 32px; /* content와 동일하게 맞춤 */
+  padding: 0 64px; /* content와 동일하게 맞춤 */
 }
 
 .topbar-left { display: flex; flex-direction: column; gap: 4px; }
