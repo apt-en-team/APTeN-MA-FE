@@ -11,6 +11,8 @@ import LoginView from '@/views/auth/ResidentLoginView.vue'
 import AdminLoginView from '@/views/auth/AdminLoginView.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
 import OAuth2CallbackView from '@/views/auth/OAuth2CallbackView.vue'
+import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
+import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
 
 // 입주민 페이지
 import ResidentDashboard from '@/views/resident/DashboardView.vue'
@@ -40,6 +42,8 @@ const routes = [
     { path: '/admin/login', name: 'AdminLogin', component: AdminLoginView },
     { path: '/register',    name: 'Register',   component: RegisterView },
     { path: '/oauth2/callback', name: 'OAuth2Callback', component: OAuth2CallbackView },
+    { path: '/forgot-password', name: 'ForgotPassword', component: ForgotPasswordView },
+    { path: '/reset-password',  name: 'ResetPassword',  component: ResetPasswordView },
 
     // 입주민 페이지 - ResidentLayout 안의 <router-view>에 렌더링
     {

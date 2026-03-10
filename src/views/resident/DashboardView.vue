@@ -216,7 +216,7 @@ const banners = [
       <!-- 내 예약 현황 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📅   `내 예약 현황</span>
+          <span class="card-title">📅내 예약 현황</span>
           <span class="card-more" @click="router.push('/resident/reservations')">전체보기 →</span>
         </div>
         <div class="card-body">
