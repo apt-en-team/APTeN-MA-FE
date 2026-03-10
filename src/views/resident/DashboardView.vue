@@ -114,7 +114,7 @@ const banners = [
     <!-- 미니 카드 -->
     <div class="stat-grid">
       <!-- 내 차량 -->
-      <div class="stat-card" @click="router.push('/resident/vehicles')">
+      <div class="stat-card" @click="router.push('/resident/my-vehicle')">
         <div class="stat-label">내 차량</div>
         <div class="stat-value" :class="{ empty: stats.vehicles === 0 }">
           {{ stats.vehicles }} <span class="stat-unit">대</span>
@@ -131,7 +131,7 @@ const banners = [
       </div>
 
       <!-- 예약 현황 -->
-      <div class="stat-card" @click="router.push('/resident/reservations')">
+      <div class="stat-card" @click="router.push('/resident/facility')">
         <div class="stat-label">예약 현황</div>
         <div class="stat-value" :class="{ empty: stats.reservations === 0 }">
           {{ stats.reservations }} <span class="stat-unit">건</span>
@@ -148,7 +148,7 @@ const banners = [
       </div>
 
       <!-- 방문차량 -->
-      <div class="stat-card" @click="router.push('/resident/visitor-vehicles')">
+      <div class="stat-card" @click="router.push('/resident/visitor-vehicles/list')">
         <div class="stat-label">방문 차량</div>
         <div class="stat-value" :class="{ empty: stats.visitorVehicles === 0 }">
           {{ stats.visitorVehicles }} <span class="stat-unit">대</span>
@@ -184,7 +184,7 @@ const banners = [
       <div class="card">
         <div class="card-header">
           <span class="card-title">📢 최근 공지사항</span>
-          <span class="card-more" @click="router.push('/resident/boards/notice')">전체보기 →</span>
+          <span class="card-more" @click="router.push('/resident/board/notice')">전체보기 →</span>
         </div>
         <div class="card-body">
           <div v-if="notices.length === 0" class="empty-state">
@@ -216,8 +216,8 @@ const banners = [
       <!-- 내 예약 현황 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📅   `내 예약 현황</span>
-          <span class="card-more" @click="router.push('/resident/reservations')">전체보기 →</span>
+          <span class="card-title">📅 내 예약 현황</span>
+          <span class="card-more" @click="router.push('/resident/my-reservation')">전체보기 →</span>
         </div>
         <div class="card-body">
           <div v-if="reservations.length === 0" class="empty-state">

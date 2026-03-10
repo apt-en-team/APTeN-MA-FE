@@ -6,6 +6,10 @@
     box-sizing: border-box;
 }
 
+svg, svg * {
+    color: inherit;
+}
+
 body {
     margin: 0;
 }
