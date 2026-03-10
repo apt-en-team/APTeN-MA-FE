@@ -210,8 +210,8 @@ function socialLogin(provider) {
   color: #999;
 }
 
-.btn-eye i :hover {
-  color: #999;  
+.btn-eye i:hover {
+  color: #333;
 }
 
 .error {
