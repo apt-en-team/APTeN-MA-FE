@@ -1,3 +1,4 @@
 <template>
-  <div>AdminBoardListView</div>
+  <div>AdminBoardLView</div>
 </template>
+
