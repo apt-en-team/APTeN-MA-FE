@@ -166,7 +166,7 @@ async function handleDeactivate() {
 
 <style scoped>
 .mypage-edit {
-  padding: 32px;
+  padding: 0px;
   min-height: 100vh;
 }
 

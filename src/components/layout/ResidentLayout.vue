@@ -1,11 +1,13 @@
 <script setup>
-import {computed} from 'vue'
+import {computed, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/modules/auth.js'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const visitorBadge = ref(0)
+const noticeBadge = ref(0)
 
 const currentTitle = computed(() => route.meta.title || '대시보드')
 

@@ -160,7 +160,7 @@ async function handleDeactivate() {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 32px;
+  padding: 0px;
 }
 
 .content-wrapper {
