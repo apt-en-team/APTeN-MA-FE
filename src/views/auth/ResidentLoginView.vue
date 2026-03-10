@@ -83,6 +83,7 @@ function socialLogin(provider) {
         <button type="submit" class="btn-login" :disabled="loading">
           {{ loading ? '로그인 중...' : '로그인' }}
         </button>
+
       </form>
 
       <!-- 구분선 -->
@@ -98,6 +99,8 @@ function socialLogin(provider) {
       <!-- 하단 링크 -->
       <p class="bottom-links">
         <router-link to="/register">회원가입</router-link>
+        <span class="sep">|</span>
+        <router-link to="/forgot-password">비밀번호 찾기</router-link>
         <span class="sep">|</span>
         <router-link to="/">메인으로</router-link>
       </p>
@@ -206,7 +209,11 @@ function socialLogin(provider) {
   padding: 0;
 }
 
-.btn-eye:hover {
+.btn-eye i {
+  color: #999;
+}
+
+.btn-eye i:hover {
   color: #333;
 }
 
