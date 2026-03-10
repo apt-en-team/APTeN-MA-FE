@@ -53,6 +53,12 @@ async function handleLogout() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           게시판 관리
         </router-link>
+        <router-link to="/admin/boards/write" class="nav-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          공지사항 작성
+        </router-link>
 
         <div class="nav-group">VEHICLE / PARKING</div>
         <router-link to="/admin/vehicles" class="nav-item">
@@ -118,13 +124,12 @@ async function handleLogout() {
             <span class="bell-label">알림</span>
           </button>
 
-          <!-- 공지 작성 (btn-bell 밖 독립 버튼) -->
-          <button class="btn-notice">+ 공지 작성</button>
-
           <!-- 페이지별 액션 버튼 -->
-          <button v-if="route.name === 'HouseholdManage'" class="btn-action">+ 세대 추가</button>
+          <button v-if="route.name === 'VisitorApproval'" class="btn-action">+ 방문차량 등록</button>
           <button v-if="route.name === 'FacilityManage'"  class="btn-action">+ 시설 추가</button>
           <button v-if="route.name === 'AdminBoardList'"  class="btn-action">+ 공지 작성</button>
+          <button v-if="route.name === 'VisitorApproval'"  class="btn-action">+ 방문차량 등록</button>
+          <button v-if="route.name === 'ParkingStats'"  class="btn-action">+ 차량 등록</button>  
         </div>
       </header>
 
@@ -295,18 +300,7 @@ async function handleLogout() {
 
 .bell-label { font-size: 13px; color: #6B7280; }
 
-/* 공지 작성 */
-.btn-notice {
-  height: 36px; padding: 0 16px;
-  background: #2B3A55; color: #fff;
-  border: none; border-radius: 7px;
-  font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
-  transition: background 0.15s;
-}
-.btn-notice:hover { background: #1E2A3E; }
-
-/* 페이지별 액션 */
+/* 버튼 */
 .btn-action {
   height: 36px; padding: 0 18px;
   background: #2B3A55; color: #fff;

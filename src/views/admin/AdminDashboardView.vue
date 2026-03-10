@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHouseholdStore } from '@/stores/modules/household'
 
 // API 모듈 임포트 (named export 방식)
 import * as visitorVehicleApi from '@/api/visitorVehicle'
@@ -13,6 +14,32 @@ const router = useRouter()
 // 로딩 / 에러 상태
 const isLoading = ref(false)
 const hasError  = ref(false)
+
+//피니아 스토어 이용. 각 파트별 데이타는 Promise.all로 호출
+const householdStore = useHouseholdStore()
+const fetchDashboardData = async () => {
+  isLoading.value = true
+  hasError.value  = false
+  isLoading.value = true
+  try {
+    await Promise.all([
+      householdStore.fetchStats(),   // 세대 통계
+      // parkingStore.fetchStats(),  // 나중에 주차 추가
+      // reservationStore.fetchStats(), // 나중에 예약 추가
+    ])
+    // 기존 임시 데이터도 유지
+    dashboardState.visitors   = []
+    dashboardState.facilities = []
+    dashboardState.records    = []
+    dashboardState.posts      = []
+
+  } catch (e) {
+    console.error('대시보드 데이터 오류:', e)
+    hasError.value = true
+  } finally {
+    isLoading.value = false
+  }
+}
 
 // 요약 카드 (null = 데이터 없음 → "-" 표시)
 const summary = reactive({
@@ -44,52 +71,6 @@ const dashboardState = reactive({
   records:    [],
   posts:      [],
 })
-
-
-/**
- * 모든 데이터를 한 번에 가져오는 함수
- * API 연결 후: TODO 블록 주석 해제, 임시 블록 삭제
- */
-const fetchDashboardData = async () => {
-  isLoading.value = true
-  hasError.value  = false
-
-  try {
-    // ── TODO: API 연결 후 아래 주석 해제 ──────────────────
-    // const [visitorsRes, facilitiesRes, recordsRes, postsRes, summaryRes] = await Promise.all([
-    //   visitorVehicleApi.getVisitorVehicles(),
-    //   facilityApi.getFacilitiesToday(),
-    //   parkingApi.getRecentRecords(),
-    //   boardApi.getRecentPosts(),
-    //   parkingApi.getParkingSummary(),
-    // ])
-    // dashboardState.visitors   = visitorsRes.data
-    // dashboardState.facilities = facilitiesRes.data
-    // dashboardState.records    = recordsRes.data
-    // dashboardState.posts      = postsRes.data
-    // const s = summaryRes.data
-    // summary.pendingCount   = s.pendingCount   ?? null
-    // summary.parkingUsed    = s.parkingUsed    ?? null
-    // summary.parkingTotal   = s.parkingTotal   ?? null
-    // summary.todayReserve   = s.todayReserve   ?? null
-    // summary.reserveDiff    = s.reserveDiff    ?? null
-    // summary.householdCount = s.householdCount ?? null
-    // summary.memberCount    = s.memberCount    ?? null
-
-    // 임시: API 미연결 → 빈 데이터로 화면 표시
-    dashboardState.visitors   = []
-    dashboardState.facilities = []
-    dashboardState.records    = []
-    dashboardState.posts      = []
-    // summary 는 null 유지 → 요약 카드 "-" 표시
-
-  } catch (error) {
-    console.error('대시보드 데이터를 불러오는 중 오류 발생:', error)
-    hasError.value = true
-  } finally {
-    isLoading.value = false
-  }
-}
 
 onMounted(fetchDashboardData)
 </script>
@@ -201,13 +182,13 @@ onMounted(fetchDashboardData)
           <div class="card-info">
             <span class="card-label">전체 세대</span>
             <div class="card-value">
-              <template v-if="summary.householdCount !== null">
-                {{ summary.householdCount }} <span class="card-unit">세대</span>
+              <template v-if="householdStore.total !== null">
+                {{ householdStore.total }} <span class="card-unit">세대</span>
               </template>
               <span v-else class="card-empty">-</span>
             </div>
             <span class="card-sub">
-              <template v-if="summary.memberCount !== null">등록 회원 {{ summary.memberCount }}명</template>
+              <template v-if="householdStore.total !== null">입주 {{ householdStore.occupied }}세대 · 공실 {{ householdStore.empty }}세대</template>
               <template v-else>데이터 없음</template>
             </span>
           </div>
@@ -474,20 +455,21 @@ onMounted(fetchDashboardData)
 }
 
 .summary-card {
+  height: 139px;
   background: #fff;
-  border-radius: 15px;
-  padding: 15px;
+  border-radius: 10px;        
+  padding: 22px 24px;         
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  border: 1px solid #e9ecf1;
+  border: 1px solid #E2E8F0; 
 }
 
 .card-info {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 90px;
+  height: 95px;               
 }
 
 .card-label { font-size: 12px; color: #687282; font-weight: 500; }
@@ -549,6 +531,7 @@ onMounted(fetchDashboardData)
   border-radius: 15px;
   border: 1px solid #e9ecf1;
   padding: 20px;
+  height: 340px;
   display: flex;
   flex-direction: column;
   gap: 5px;

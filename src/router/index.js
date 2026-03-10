@@ -33,6 +33,7 @@ import AdminBoardListView from '@/views/admin/AdminBoardListView.vue'
 import FacilityManageView from '@/views/admin/FacilityManageView.vue'
 import VisitorApprovalView from '@/views/admin/VisitorApprovalView.vue'
 import ParkingStatsView from '@/views/admin/ParkingStatsView.vue'
+import AdminBoardWrite from '@/views/admin/AdminBoardWrite.vue'
 import VisitorVehiclesListView from '@/views/resident/VisitorVehiclesListView.vue'
 import NoticeListView from '@/views/resident/NoticeListView.vue'
 import MyPostsView from '@/views/resident/MyPostsView.vue'
@@ -84,6 +85,7 @@ const routes = [
             { path: 'facility',   name: 'FacilityManage',  component: FacilityManageView,   meta: { title: '시설 관리' } },
             { path: 'visitor',    name: 'VisitorApproval', component: VisitorApprovalView,  meta: { title: '방문차량 승인' } },
             { path: 'parking',    name: 'ParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
+            { path: 'board/write', name: 'AdminBoardWrite', component: AdminBoardWrite,      meta: { title: '공지사항 작성' } },
         ]
     }
 
