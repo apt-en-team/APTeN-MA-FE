@@ -121,7 +121,7 @@ const DUMMY_FREE = [
     title: '샐러드 맛집 발견했어요',
     content: '아파트 정문에서 5분 거리인데 진짜 맛있어요. 가격도 착하고 양도 많아요!',
     thumbnail: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&q=80',
-    authorName: '박나래', authorUnit: '102동 703호',
+    authorName: '박지현', authorUnit: '102동 703호',
     commentCount: 26, likeCount: 94, createdAt: '2026.06.20', type: 'free',
   },
   {
@@ -461,7 +461,7 @@ function getAvatarStyle(name) {
   box-shadow: 0 6px 24px rgba(59,130,246,0.10);
   border-color: #dbeafe;
 }
-.card-thumb { width: 130px; min-height: 110px; flex-shrink: 0; overflow: hidden; }
+.card-thumb { width: 200px; height: 200px; flex-shrink: 0; overflow: hidden; }
 .card-thumb img {
   width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s;
 }
