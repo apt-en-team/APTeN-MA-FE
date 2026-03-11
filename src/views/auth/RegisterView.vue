@@ -76,13 +76,36 @@ async function handleRegister() {
 
   loading.value = true
   try {
-    await auth.register(form)
+    const payload = {
+      ...form,
+      dong: form.dong + '동',
+      ho: form.ho + '호'
+    }
+    await auth.register(payload)
     successMsg.value = '회원가입 성공! 로그인 페이지로 이동합니다'
     setTimeout(() => router.push('/login'), 1500)
   } catch (e) {
     errorMsg.value = e.response?.data?.resultMessage || '회원가입에 실패했습니다'
   }
   loading.value = false
+}
+
+// 휴대폰 자동 하이픈 포맷 (숫자만 입력 → 010-1234-5678)
+function formatPhone(e) {
+  const nums = e.target.value.replace(/\D/g, '').slice(0, 11)
+  if (nums.length < 4) form.phone = nums
+  else if (nums.length < 8) form.phone = `${nums.slice(0,3)}-${nums.slice(3)}`
+  else form.phone = `${nums.slice(0,3)}-${nums.slice(3,7)}-${nums.slice(7)}`
+}
+
+// 동 숫자만 입력받기
+function formatDong(e) {
+  form.dong = e.target.value.replace(/\D/g, '')
+}
+
+// 호 숫자만 입력받기
+function formatHo(e) {
+  form.ho = e.target.value.replace(/\D/g, '')
 }
 </script>
 
@@ -154,18 +177,24 @@ async function handleRegister() {
         <!-- 휴대폰 -->
         <div class="input-group">
           <label>휴대폰</label>
-          <input v-model="form.phone" type="text" placeholder="010-0000-0000"/>
+          <input v-model="form.phone" type="text" placeholder="010-0000-0000" @input="formatPhone"/>
         </div>
 
         <!-- 동/호 -->
         <div class="input-row">
           <div class="input-group">
             <label>동</label>
-            <input v-model="form.dong" type="text" placeholder="101동" required/>
+            <div class="input-with-suffix">
+              <input v-model="form.dong" type="text" placeholder="101" required @input="formatDong"/>
+              <span class="suffix">동</span>
+            </div>
           </div>
           <div class="input-group">
             <label>호</label>
-            <input v-model="form.ho" type="text" placeholder="101호" required/>
+            <div class="input-with-suffix">
+              <input v-model="form.ho" type="text" placeholder="101" required @input="formatHo"/>
+              <span class="suffix">호</span>
+            </div>
           </div>
         </div>
 
@@ -266,6 +295,26 @@ async function handleRegister() {
 
 .input-row .input-group {
   flex: 1;
+}
+
+.input-with-suffix {
+  position: relative;
+}
+
+.input-with-suffix input {
+  width: 100%;
+  padding-right: 30px;
+  box-sizing: border-box;
+}
+
+.suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #333;
+  pointer-events: none;
 }
 
 /* 이메일 중복확인 */

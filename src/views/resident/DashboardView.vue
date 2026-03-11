@@ -51,6 +51,7 @@ const banners = [
     title: '편안한 일상, 스마트한 관리',
     desc: '주차, 예약, 공지사항을 한 곳에서 확인하세요.',
     badge: null,
+    badgeClass: null,
     bg: 'https://images.unsplash.com/photo-1533280385001-c32ffcbd52a7?q=80&w=2070&auto=format&fit=crop'
   },
   {
@@ -58,6 +59,7 @@ const banners = [
     title: '아파트 커뮤니티 신규 강좌 모집',
     desc: '요가 · 필라테스 · 갤러리댄스 · 영어회화 3월 개강',
     badge: '선착순 20명',
+    badgeClass: 'badge-green',
     bg: 'https://images.unsplash.com/photo-1651077837628-52b3247550ae?q=80&w=1074&auto=format&fit=crop'
   },
   {
@@ -65,6 +67,7 @@ const banners = [
     title: '이마트 그린점 입주민 특별 할인',
     desc: '그린아파트 입주민 앱 제시 시 전 품목 5% 추가 할인',
     badge: '~3.28 까지',
+    badgeClass: 'badge-red',
     bg: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1074&auto=format&fit=crop'
   },
   {
@@ -72,6 +75,7 @@ const banners = [
     title: '2026 주거 복지 보조금 신청 안내',
     desc: '에너지 월납 보조금 · 주거급여 · 청년 월세 지원 | 신청기간 ~06.31',
     badge: '신청하기 →',
+    badgeClass: 'badge-yellow',
     bg: 'https://images.unsplash.com/photo-1525953776754-6c4b7ee655ab?q=80&w=1021&auto=format&fit=crop'
   },
 ]
@@ -105,7 +109,7 @@ const banners = [
             <div class="banner-badge">{{ banner.tag }}</div>
             <h2 class="banner-title">{{ banner.title }}</h2>
             <p class="banner-desc">{{ banner.desc }}</p>
-            <span v-if="banner.badge" class="banner-chip">{{ banner.badge }}</span>
+            <span v-if="banner.badge" :class="['banner-chip', banner.badgeClass]">{{ banner.badge }}</span>
           </div>
         </div>
       </SwiperSlide>
@@ -114,7 +118,7 @@ const banners = [
     <!-- 미니 카드 -->
     <div class="stat-grid">
       <!-- 내 차량 -->
-      <div class="stat-card" @click="router.push('/resident/vehicles')">
+      <div class="stat-card" @click="router.push('/resident/my-vehicle')">
         <div class="stat-label">내 차량</div>
         <div class="stat-value" :class="{ empty: stats.vehicles === 0 }">
           {{ stats.vehicles }} <span class="stat-unit">대</span>
@@ -131,7 +135,7 @@ const banners = [
       </div>
 
       <!-- 예약 현황 -->
-      <div class="stat-card" @click="router.push('/resident/reservations')">
+      <div class="stat-card" @click="router.push('/resident/facility')">
         <div class="stat-label">예약 현황</div>
         <div class="stat-value" :class="{ empty: stats.reservations === 0 }">
           {{ stats.reservations }} <span class="stat-unit">건</span>
@@ -148,7 +152,7 @@ const banners = [
       </div>
 
       <!-- 방문차량 -->
-      <div class="stat-card" @click="router.push('/resident/visitor-vehicles')">
+      <div class="stat-card" @click="router.push('/resident/visitor-vehicles/list')">
         <div class="stat-label">방문 차량</div>
         <div class="stat-value" :class="{ empty: stats.visitorVehicles === 0 }">
           {{ stats.visitorVehicles }} <span class="stat-unit">대</span>
@@ -184,7 +188,7 @@ const banners = [
       <div class="card">
         <div class="card-header">
           <span class="card-title">📢 최근 공지사항</span>
-          <span class="card-more" @click="router.push('/resident/boards/notice')">전체보기 →</span>
+          <span class="card-more" @click="router.push('/resident/board/notice')">전체보기 →</span>
         </div>
         <div class="card-body">
           <div v-if="notices.length === 0" class="empty-state">
@@ -216,8 +220,9 @@ const banners = [
       <!-- 내 예약 현황 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📅   `내 예약 현황</span>
+          <span class="card-title">📅내 예약 현황</span>
           <span class="card-more" @click="router.push('/resident/reservations')">전체보기 →</span>
+
         </div>
         <div class="card-body">
           <div v-if="reservations.length === 0" class="empty-state">
@@ -302,7 +307,6 @@ const banners = [
 }
 .banner-chip {
   margin-top: 10px;
-  background: #FFD700;
   color: #111;
   font-size: 11px;
   font-weight: 700;
@@ -310,6 +314,10 @@ const banners = [
   border-radius: 20px;
   width: fit-content;
 }
+/* .badge-blue   { background: #4973E5; color: #fff; } */
+.badge-red    { background: #FF6B6B; color: #fff; }
+.badge-green  { background: #52B788; color: #fff; }
+.badge-yellow   { background: #FFD700; color: #333; }
 .banner-overlay {
   position: absolute;
   inset: 0;

@@ -11,6 +11,8 @@ import LoginView from '@/views/auth/ResidentLoginView.vue'
 import AdminLoginView from '@/views/auth/AdminLoginView.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
 import OAuth2CallbackView from '@/views/auth/OAuth2CallbackView.vue'
+import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
+import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
 
 // 입주민 페이지
 import ResidentDashboard from '@/views/resident/DashboardView.vue'
@@ -31,6 +33,11 @@ import AdminBoardListView from '@/views/admin/AdminBoardListView.vue'
 import FacilityManageView from '@/views/admin/FacilityManageView.vue'
 import VisitorApprovalView from '@/views/admin/VisitorApprovalView.vue'
 import ParkingStatsView from '@/views/admin/ParkingStatsView.vue'
+import AdminBoardWrite from '@/views/admin/AdminBoardWrite.vue'
+import VisitorVehiclesListView from '@/views/resident/VisitorVehiclesListView.vue'
+import NoticeListView from '@/views/resident/NoticeListView.vue'
+import MyPostsView from '@/views/resident/MyPostsView.vue'
+import VisitorVehiclesEditView from '@/views/resident/VisitorVehiclesEditView.vue'
 
 const routes = [
 
@@ -40,6 +47,8 @@ const routes = [
     { path: '/admin/login', name: 'AdminLogin', component: AdminLoginView },
     { path: '/register',    name: 'Register',   component: RegisterView },
     { path: '/oauth2/callback', name: 'OAuth2Callback', component: OAuth2CallbackView },
+    { path: '/forgot-password', name: 'ForgotPassword', component: ForgotPasswordView },
+    { path: '/reset-password',  name: 'ResetPassword',  component: ResetPasswordView },
 
     // 입주민 페이지 - ResidentLayout 안의 <router-view>에 렌더링
     {
@@ -48,12 +57,16 @@ const routes = [
         meta: { requiresAuth: true, role: 'RESIDENT' },
         children: [
             { path: 'dashboard', name: 'ResidentDashboard', component: ResidentDashboard, meta: { title: '대시보드' } },
-            { path: 'board', name: 'BoardList', component: BoardListView, meta: { title: '게시판' } },
-            { path: 'board/:id', name: 'BoardDetail', component: BoardDetailView, meta: { title: '게시판' } },
-            { path: 'board/form', name: 'BoardForm', component: BoardFormView, meta: { title: '게시판 작성' } },
+            { path: 'board/notice', name: 'NoticeList', component: NoticeListView, meta: { title: '공지사항' } },
+            { path: 'board', name: 'BoardList', component: BoardListView, meta: { title: '자유게시판' } },
+            { path: 'board/form', name: 'BoardForm', component: BoardFormView, meta: { title: '게시글 작성' } },
+            { path: 'board/:id', name: 'BoardDetail', component: BoardDetailView, meta: { title: '게시글 상세보기' } },
+            { path: 'my-posts', name: 'MyPosts', component: MyPostsView, meta: { title: '내가 쓴 글' } },
             { path: 'facility', name: 'FacilityList', component: FacilityListView, meta: { title: '시설' } },
             { path: 'reservation', name: 'ReservationCalendar', component: ReservationCalendarView, meta: { title: '시설 예약' } },
             { path: 'my-reservation', name: 'MyReservation', component: MyReservationView, meta: { title: '내 예약' } },
+            { path: 'visitor-vehicles', name: 'VisitorVehicles', component: VisitorVehiclesEditView, meta: { title: '방문차량 등록' } },
+            { path: 'visitor-vehicles/list', name: 'VisitorVehiclesList', component: VisitorVehiclesListView, meta: { title: '방문차량 목록' } },
             { path: 'my-vehicle', name: 'MyVehicle', component: MyVehicleView, meta: { title: '내 차량' } },
             { path: 'mypage', name: 'MyPage', component: MyPageView, meta: { title: '마이페이지' } },
             { path: 'mypage/edit', name: 'MyPageEdit', component: MyPageEditView, meta: { title: '마이페이지 수정' } },
@@ -72,6 +85,7 @@ const routes = [
             { path: 'facility',   name: 'FacilityManage',  component: FacilityManageView,   meta: { title: '시설 관리' } },
             { path: 'visitor',    name: 'VisitorApproval', component: VisitorApprovalView,  meta: { title: '방문차량 승인' } },
             { path: 'parking',    name: 'ParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
+            { path: 'board/write', name: 'AdminBoardWrite', component: AdminBoardWrite,      meta: { title: '공지사항 작성' } },
         ]
     }
 

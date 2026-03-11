@@ -2,20 +2,24 @@
 import { reactive, computed, onMounted } from 'vue'
 import householdAPI from '@/api/household.js'
 import BaseModal from '@/components/common/BeseModel.vue'
+import { useHouseholdStore } from '@/stores/modules/household'
+
+const householdStore = useHouseholdStore()
+const fetchStats = () => householdStore.fetchStats()
 
 const state = reactive({
   // 세대 목록
   list: [],
   dongOptions: [],   // 백엔드에서 전체 동 목록 받아옴
 
-  // 통계 카드
-  total:    0,
-  occupied: 0,
-  empty:    0,
-  needCare: 0,
-  monthNew: 0,
-  moveIn:   0,
-  moveOut:  0,
+  // // 통계 카드
+  // total:    0,
+  // occupied: 0,
+  // empty:    0,
+  // needCare: 0,
+  // monthNew: 0,
+  // moveIn:   0,
+  // moveOut:  0,
 
   // 필터
   dong:       '',
@@ -26,6 +30,7 @@ const state = reactive({
   size:        10,
   currentPage: 1,
   maxPage:     0,
+  totalFiltered: 0
 })
 
 // 세대 상세 모달
@@ -57,8 +62,8 @@ const confirmModal = reactive({
 // ─────────────────────────────────────────────
 
 const occupiedRate = computed(() => {
-  if (!state.total) return 0
-  return ((state.occupied / state.total) * 100).toFixed(1)
+  if (!householdStore.total) return 0
+  return ((householdStore.occupied / householdStore.total) * 100).toFixed(1)
 })
 
 const allChecked = computed({
@@ -112,7 +117,7 @@ const isNeedCare = (item) => {
   if (item.status !== '퇴거' && item.status !== '공실') return false
   const oneMonthAgo = new Date()
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
-  return new Date(item.createdAt) <= oneMonthAgo
+  return new Date(item.lastChangedAt) <= oneMonthAgo
 }
 
 
@@ -120,19 +125,19 @@ const isNeedCare = (item) => {
 //  API 통신 함수
 // ─────────────────────────────────────────────
 
-const fetchStats = async () => {
-  try {
-    const result = await householdAPI.getStats()
-    const d = result.data.resultData
-    state.total    = d.total    ?? 0
-    state.occupied = d.occupied ?? 0
-    state.empty    = d.empty    ?? 0
-    state.needCare = d.needCare ?? 0
-    state.moveIn   = d.moveIn   ?? 0
-    state.moveOut  = d.moveOut  ?? 0
-    state.monthNew = state.moveIn + state.moveOut
-  } catch (e) { console.error('통계 조회 실패', e) }
-}
+// const fetchStats = async () => {
+//   try {
+//     const result = await householdAPI.getStats()
+//     const d = result.data.resultData
+//     state.total    = d.total    ?? 0
+//     state.occupied = d.occupied ?? 0
+//     state.empty    = d.empty    ?? 0
+//     state.needCare = d.needCare ?? 0
+//     state.moveIn   = d.moveIn   ?? 0
+//     state.moveOut  = d.moveOut  ?? 0
+//     state.monthNew = state.moveIn + state.moveOut
+//   } catch (e) { console.error('통계 조회 실패', e) }
+// }
 
 const fetchDongs = async () => {
   try {
@@ -144,7 +149,9 @@ const fetchDongs = async () => {
 const getMaxPage = async () => {
   try {
     const result = await householdAPI.getMaxPage(state.size, state.dong, state.ho, state.status)
-    state.maxPage = result.data.resultData
+    const d = result.data.resultData
+    state.maxPage       = d.maxPage
+    state.totalFiltered = d.totalCount  // ← 추가
   } catch (e) { console.error('maxPage 조회 실패', e) }
 }
 
@@ -283,23 +290,23 @@ const closeConfirmModal = () => { confirmModal.show = false }
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">전체 세대</div>
-        <div class="stat-value">{{ state.total }}<span class="stat-unit"> 세대</span></div>
+        <div class="stat-value">{{ householdStore.total }}<span class="stat-unit"> 세대</span></div>
         <div class="stat-desc">등록 세대 기준</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">입주 세대</div>
-        <div class="stat-value">{{ state.occupied }}<span class="stat-unit"> 세대</span></div>
+        <div class="stat-value">{{ householdStore.occupied }}<span class="stat-unit"> 세대</span></div>
         <div class="stat-desc success">전체 대비 {{ occupiedRate }}%</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">공실 세대</div>
-        <div class="stat-value">{{ state.empty }}<span class="stat-unit"> 세대</span></div>
-        <div class="stat-desc warning">관리 필요 {{ state.needCare }}세대</div>
+        <div class="stat-value">{{ householdStore.empty }}<span class="stat-unit"> 세대</span></div>
+        <div class="stat-desc warning">관리 필요 {{ householdStore.needCare }}세대</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">이번 달 변동</div>
-        <div class="stat-value">{{ state.monthNew }}<span class="stat-unit"> 건</span></div>
-        <div class="stat-desc">전입 {{ state.moveIn }} · 전출 {{ state.moveOut }}</div>
+        <div class="stat-value">{{ householdStore.monthNew }}<span class="stat-unit"> 건</span></div>
+        <div class="stat-desc">전입 {{ householdStore.moveIn }} · 전출 {{ householdStore.moveOut }}</div>
       </div>
     </div>
 
@@ -349,13 +356,13 @@ const closeConfirmModal = () => { confirmModal.show = false }
             <td class="col-id">#{{ item.householdId }}</td>
             <td>{{ item.dong }}</td>
             <td>{{ item.ho }}</td>
-            <td>{{ item.createdAt ?? '-' }}</td>
+            <td>{{ item.lastChangedAt ?? '-' }}</td>
             <td><span :class="['status-badge', statusClass(item.status)]">{{ item.status ?? '-' }}</span></td>
-            <td>{{ item.carCount != null ? item.carCount + '대' : '-' }}</td>
+            <td>{{ item.carCount > 0 ? item.carCount + '대' : '-' }}</td>
             <td>
               <button v-if="item.pendingCount > 0" class="btn-register"
                 @click.stop="openConfirmModal($event, item)">
-                승인요청 ({{ item.pendingCount }})
+                승인요청
               </button>
               <button v-else-if="isNeedCare(item)" class="btn-warning">
                 장기공실
@@ -368,7 +375,9 @@ const closeConfirmModal = () => { confirmModal.show = false }
 
       <!-- 페이지네이션 -->
       <div class="pagination-wrap">
-        <div class="pagination-info">총 {{ state.total }}세대 · 페이지당 {{ state.size }}개</div>
+        <div class="pagination-info">
+          총 {{ householdStore.total }}세대 중 {{ state.totalFiltered }}세대 조회
+        </div>
         <div class="pagination">
           <button v-show="state.currentPage !== 1" class="page-btn" @click="stdown">&lt;&lt;</button>
           <button v-show="state.currentPage !== 1" class="page-btn" @click="down">&lt;</button>
@@ -542,7 +551,7 @@ const closeConfirmModal = () => { confirmModal.show = false }
 
 <style scoped>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-.household-page { display: flex; flex-direction: column; gap: 20px; font-family: 'Noto Sans KR', sans-serif; color: #333; }
+.household-page { padding-left: 32px; padding-right: 32px; display: flex; flex-direction: column; gap: 20px; font-family: 'Noto Sans KR', sans-serif; color: #333; }
 
 /* 통계 카드 */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
