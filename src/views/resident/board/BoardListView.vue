@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // ─── 더미 데이터 (백엔드 연결 전 테스트용) ──────────────────────────
 // TODO: 백엔드 연결 시 DUMMY_* 삭제 후 store/modules/board.js + api/board.js 로 교체
@@ -238,7 +241,7 @@ function getAvatarStyle(name) {
             <button class="tab-btn" :class="{ active: activeTab === 'free' }" @click="setTab('free')">자유게시판</button>
             <button class="tab-btn" :class="{ active: activeTab === 'inquiry' }" @click="setTab('inquiry')">문의사항</button>
           </div>
-          <button class="write-btn">
+          <button class="write-btn" @click="router.push('/resident/board/form')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="15" height="15">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
@@ -412,7 +415,7 @@ function getAvatarStyle(name) {
 
 <style scoped>
 .board-list-view {
-  padding: 24px 0px 16px 0px;
+  padding: 0px;
   max-width: 1200px;
   margin: 0 auto;
   font-family: 'Noto Sans KR';
@@ -545,8 +548,8 @@ function getAvatarStyle(name) {
 .action-btn.delete { background: #fee2e2; color: #dc2626; }
 .action-btn.delete:hover { background: #fecaca; }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .board-layout { grid-template-columns: 1fr; }
-  .board-list-view { padding: 20px 16px; }
+  .board-list-view { padding: 0px; }
 }
 </style>

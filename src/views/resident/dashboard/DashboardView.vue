@@ -26,9 +26,9 @@ const reservations = ref([])
 onMounted(async () => {
   try {
     const { data } = await axios.get('/dashboard')
-    stats.value = data.stats
-    notices.value = data.notices
-    reservations.value = data.reservations
+    stats.value = data.stats ?? stats.value
+    notices.value = data.notices ?? []
+    reservations.value = data.reservations ?? []
   } catch (e) {
     console.warn('대시보드 API 오류:', e)
   }
@@ -182,7 +182,7 @@ const banners = [
       <!-- 최근 공지사항 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📢 최근 공지사항</span>
+          <span class="card-title">📢최근 공지사항</span>
           <span class="card-more" @click="router.push('/resident/board/notice')">전체보기 →</span>
         </div>
         <div class="card-body">
