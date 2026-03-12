@@ -25,19 +25,27 @@ import MyReservationView from '@/views/resident/MyReservationView.vue'
 import MyVehicleView from '@/views/resident/MyVehicleView.vue'
 import MyPageView from '@/views/resident/MyPageView.vue'
 import MyPageEditView from '@/views/resident/MyPageEditView.vue'
+import MyPostsView from '@/views/resident/MyPostsView.vue'
+import VisitorVehiclesEditView from '@/views/resident/VisitorVehiclesEditView.vue'
+import VisitorVehiclesListView from '@/views/resident/VisitorVehiclesListView.vue'
+import NoticeListView from '@/views/resident/NoticeListView.vue'
 
 // 관리자 페이지
 import AdminDashboard from '@/views/admin/AdminDashboardView.vue'
 import HouseholdManageView from '@/views/admin/HouseholdManageView.vue'
 import AdminBoardListView from '@/views/admin/AdminBoardListView.vue'
 import FacilityManageView from '@/views/admin/FacilityManageView.vue'
-import VisitorApprovalView from '@/views/admin/VisitorApprovalView.vue'
 import ParkingStatsView from '@/views/admin/ParkingStatsView.vue'
 import AdminBoardWrite from '@/views/admin/AdminBoardWrite.vue'
-import VisitorVehiclesListView from '@/views/resident/VisitorVehiclesListView.vue'
-import NoticeListView from '@/views/resident/NoticeListView.vue'
-import MyPostsView from '@/views/resident/MyPostsView.vue'
-import VisitorVehiclesEditView from '@/views/resident/VisitorVehiclesEditView.vue'
+import AdminVehicleListView from '@/views/admin/AdminVehicleListView.vue'
+import AdminParkingLogView from '@/views/admin/AdminParkingLogView.vue'
+import ParkingDashboardView from '@/views/admin/ParkingDashboardView.vue'
+import AdminReservationListView from '@/views/admin/AdminReservationListView.vue'
+import VisitorVehicleListView from '@/views/admin/VisitorVehicleListView.vue'
+import AdminBoardDetailView from '@/views/admin/AdminBoardDetailView.vue'
+import AdminBoardModifyView from '@/views/admin/AdminBoardModifyView.vue'
+import AdminReservationDetailView from '@/views/admin/AdminReservationDetailView.vue'
+import AdminGxApprovalView from '@/views/admin/AdminGxApprovalView.vue'
 
 const routes = [
 
@@ -82,10 +90,18 @@ const routes = [
             { path: 'dashboard',  name: 'AdminDashboard',  component: AdminDashboard,       meta: { title: '대시보드' } },
             { path: 'households', name: 'HouseholdManage', component: HouseholdManageView,  meta: { title: '세대 관리' } },
             { path: 'board',      name: 'AdminBoardList',  component: AdminBoardListView,   meta: { title: '게시판 관리' } },
-            { path: 'facility',   name: 'FacilityManage',  component: FacilityManageView,   meta: { title: '시설 관리' } },
-            { path: 'visitor',    name: 'VisitorApproval', component: VisitorApprovalView,  meta: { title: '방문차량 승인' } },
-            { path: 'parking',    name: 'ParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
             { path: 'board/write', name: 'AdminBoardWrite', component: AdminBoardWrite,      meta: { title: '공지사항 작성' } },
+            { path: 'vehicles', name: 'AdminVehicleListView', component: AdminVehicleListView,      meta: { title: '입주민 차량 목록' } },
+            { path: 'parking-logs',    name: 'AdminParkingLog', component: AdminParkingLogView,  meta: { title: '입출차 기록' } },
+            { path: 'parking-dashboard',    name: 'AdminParkingDashboard',    component: ParkingDashboardView,     meta: { title: '주차 현황' } },
+            { path: 'parking-stats',    name: 'AdminParkingStats',    component: ParkingStatsView,     meta: { title: '주차 통계' } },
+            { path: 'facility', name: 'AdminFacilityManage', component: FacilityManageView,      meta: { title: '시설 관리' } },
+            { path: 'reservations', name: 'AdminReservationListView', component: AdminReservationListView,      meta: { title: '전체 예약 현황' } },
+            { path: 'VisitorVehicleList', name: 'AdminVisitorVehicleList', component: VisitorVehicleListView,      meta: { title: '방문 차량 관리' } },
+            { path: 'boards/:id', name: 'AdminBoardDetail', component: AdminBoardDetailView,      meta: { title: '게시판 상세' } },
+            { path: 'boards/modify/:id', name: 'AdminBoardModify', component: AdminBoardModifyView,      meta: { title: '게시글 수정' } },
+            { path: 'reservations/:id', name: 'AdminReservationDetail', component: AdminReservationDetailView,      meta: { title: '시설별 예약 현황' } },
+            { path: 'reservations/gx-approve', name: 'AdminGxApproval', component: AdminGxApprovalView,      meta: { title: 'GX승인' } },
         ]
     }
 
