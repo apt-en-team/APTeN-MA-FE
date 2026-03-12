@@ -33,7 +33,7 @@ import MyReservationView from '@/views/resident/reservation/MyReservationView.vu
 import MyVehicleView from '@/views/resident/vehicle/MyVehicleView.vue'
 
 // 입주민 - 주차/방문차량
-import VisitorVehiclesEditView from '@/views/resident/parking/VisitorVehiclesEditView.vue'
+import VisitorVehicleFormView from '@/views/resident/parking/VisitorVehicleFormView.vue'
 import VisitorVehiclesListView from '@/views/resident/parking/VisitorVehiclesListView.vue'
 import ParkingStatusView from '@/views/resident/parking/ParkingStatusView.vue'
 
@@ -105,7 +105,7 @@ const routes = [
             { path: 'my-vehicle', name: 'MyVehicle', component: MyVehicleView, meta: { title: '내 차량' } },
 
             // 주차/방문차량
-            { path: 'visitor-vehicles',      name: 'VisitorVehicles',     component: VisitorVehiclesEditView, meta: { title: '방문차량 등록' } },
+            { path: 'visitor-vehicles',      name: 'VisitorVehicles',     component: VisitorVehicleFormView, meta: { title: '방문차량 등록' } },
             { path: 'visitor-vehicles/list', name: 'VisitorVehiclesList', component: VisitorVehiclesListView, meta: { title: '방문차량 목록' } },
             { path: 'parking/status',        name: 'ParkingStatus',       component: ParkingStatusView,       meta: { title: '주차 현황' } },
 
