@@ -2,32 +2,29 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHouseholdStore } from '@/stores/modules/household'
-
-// API 모듈 임포트 (named export 방식)
-import * as visitorVehicleApi from '@/api/visitorVehicle'
-import * as facilityApi       from '@/api/facility'
-import * as parkingApi        from '@/api/parking'
-import * as boardApi          from '@/api/board'
+import StatsCards from '@/components/admin/StatsCards.vue'
 
 const router = useRouter()
 
-// 로딩 / 에러 상태
+// ── 로딩 / 에러 상태 ──
 const isLoading = ref(false)
 const hasError  = ref(false)
 
-//피니아 스토어 이용. 각 파트별 데이타는 Promise.all로 호출
+// ── 피니아 스토어 ──
 const householdStore = useHouseholdStore()
+
+// ── 대시보드 데이터 fetch ──
 const fetchDashboardData = async () => {
   isLoading.value = true
   hasError.value  = false
-  isLoading.value = true
   try {
     await Promise.all([
       householdStore.fetchStats(),   // 세대 통계
       // parkingStore.fetchStats(),  // 나중에 주차 추가
       // reservationStore.fetchStats(), // 나중에 예약 추가
     ])
-    // 기존 임시 데이터도 유지
+
+    // 패널 데이터 - API 연결 후 교체
     dashboardState.visitors   = []
     dashboardState.facilities = []
     dashboardState.records    = []
@@ -41,30 +38,16 @@ const fetchDashboardData = async () => {
   }
 }
 
-// 요약 카드 (null = 데이터 없음 → "-" 표시)
+// ── 주차/예약 summary (나중에 피니아 스토어로 대체) ──
 const summary = reactive({
-  pendingCount:   null,  // 승인 대기 건수
-  parkingUsed:    null,  // 주차 사용 면수
-  parkingTotal:   null,  // 주차 전체 면수
-  todayReserve:   null,  // 오늘 예약 건수
-  reserveDiff:    null,  // 전일 대비 증감
-  householdCount: null,  // 전체 세대 수
-  memberCount:    null,  // 등록 회원 수
+  pendingCount: null,  // 승인 대기 건수
+  parkingUsed:  null,  // 주차 사용 면수
+  parkingTotal: null,  // 주차 전체 면수
+  todayReserve: null,  // 오늘 예약 건수
+  reserveDiff:  null,  // 전일 대비 증감
 })
 
-// 주차 점유율 (%)
-const parkingPercent = computed(() => {
-  if (summary.parkingUsed === null || summary.parkingTotal === null || summary.parkingTotal === 0) return null
-  return Math.round((summary.parkingUsed / summary.parkingTotal) * 100)
-})
-
-// 전일 대비 표시 문자열  ex) "+3건" | "-1건"
-const reserveDiffLabel = computed(() => {
-  if (summary.reserveDiff === null) return null
-  return (summary.reserveDiff >= 0 ? '+' : '') + summary.reserveDiff + '건'
-})
-
-// 패널 목록
+// ── 패널 목록 ──
 const dashboardState = reactive({
   visitors:   [],
   facilities: [],
@@ -72,7 +55,62 @@ const dashboardState = reactive({
   posts:      [],
 })
 
-onMounted(fetchDashboardData)
+// ── computed ──
+const parkingPercent = computed(() => {
+  if (!summary.parkingUsed || !summary.parkingTotal) return null
+  return Math.round((summary.parkingUsed / summary.parkingTotal) * 100)
+})
+
+const reserveDiffLabel = computed(() => {
+  if (summary.reserveDiff === null) return null
+  return (summary.reserveDiff >= 0 ? '+' : '') + summary.reserveDiff + '건'
+})
+
+// ── StatsCards 에 넘길 데이터 ──
+const dashboardStats = computed(() => [
+  {
+    label:     '승인 대기',
+    value:     summary.pendingCount ?? '-',
+    unit:      summary.pendingCount !== null ? '건' : '',
+    desc:      summary.pendingCount !== null ? '입주민차량 승인 필요' : '데이터 없음',
+    descClass: 'highlight-orange',
+    iconClass: 'icon-orange',
+  },
+  {
+    label:     '주차 현황',
+    value:     parkingPercent.value ?? '-',
+    unit:      parkingPercent.value !== null ? '%' : '',
+    desc:      summary.parkingUsed !== null
+                 ? `${summary.parkingUsed} / ${summary.parkingTotal}면 사용중`
+                 : '데이터 없음',
+    progress:  parkingPercent.value,
+    iconClass: 'icon-blue',
+  },
+  {
+    label:     '오늘 예약',
+    value:     summary.todayReserve ?? '-',
+    unit:      summary.todayReserve !== null ? '건' : '',
+    desc:      reserveDiffLabel.value !== null
+                 ? `전일 대비 ${reserveDiffLabel.value}`
+                 : '데이터 없음',
+    descClass: 'highlight-green',
+    iconClass: 'icon-green',
+  },
+  {
+    label:     '전체 세대',
+    value:     householdStore.total || '-',
+    unit:      householdStore.total ? '세대' : '',
+    desc:      householdStore.total
+                 ? `입주 ${householdStore.occupied}세대 · 공실 ${householdStore.empty}세대`
+                 : '데이터 없음',
+    iconClass: 'icon-gray',
+  },
+])
+
+onMounted(() => {
+  console.log('대시보드 마운트됨')
+  fetchDashboardData()
+})
 </script>
 
 <template>
@@ -98,124 +136,61 @@ onMounted(fetchDashboardData)
     <!-- 대시보드 본문 -->
     <div v-else class="dashboard-wrapper">
 
-      <!-- 요약 카드 4개 -->
-      <section class="summary-grid">
-
-        <!-- 승인 대기 -->
-        <div class="summary-card card-clickable" @click="router.push({ name: 'VisitorApproval' })">
-          <div class="card-info">
-            <span class="card-label">승인 대기</span>
-            <div class="card-value">
-              <template v-if="summary.pendingCount !== null">
-                {{ summary.pendingCount }} <span class="card-unit">건</span>
-              </template>
-              <span v-else class="card-empty">-</span>
-            </div>
-            <span class="card-sub highlight-orange">
-              {{ summary.pendingCount !== null ? '방문차량 승인 필요' : '데이터 없음' }}
-            </span>
-          </div>
-          <div class="card-icon icon-orange">
+      <!-- ── 요약 카드 4개 ── -->
+      <section class="summary-section">
+        <StatsCards :stats="dashboardStats" :showIcon="true"
+          @click-0="router.push({ name: 'AdminVehicleListView' })"
+          @click-1="router.push({ name: 'ParkingDashboardView' })"
+          @click-2="router.push({ name: 'AdminReservationListView' })"
+          @click-3="router.push({ name: 'HouseholdManage' })"
+        >
+          <!-- 승인 대기 아이콘 -->
+          <template #icon-0>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-          </div>
-        </div>
-
-        <!-- 주차 현황 -->
-        <div class="summary-card card-clickable" @click="router.push({ name: 'ParkingStats' })">
-          <div class="card-info">
-            <span class="card-label">주차 현황</span>
-            <div class="card-value">
-              <template v-if="parkingPercent !== null">
-                {{ parkingPercent }} <span class="card-unit">%</span>
-              </template>
-              <span v-else class="card-empty">-</span>
-            </div>
-            <div class="progress-bar-wrap">
-              <div class="progress-bar">
-                <div class="progress-fill blue" :style="{ width: (parkingPercent ?? 0) + '%' }"></div>
-              </div>
-            </div>
-            <span class="card-sub">
-              <template v-if="summary.parkingUsed !== null && summary.parkingTotal !== null">
-                {{ summary.parkingUsed }} / {{ summary.parkingTotal }}면 사용중
-              </template>
-              <template v-else>데이터 없음</template>
-            </span>
-          </div>
-          <div class="card-icon icon-blue">
+          </template>
+          <!-- 주차 현황 아이콘 -->
+          <template #icon-1>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
               <path d="M9 17V9h4a2 2 0 010 4H9"/>
             </svg>
-          </div>
-        </div>
-
-        <!-- 오늘 예약 -->
-        <div class="summary-card card-clickable" @click="router.push({ name: 'FacilityManage' })">
-          <div class="card-info">
-            <span class="card-label">오늘 예약</span>
-            <div class="card-value">
-              <template v-if="summary.todayReserve !== null">
-                {{ summary.todayReserve }} <span class="card-unit">건</span>
-              </template>
-              <span v-else class="card-empty">-</span>
-            </div>
-            <span class="card-sub highlight-green">
-              <template v-if="reserveDiffLabel !== null">전일 대비 {{ reserveDiffLabel }}</template>
-              <template v-else>데이터 없음</template>
-            </span>
-          </div>
-          <div class="card-icon icon-green">
+          </template>
+          <!-- 오늘 예약 아이콘 -->
+          <template #icon-2>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2"/>
               <line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/>
               <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-          </div>
-        </div>
-
-        <!-- 전체 세대 -->
-        <div class="summary-card card-clickable" @click="router.push({ name: 'HouseholdManage' })">
-          <div class="card-info">
-            <span class="card-label">전체 세대</span>
-            <div class="card-value">
-              <template v-if="householdStore.total !== null">
-                {{ householdStore.total }} <span class="card-unit">세대</span>
-              </template>
-              <span v-else class="card-empty">-</span>
-            </div>
-            <span class="card-sub">
-              <template v-if="householdStore.total !== null">입주 {{ householdStore.occupied }}세대 · 공실 {{ householdStore.empty }}세대</template>
-              <template v-else>데이터 없음</template>
-            </span>
-          </div>
-          <div class="card-icon icon-gray">
+          </template>
+          <!-- 전체 세대 아이콘 -->
+          <template #icon-3>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
               <polyline points="9,22 9,12 15,12 15,22"/>
             </svg>
-          </div>
-        </div>
+          </template>
+        </StatsCards>
       </section>
 
-      <!-- 중간 행: 방문차량 / 시설 예약 -->
+      <!-- ── 중간 행: 방문차량 / 시설 예약 ── -->
       <section class="middle-grid">
 
         <!-- 방문차량 관리 패널 -->
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">방문차량 목록</h2>
-            <router-link :to="{ name: 'VisitorApproval' }" class="panel-more">전체보기 →</router-link>
+            <router-link :to="{ name: 'AdminVehicleListView' }" class="panel-more">전체보기 →</router-link>
           </div>
           <div v-if="dashboardState.visitors.length > 0" class="visitor-list">
             <div
               v-for="vehicle in dashboardState.visitors"
               :key="vehicle.plate"
               class="visitor-item card-clickable"
-              @click="router.push({ name: 'VisitorApproval' })"
+              @click="router.push({ name: 'AdminVehicleListView' })"
             >
               <div class="visitor-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -247,14 +222,14 @@ onMounted(fetchDashboardData)
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">오늘 시설 예약 현황</h2>
-            <router-link :to="{ name: 'FacilityManage' }" class="panel-more">전체보기 →</router-link>
+            <router-link :to="{ name: 'AdminReservationListView' }" class="panel-more">전체보기 →</router-link>
           </div>
           <div v-if="dashboardState.facilities.length > 0" class="facility-list">
             <div
               v-for="facility in dashboardState.facilities"
               :key="facility.name"
               class="facility-item card-clickable"
-              @click="router.push({ name: 'FacilityManage' })"
+              @click="router.push({ name: 'AdminReservationListView' })"
             >
               <div class="facility-bar" :class="'bar-' + facility.barColor"></div>
               <div class="facility-left">
@@ -288,14 +263,14 @@ onMounted(fetchDashboardData)
 
       </section>
 
-      <!-- 하단 행: 입출차 기록 / 게시판 활동 -->
+      <!-- ── 하단 행: 입출차 기록 / 게시판 활동 ── -->
       <section class="bottom-grid">
 
         <!-- 최근 입출차 기록 패널 -->
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">최근 입출차 기록</h2>
-            <router-link :to="{ name: 'ParkingStats' }" class="panel-more">전체보기 →</router-link>
+            <router-link :to="{ name: 'AdminParkingLog' }" class="panel-more">전체보기 →</router-link>
           </div>
           <template v-if="dashboardState.records.length > 0">
             <table class="entry-table">
@@ -381,8 +356,6 @@ onMounted(fetchDashboardData)
   </div>
 </template>
 
-
-
 <style scoped>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -432,7 +405,6 @@ onMounted(fetchDashboardData)
 /* 대시보드 래퍼 */
 .dashboard-wrapper {
   width: 100%;
-  padding: 0 32px;
 }
 
 /* 클릭 가능 공통 */
@@ -445,77 +417,6 @@ onMounted(fetchDashboardData)
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
-
-/* 요약 카드 */
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.summary-card {
-  height: 139px;
-  background: #fff;
-  border-radius: 10px;        
-  padding: 22px 24px;         
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  border: 1px solid #E2E8F0; 
-}
-
-.card-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 95px;               
-}
-
-.card-label { font-size: 12px; color: #687282; font-weight: 500; }
-
-.card-value { font-size: 30px; font-weight: 800; color: #333333; line-height: 1.2; }
-
-.card-unit { font-size: 12px; font-weight: 500; color: #6b7280; }
-
-.card-empty { font-size: 28px; font-weight: 700; color: #d1d5db; }
-
-.card-sub { font-size: 12px; color: #6B7280; }
-
-.highlight-orange { color: #C08B2D !important; }
-.highlight-green  { color: #4D8B5A !important; }
-
-.card-icon {
-  width: 40px; height: 40px;
-  border-radius: 50px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-
-.card-icon svg { width: 20px; height: 20px; }
-
-.icon-orange { background: #FDF6E8; color: #C08B2D; }
-.icon-blue   { background: #E8EBF2; color: #2B3A55; }
-.icon-green  { background: #C6F6D5; color: #4D8B5A; }
-.icon-gray   { background: #EDEEF2; color: #6B7280; }
-
-.progress-bar-wrap { margin: 6px 0 2px; }
-
-.progress-bar {
-  width: 100%; height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px; overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%; border-radius: 3px;
-  transition: width 0.4s ease;
-}
-
-.progress-fill.blue   { background: #3b82f6; }
-.progress-fill.green  { background: #4D8B5A; }
-.progress-fill.dark   { background: #2B3A55; }
-.progress-fill.yellow { background: #C08B2D; }
 
 /* 패널 그리드 */
 .middle-grid,

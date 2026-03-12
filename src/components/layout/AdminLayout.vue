@@ -49,26 +49,31 @@ async function handleLogout() {
         </router-link>      
 
         <div class="nav-group">COMMUNITY</div>
-        <router-link to="/admin/boards" class="nav-item">
+        <router-link to="/admin/board" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           게시판 관리
         </router-link>
-        <router-link to="/admin/boards/write" class="nav-item">
+        <router-link to="/admin/board/write" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           공지사항 작성
         </router-link>
 
-        <div class="nav-group">VEHICLE / PARKING</div>
+        <div class="nav-group">VEHICLE</div>
         <router-link to="/admin/vehicles" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           전체 차량 목록
         </router-link>
-        <router-link to="/admin/visitor-vehicles" class="nav-item">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          방문차량 목록
+        <router-link to="/admin/VisitorVehicleList" class="nav-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          방문 차량 목록
         </router-link>
+
+        <div class="nav-group">PARKING</div>
         <router-link to="/admin/parking-logs" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           입출차 기록
@@ -83,7 +88,7 @@ async function handleLogout() {
         </router-link>
 
         <div class="nav-group">FACILITY / RESERVATION</div>
-        <router-link to="/admin/facilities" class="nav-item">
+        <router-link to="/admin/facility" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
           시설 관리
         </router-link>
@@ -125,11 +130,11 @@ async function handleLogout() {
           </button>
 
           <!-- 페이지별 액션 버튼 -->
-          <button v-if="route.name === 'VisitorApproval'" class="btn-action">+ 방문차량 등록</button>
-          <button v-if="route.name === 'FacilityManage'"  class="btn-action">+ 시설 추가</button>
+          <button v-if="route.name === 'AdminVisitorVehicleList'" class="btn-action">+ 방문차량 등록</button>
+          <button v-if="route.name === 'AdminFacilityManage'"  class="btn-action">+ 시설 추가</button>
           <button v-if="route.name === 'AdminBoardList'"  class="btn-action">+ 공지 작성</button>
-          <button v-if="route.name === 'VisitorApproval'"  class="btn-action">+ 방문차량 등록</button>
-          <button v-if="route.name === 'ParkingStats'"  class="btn-action">+ 차량 등록</button>  
+          <button v-if="route.name === 'AdminParkingLog'"  class="btn-action">+ 기록 등록</button>
+          <button v-if="route.name === 'AdminVehicleListView'"  class="btn-action">+ 차량 등록</button>  
         </div>
       </header>
 
@@ -147,7 +152,7 @@ async function handleLogout() {
 .layout {
   display: flex;
   width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
   font-family: 'Noto Sans KR', sans-serif;
   color: #333333;
@@ -157,7 +162,7 @@ async function handleLogout() {
 /* ── 사이드바 ── */
 .sidebar {
   width: 240px;
-  height: 1024px;
+  height: 100vh;
   background: #1E2A3E;
   display: flex;
   flex-direction: column;
@@ -204,7 +209,7 @@ async function handleLogout() {
 .nav-item.router-link-active { background: #2B3A55; color: #fff; font-weight: 600; }
 
 .nav-item svg {
-   stroke: #8B9AB0 !important;
+  stroke: #8B9AB0 !important;
 }
 
 
@@ -257,7 +262,7 @@ async function handleLogout() {
 /* ── 메인 ── */
 .main {
   flex: 1;
-  height: 1024px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: #F5F6F8;
@@ -266,13 +271,13 @@ async function handleLogout() {
 
 /* ── 탑바 ── */
 .topbar {
-  height: 84px;
+  height: 88px;
   flex-shrink: 0;
   background: #F5F6F8;
   border-bottom: 1px solid #E2E8F0;
   display: flex; align-items: center;
   justify-content: space-between;
-  padding: 0 64px; /* content와 동일하게 맞춤 */
+  padding: 0 48px; /* content와 동일하게 맞춤 */
 }
 
 .topbar-left { display: flex; flex-direction: column; gap: 4px; }
@@ -313,7 +318,7 @@ async function handleLogout() {
 /* ── 콘텐츠 ── */
 .content {
   flex: 1;
-  padding: 20px 32px;
+  padding: 20px 64px;
   overflow-y: auto;
 }
 </style>
