@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
-  columns: Array,  // [{ label, key }]
-  rows:    Array,
+  columns: Array, // [{ label, key }]
+  rows: Array,
 })
 const emit = defineEmits(['row-click'])
 </script>

@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useHouseholdStore } from '@/stores/modules/household'
+import { useHouseholdStore } from '@/stores/modules/household.js'
 import StatsCards from '@/components/admin/StatsCards.vue'
 
 const router = useRouter()

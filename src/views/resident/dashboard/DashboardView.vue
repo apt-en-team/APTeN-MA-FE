@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/modules/auth.js'
 import { useRouter } from 'vue-router'
-import axios from '@/api/axios'
+import axios from '@/api/axios.js'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Autoplay, Pagination } from 'swiper/modules'
 import 'swiper/css'

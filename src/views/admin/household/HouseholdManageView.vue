@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, computed, onMounted } from 'vue'
 import householdAPI from '@/api/household.js'
-import { useHouseholdStore } from '@/stores/modules/household'
+import { useHouseholdStore } from '@/stores/modules/household.js'
 
 import BaseModal from '@/components/common/BeseModel.vue'
 import StatsCards from '@/components/admin/StatsCards.vue'
