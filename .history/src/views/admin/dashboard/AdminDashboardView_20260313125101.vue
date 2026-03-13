@@ -2,11 +2,10 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHouseholdStore } from '@/stores/modules/household.js'
-import { useVehicleStore }   from '@/stores/modules/vehicle.js'
+import { useVehicleStore } from '@/stores/modules/vehicle.js'
 import StatsCards from '@/components/admin/StatsCards.vue'
 
 const router = useRouter()
-const vehicleStore   = useVehicleStore()    
 
 // ── 로딩 / 에러 상태 ──
 const isLoading = ref(false)
@@ -14,6 +13,7 @@ const hasError  = ref(false)
 
 // ── 피니아 스토어 ──
 const householdStore = useHouseholdStore()
+const vehicleSto
 
 // ── 대시보드 데이터 fetch ──
 const fetchDashboardData = async () => {
@@ -22,7 +22,6 @@ const fetchDashboardData = async () => {
   try {
     await Promise.all([
       householdStore.fetchStats(),   // 세대 통계
-      vehicleStore.fetchStats() // 전체주차 목록
       // parkingStore.fetchStats(),  // 나중에 주차 추가
       // reservationStore.fetchStats(), // 나중에 예약 추가
     ])
@@ -73,9 +72,9 @@ const reserveDiffLabel = computed(() => {
 const dashboardStats = computed(() => [
   {
     label:     '승인 대기',
-    value:     vehicleStore.pending ?? '-',             
-    unit:      vehicleStore.pending !== null ? '건' : '',
-    desc:      vehicleStore.pending !== null ? '입주민차량 승인 필요' : '데이터 없음',
+    value:     summary.pendingCount ?? '-',
+    unit:      summary.pendingCount !== null ? '건' : '',
+    desc:      summary.pendingCount !== null ? '입주민차량 승인 필요' : '데이터 없음',
     descClass: 'highlight-orange',
     iconClass: 'icon-orange',
   },

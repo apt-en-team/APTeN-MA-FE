@@ -73,9 +73,9 @@ const reserveDiffLabel = computed(() => {
 const dashboardStats = computed(() => [
   {
     label:     '승인 대기',
-    value:     vehicleStore.pending ?? '-',             
-    unit:      vehicleStore.pending !== null ? '건' : '',
-    desc:      vehicleStore.pending !== null ? '입주민차량 승인 필요' : '데이터 없음',
+    value:     summary.pendingCount ?? '-',
+    unit:      summary.pendingCount !== null ? '건' : '',
+    desc:      summary.pendingCount !== null ? '입주민차량 승인 필요' : '데이터 없음',
     descClass: 'highlight-orange',
     iconClass: 'icon-orange',
   },

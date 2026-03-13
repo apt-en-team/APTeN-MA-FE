@@ -13,7 +13,7 @@ export const useVehicleStore = defineStore('vehicle', {
   actions: {
     async fetchStats() {
       try {
-        const result = await vehicleAPI.getVehicleStats()  // ← 연결
+        const result = await vehicleAPI.getVehicleStats()
         const d = result.data.resultData
         this.total    = d.total    ?? 0
         this.pending  = d.pending  ?? 0

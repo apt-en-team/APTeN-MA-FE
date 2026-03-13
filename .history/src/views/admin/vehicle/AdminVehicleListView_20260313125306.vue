@@ -7,7 +7,7 @@ import StatsCards from '@/components/admin/StatsCards.vue'
 import FilterBar  from '@/components/admin/FilterBar.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/admin/Pagination.vue'
-import BaseModal from '@/components/common/BeseModel.vue'
+import BaseModal  from '@/components/common/Modal.vue'
 
 const vehicleStore = useVehicleStore()
 

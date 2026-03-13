@@ -40,30 +40,12 @@ export default {
     return axios.get('/admin/vehicles')
   },
 
-  // ── API-042: 차량 통계 조회 (관리자) ──────────────────────────
-  // GET /api/admin/vehicles/stats
-  // 반환: { total, pending, approved, rejected }
-  getVehicleStats() {
-    return axios.get('/admin/vehicles/stats')
-  },
-
-  // ── API-042: 차량 승인 (관리자) ───────────────────────────────
-  // PATCH /api/admin/vehicles/:id/approve
-  approveVehicle(id) {
-    return axios.patch(`/admin/vehicles/${id}/approve`)
-  },
-
-  // ── API-042: 차량 거부 (관리자) ───────────────────────────────
-  // PATCH /api/admin/vehicles/:id/reject
-  rejectVehicle(id) {
-    return axios.patch(`/admin/vehicles/${id}/reject`)
-  },
-
   // ── API-043: 내 차량 입출차 기록 조회 ────────────────────────
   // GET /api/vehicles/my-logs
   // 반환: [ { logId, licensePlate, entryType, loggedAt } ]
   getMyVehicleLogs() {
     return axios.get('/vehicles/my-logs')
-  },
+  }
 
+  
 }

@@ -1,15 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import vehicleAPI from '@/api/vehicle.js'
-import { useVehicleStore } from '@/stores/modules/vehicle.js'
 
 import StatsCards from '@/components/admin/StatsCards.vue'
 import FilterBar  from '@/components/admin/FilterBar.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/admin/Pagination.vue'
 import BaseModal from '@/components/common/BeseModel.vue'
-
-const vehicleStore = useVehicleStore()
 
 const state = reactive({
   list: [],
@@ -24,7 +21,9 @@ const state = reactive({
   totalFiltered: 0,
 })
 
-const selectedIds = reactive([])
+const stats = ref({ total: 0, pending: 0, approved: 0, rejected: 0 })
+const selectedIds = ref([])
+const selectAll   = ref(false)
 
 // ── 모달 상태 ──
 const detailModal  = reactive({ show: false, vehicle: null })
@@ -33,7 +32,6 @@ const rejectModal  = reactive({ show: false, vehicle: null, loading: false, reas
 
 const rejectReasons = ['중복 차량', '세대 한도 초과', '정보 불일치', '직접 입력']
 
-// ── 테이블 컬럼 ──
 const columns = [
   { label: '',         key: 'checkbox' },
   { label: 'ID',       key: 'vehicleId' },
@@ -43,17 +41,19 @@ const columns = [
   { label: '등록일',    key: 'createdAt' },
 ]
 
-// ── 통계 카드 ──
 const statsCards = computed(() => [
-  { label: '전체 등록 차량', value: vehicleStore.total,    unit: '대', desc: '승인 완료 기준' },
-  { label: '승인 대기',      value: vehicleStore.pending,  unit: '대', desc: '즉시 처리 필요', descClass: 'urgent' },
-  { label: '승인 완료',      value: vehicleStore.approved, unit: '대', desc: '정상 등록' },
-  { label: '거부',           value: vehicleStore.rejected, unit: '대', desc: '재신청 가능' },
+  { label: '전체 등록 차량', value: stats.value.total,    unit: '대', desc: '승인 완료 기준' },
+  { label: '승인 대기',      value: stats.value.pending,  unit: '대', desc: '즉시 처리 필요', descClass: 'urgent' },
+  { label: '승인 완료',      value: stats.value.approved, unit: '대', desc: '정상 등록' },
+  { label: '거부',           value: stats.value.rejected, unit: '대', desc: '재신청 가능' },
 ])
 
-// ── 유틸 ──
 const statusLabel = (s) => ({ APPROVED: '승인', PENDING: '대기', REJECTED: '거부' }[s] ?? s)
 const statusClass = (s) => ({ APPROVED: 'approved', PENDING: 'pending', REJECTED: 'rejected' }[s] ?? '')
+
+const toggleSelectAll = () => {
+  selectedIds.value = selectAll.value ? state.list.map(v => v.vehicleId) : []
+}
 
 // ── API ──
 const fetchVehicles = async () => {
@@ -65,7 +65,12 @@ const fetchVehicles = async () => {
   } catch (e) { console.error('차량 목록 조회 실패', e) }
 }
 
-const fetchStats = () => vehicleStore.fetchStats()
+const fetchStats = async () => {
+  try {
+    const { data } = await vehicleAPI.getVehicleStats()
+    stats.value = data.resultData
+  } catch (e) { console.error('통계 조회 실패', e) }
+}
 
 // ── 상세 모달 ──
 const openDetailModal  = (vehicle) => { detailModal.vehicle = vehicle; detailModal.show = true }
@@ -105,7 +110,6 @@ const handleReject = async () => {
   finally { rejectModal.loading = false }
 }
 
-// ── 검색/필터/페이지 ──
 const doSearch = () => { state.currentPage = 1; fetchVehicles() }
 const resetFilters = () => {
   state.searchQuery = ''; state.filterStatus = ''
@@ -281,6 +285,7 @@ onMounted(() => { fetchVehicles(); fetchStats() })
         </div>
         <p class="confirm-vehicle-sub">{{ rejectModal.vehicle?.carModel ?? '-' }}</p>
       </div>
+
       <div class="form-group">
         <label class="form-label">거부 사유 <span class="required">*</span></label>
         <select class="form-select" v-model="rejectModal.reason">
@@ -288,6 +293,7 @@ onMounted(() => { fetchVehicles(); fetchStats() })
           <option v-for="r in rejectReasons" :key="r" :value="r">{{ r }}</option>
         </select>
       </div>
+
       <div class="reason-chips">
         <button
           v-for="r in rejectReasons"
@@ -296,6 +302,7 @@ onMounted(() => { fetchVehicles(); fetchStats() })
           @click="rejectModal.reason = r"
         >{{ r }}</button>
       </div>
+
       <div class="form-group">
         <label class="form-label">상세 내용 (선택)</label>
         <textarea
@@ -305,6 +312,7 @@ onMounted(() => { fetchVehicles(); fetchStats() })
           rows="3"
         />
       </div>
+
       <template #footer>
         <button class="btn-cancel" @click="closeRejectModal">취소</button>
         <button
@@ -348,7 +356,7 @@ onMounted(() => { fetchVehicles(); fetchStats() })
 .btn-detail:hover  { background: #DBEAFE; }
 
 /* 모달 공통 */
-.detail-hero { margin-bottom: 14px; }
+.detail-hero   { margin-bottom: 14px; }
 .detail-status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
 .detail-status-badge.approved { background: #EBF5EE; color: #4D8B5A; }
 .detail-status-badge.pending  { background: #FEF9C3; color: #ca8a04; }
@@ -361,7 +369,7 @@ onMounted(() => { fetchVehicles(); fetchStats() })
 .detail-cell-label { font-size: 12px; color: #A0AEC0; }
 .detail-cell-value { font-size: 14px; font-weight: 600; color: #1A202C; }
 
-/* 승인/거부 모달 카드 */
+/* 승인/거부 모달 공통 카드 */
 .confirm-vehicle-card { background: #F5F6F8; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
 .confirm-vehicle-info { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .confirm-plate { font-size: 15px; font-weight: 700; color: #1A202C; }
