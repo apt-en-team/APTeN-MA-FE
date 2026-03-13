@@ -294,7 +294,7 @@ async function handleLogout() {
 }
 
 .topbar {
-  height: 60px;
+  height: 62px;
   display: flex;
   align-items: center;
   justify-content: space-between;

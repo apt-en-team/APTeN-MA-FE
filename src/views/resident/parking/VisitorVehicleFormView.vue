@@ -276,7 +276,7 @@ const handleSubmit = async () => {
 
 .notice-card ul li {
   font-size: 12px;
-  color: #888;
+  color: #687282;
   padding-left: 14px;
   position: relative;
   line-height: 1.5;

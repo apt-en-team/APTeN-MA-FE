@@ -141,6 +141,7 @@ const routes = [
             { path: 'parking-dashboard', name: 'AdminParkingDashboard',    component: ParkingDashboardView,   meta: { title: '주차 현황' } },
             { path: 'parking-stats',     name: 'AdminParkingStats',        component: ParkingStatsView,       meta: { title: '주차 통계' } },
             { path: 'visitor-vehicles',  name: 'AdminVisitorVehicleList',  component: VisitorVehicleListView, meta: { title: '방문 차량 관리' } },
+            { path: 'visitor-vehicles/:id', name: 'VisitorVehicleDetail', component: () => import('@/views/resident/parking/VisitorVehicleDetailView.vue'), meta: { title: '방문차량 상세' } },
 
             // 시설/예약
             { path: 'facility',                name: 'AdminFacilityManage',    component: FacilityManageView,         meta: { title: '시설 관리' } },
