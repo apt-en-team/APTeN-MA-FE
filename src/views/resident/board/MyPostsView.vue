@@ -245,7 +245,7 @@ function getAvatarStyle(name) {
 
 /* 2컬럼 레이아웃 */
 .board-layout { display: grid; grid-template-columns: 1fr 268px; gap: 34px; align-items: start; }
-.board-sidebar { position: sticky; top: 20px; }
+.board-sidebar { margin-top: 60px; position: sticky; top: 20px; }
 
 /* 사이드바 */
 .sidebar-card { background: #fff; border-radius: 16px; border: 1px solid #f0f0f0; padding: 20px; margin-bottom: 16px; }

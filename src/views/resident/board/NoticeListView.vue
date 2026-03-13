@@ -1,47 +1,37 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useBoardStore } from '@/stores/modules/board'
+import { useRouter } from 'vue-router'
 
-// ── 데이터 상태 ───────────────────────────────────────────────
-const allNotices = ref([])
+const router = useRouter()
+const boardStore = useBoardStore()
 const loading    = ref(false)
-
-// TODO: Spring Boot API 연동 시 아래 주석 해제
-// async function fetchNotices() {
-//   loading.value = true
-//   try {
-//     const res = await axios.get('/api/notices')
-//     allNotices.value = res.data
-//   } catch (e) {
-//     console.error('공지사항 조회 실패', e)
-//   } finally {
-//     loading.value = false
-//   }
-// }
-// onMounted(fetchNotices)
 
 // ── 상태 ──────────────────────────────────────────────────────
 const searchKeyword  = ref('')
-const selectedCat    = ref('')
 const selectedAuthor = ref('')
 const currentPage    = ref(1)
 const perPage        = 9
-const hoveredId      = ref(null)
-const selectedId     = ref(null)
-const showModal      = ref(false)
-const selectedNotice = ref(null)
+const hoveredId      = ref(-1)
 
-const categories = ['시설 청소', '정기 점검', '관리비', '안전', '행사']
+// ── 데이터 불러오기 ──────────────────────────────────────────
+onMounted(async () => {
+  loading.value = true
+  try {
+    await boardStore.fetchNotices()
+  } finally {
+    loading.value = false
+  }
+  document.addEventListener('click', onOutsideClick)
+})
+
+// ── 날짜 포맷 ─────────────────────────────────────────────────
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return dateStr.replace('T', ' ').slice(0, 10)
+}
 
 // ── 필터링 & 페이징 ───────────────────────────────────────────
-const filtered = computed(() => {
-  return allNotices.value.filter(n => {
-    const kw = searchKeyword.value.trim().toLowerCase()
-    const matchKw  = !kw || n.title.toLowerCase().includes(kw) || n.category.toLowerCase().includes(kw)
-    const matchCat = !selectedCat.value  || n.category === selectedCat.value
-    const matchAut = !selectedAuthor.value || n.author === selectedAuthor.value
-    return matchKw && matchCat && matchAut
-  })
-})
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / perPage)))
 
@@ -58,11 +48,11 @@ const pageNumbers = computed(() => {
     nums = Array.from({ length: total }, (_, i) => i + 1)
   } else if (cur <= 4) {
     for (let i = 1; i <= 5; i++) nums.push(i)
-    nums.push(-1) // 앞쪽 ellipsis
+    nums.push(-1)
     nums.push(total)
   } else if (cur >= total - 3) {
     nums.push(1)
-    nums.push(-2) // 뒤쪽 ellipsis
+    nums.push(-2)
     for (let i = total - 4; i <= total; i++) nums.push(i)
   } else {
     nums.push(1)
@@ -71,7 +61,7 @@ const pageNumbers = computed(() => {
     nums.push(-2)
     nums.push(total)
   }
-  return nums // 음수는 ellipsis, 양수는 페이지 번호
+  return nums
 })
 
 function goPage(p) {
@@ -79,20 +69,10 @@ function goPage(p) {
   currentPage.value = p
 }
 
-// 모달 열릴 때 body 스크롤 잠금
-watch(showModal, (val) => {
-  document.body.style.overflow = val ? 'hidden' : ''
-})
-
-const openDropdown = ref(null) // 'cat' | 'author' | null
+const openDropdown = ref(null)
 
 function toggleDropdown(name) {
   openDropdown.value = openDropdown.value === name ? null : name
-}
-function selectCat(val) {
-  selectedCat.value = val
-  openDropdown.value = null
-  onFilterChange()
 }
 function selectAuthor(val) {
   selectedAuthor.value = val
@@ -102,39 +82,43 @@ function selectAuthor(val) {
 function onOutsideClick(e) {
   if (!e.target.closest('.custom-select')) openDropdown.value = null
 }
-onMounted(()   => document.addEventListener('click', onOutsideClick))
+
+// filtered
+const filtered = computed(() => {
+  return (boardStore.notices || []).filter(n => {
+    const kw = searchKeyword.value.trim().toLowerCase()
+    const matchKw  = !kw || n.title.toLowerCase().includes(kw)
+    const matchAut = !selectedAuthor.value || n.authorName === selectedAuthor.value
+    return matchKw && matchAut
+  })
+})
+
 onUnmounted(() => document.removeEventListener('click', onOutsideClick))
 
 function resetFilters() {
   searchKeyword.value  = ''
-  selectedCat.value    = ''
   selectedAuthor.value = ''
   currentPage.value    = 1
   openDropdown.value   = null
 }
 
-// 검색/필터 변경 시 1페이지로
 function onFilterChange() { currentPage.value = 1 }
 
 // ── 모달 ──────────────────────────────────────────────────────
+const readIds = ref(new Set(JSON.parse(localStorage.getItem('readNoticeIds') || '[]')))
+
 function openNotice(notice) {
-  selectedId.value     = notice.id
-  selectedNotice.value = notice
-  showModal.value      = true
-  // 조회수 증가 (UX)
-  notice.views++
-}
-function closeModal() {
-  showModal.value = false
-  setTimeout(() => { selectedNotice.value = null }, 250)
+  readIds.value.add(notice.boardId)
+  localStorage.setItem('readNoticeIds', JSON.stringify([...readIds.value]))
+  router.push(`/resident/board/notice/${notice.boardId}`)
 }
 
-// ── 태그 색상 ─────────────────────────────────────────────────
 function tagClass(tag) {
   if (tag === '신규')   return 'tag-new'
   if (tag === '수정됨') return 'tag-edit'
   return 'tag-default'
 }
+
 </script>
 
 <template>
@@ -154,24 +138,6 @@ function tagClass(tag) {
         />
       </div>
 
-      <!-- 카테고리 드롭다운 -->
-      <div class="custom-select" :class="{ open: openDropdown === 'cat' }">
-        <button class="cs-trigger" @click.stop="toggleDropdown('cat')">
-          <span :class="{ 'cs-placeholder': !selectedCat }">{{ selectedCat || '카테고리' }}</span>
-          <svg class="cs-arrow" viewBox="0 0 10 6" width="10" height="6">
-            <path d="M0 0l5 6 5-6z" fill="currentColor"/>
-          </svg>
-        </button>
-        <div class="cs-dropdown" v-show="openDropdown === 'cat'">
-          <div class="cs-option" :class="{ selected: !selectedCat }" @click="selectCat('')">전체</div>
-          <div
-            v-for="c in categories" :key="c"
-            class="cs-option" :class="{ selected: selectedCat === c }"
-            @click="selectCat(c)"
-          >{{ c }}</div>
-        </div>
-      </div>
-
       <!-- 작성자 드롭다운 -->
       <div class="custom-select" :class="{ open: openDropdown === 'author' }">
         <button class="cs-trigger" @click.stop="toggleDropdown('author')">
@@ -182,7 +148,9 @@ function tagClass(tag) {
         </button>
         <div class="cs-dropdown" v-show="openDropdown === 'author'">
           <div class="cs-option" :class="{ selected: !selectedAuthor }" @click="selectAuthor('')">전체</div>
+          <div class="cs-option" :class="{ selected: selectedAuthor === '관리자' }" @click="selectAuthor('관리자')">관리자</div>
           <div class="cs-option" :class="{ selected: selectedAuthor === '관리사무소' }" @click="selectAuthor('관리사무소')">관리사무소</div>
+          <div class="cs-option" :class="{ selected: selectedAuthor === '입주자 대표' }" @click="selectAuthor('입주자 대표')">입주자 대표</div>
         </div>
       </div>
 
@@ -192,7 +160,6 @@ function tagClass(tag) {
         </svg>
         초기화
       </button>
-
     </div>
 
     <!-- 테이블 -->
@@ -200,23 +167,20 @@ function tagClass(tag) {
       <table class="notice-table">
         <thead>
           <tr>
-            <th class="col-check"><input type="checkbox" /></th>
             <th class="col-id">ID</th>
-            <th class="col-cat">카테고리</th>
             <th class="col-title">제목</th>
             <th class="col-author">작성자</th>
             <th class="col-comments">댓글</th>
             <th class="col-views">조회</th>
             <th class="col-date">작성일</th>
-            <th class="col-change">변경내역</th>
-            <th class="col-action">상세보기</th>
+            <th class="col-action">열람 여부</th>
           </tr>
         </thead>
-        <tbody>
 
+        <tbody>
           <!-- 데이터 없음 -->
           <tr v-if="paginated.length === 0">
-            <td colspan="10">
+            <td colspan="7">
               <div class="empty-state">
                 <div class="empty-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" width="40" height="40">
@@ -225,50 +189,45 @@ function tagClass(tag) {
                 </div>
                 <p class="empty-title">등록된 공지사항이 없습니다</p>
                 <p class="empty-sub">
-                  {{ searchKeyword || selectedCat || selectedAuthor ? '검색 조건을 변경하거나 초기화해 주세요.' : '아직 작성된 공지사항이 없습니다.' }}
+                  {{ searchKeyword || selectedAuthor ? '검색 조건을 변경하거나 초기화해 주세요.' : '아직 작성된 공지사항이 없습니다.' }}
                 </p>
-                <button v-if="searchKeyword || selectedCat || selectedAuthor" class="btn-reset-inline" @click="resetFilters">필터 초기화</button>
+                <button v-if="searchKeyword || selectedAuthor" class="btn-reset-inline" @click="resetFilters">필터 초기화</button>
               </div>
             </td>
           </tr>
 
           <!-- 목록 -->
           <tr
-            v-for="notice in paginated"
-            :key="notice.id"
+            v-for="(notice, index) in paginated"
+            :key="notice.boardId"
             class="notice-row"
             :class="{
-              'row-pinned':   notice.pinned,
-              'row-hovered':  hoveredId  === notice.id,
-              'row-selected': selectedId === notice.id,
+              'row-hovered':  hoveredId  === notice.boardId,
             }"
-            @mouseenter="hoveredId = notice.id"
-            @mouseleave="hoveredId = null"
+            @mouseenter="hoveredId = notice.boardId"
+            @mouseleave="hoveredId = -1"
             @click="openNotice(notice)"
           >
-            <td class="col-check" @click.stop><input type="checkbox" /></td>
-            <td class="col-id">
-              <span v-if="notice.pinned" class="pin-icon" title="고정">📌</span>
-              <span v-else>#{{ notice.id }}</span>
-            </td>
-            <td class="col-cat"><span class="cat-label">{{ notice.category }}</span></td>
+            <td class="col-id">#{{ filtered.length - ((currentPage - 1) * perPage + index) }}</td>
             <td class="col-title">
               <span class="badge-gong">공지</span>
-              <span class="title-text" :class="{ 'title-pinned': notice.pinned }">{{ notice.title }}</span>
-              <span v-if="notice.comments > 0" class="comment-count">[{{ notice.comments }}]</span>
+              <span class="title-text">{{ notice.title }}</span>
+              <span v-if="notice.commentCount > 0" class="comment-count">[{{ notice.commentCount }}]</span>
             </td>
-            <td class="col-author">{{ notice.author }}</td>
-            <td class="col-comments">{{ notice.comments }}</td>
-            <td class="col-views">{{ notice.views }}</td>
-            <td class="col-date">{{ notice.date }}</td>
-            <td class="col-change">
-              <span v-for="tag in notice.tags" :key="tag" class="tag" :class="tagClass(tag)">{{ tag }}</span>
-            </td>
+            <td class="col-author">{{ notice.authorName }}</td>
+            <td class="col-comments">{{ notice.commentCount }}</td>
+            <td class="col-views">{{ notice.viewCount }}</td>
+            <td class="col-date">{{ formatDate(notice.createdAt) }}</td>
             <td class="col-action">
-              <button class="btn-detail" @click.stop="openNotice(notice)">열람</button>
+              <button
+                class="btn-detail"
+                :class="{ 'btn-read': readIds.has(notice.boardId) }"
+                @click.stop="openNotice(notice)"
+              >
+                {{ readIds.has(notice.boardId) ? '열람완료' : '열람' }}
+              </button>
             </td>
           </tr>
-
         </tbody>
       </table>
     </div>
@@ -292,51 +251,6 @@ function tagClass(tag) {
     <p class="summary">총 {{ filtered.length }}개 · 페이지당 {{ perPage }}개</p>
 
   </div>
-
-  <!-- ── 상세 모달 ── -->
-  <Transition name="modal-fade">
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-box" v-if="selectedNotice">
-        <div class="modal-header">
-          <div class="modal-meta">
-            <span class="badge-gong">공지</span>
-            <span class="modal-cat">{{ selectedNotice.category }}</span>
-          </div>
-          <button class="modal-close" @click="closeModal">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-        <h2 class="modal-title">{{ selectedNotice.title }}</h2>
-        <div class="modal-info">
-          <span>{{ selectedNotice.author }}</span>
-          <span>·</span>
-          <span>{{ selectedNotice.date }}</span>
-          <span>·</span>
-          <span>조회 {{ selectedNotice.views }}</span>
-          <span v-for="tag in selectedNotice.tags" :key="tag" class="tag ml-6" :class="tagClass(tag)">{{ tag }}</span>
-        </div>
-        <div class="modal-divider"/>
-        <div class="modal-body">
-          <p>안녕하세요, <strong>APTEN 관리사무소</strong>입니다.</p>
-          <p>입주민 여러분의 쾌적한 주거 환경을 위해 아래와 같이 안내 드립니다.</p>
-          <br/>
-          <p><strong>■ 작업 일시</strong></p>
-          <p>2025년 12월 15일(일) 오전 09:00 ~ 오후 13:00</p>
-          <br/>
-          <p><strong>■ 작업 내용</strong></p>
-          <p>지하 1층 ~ 지하 3층 주차장 전체 청소 작업</p>
-          <br/>
-          <p><strong>■ 유의사항</strong></p>
-          <p>작업 시간 동안 해당 구역 차량 이동이 제한될 수 있으니 양해 부탁드립니다. 작업 전날인 12월 14일(토) 자정까지 차량을 이동해 주시기 바랍니다.</p>
-          <br/>
-          <p>문의사항은 관리사무소(☎ 02-0000-0000)로 연락 주시기 바랍니다.</p>
-          <p>감사합니다.</p>
-        </div>
-      </div>
-    </div>
-  </Transition>
 </template>
 
 <style scoped>
@@ -475,7 +389,6 @@ function tagClass(tag) {
 }
 
 /* 컬럼 너비 */
-.col-check    { width: 36px; }
 .col-id       { width: 50px; }
 .col-cat      { width: 100px; }
 .col-title    { text-align: left !important; min-width: 280px; white-space: normal; }
@@ -570,6 +483,12 @@ function tagClass(tag) {
   transition: background 0.12s, border-color 0.12s;
 }
 .btn-detail:hover { background: #EEF3FB; border-color: #4973E5; }
+.btn-read {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: default;
+}
 
 /* ── 빈 상태 ─────────────────────────────────────────────────── */
 .empty-state {
@@ -637,88 +556,4 @@ function tagClass(tag) {
   text-align: left;
   margin-top: 12px;
 }
-
-/* ── 모달 ───────────────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 15, 40, 0.35);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-box {
-  background: #fff;
-  border-radius: 16px;
-  width: 640px;
-  max-width: calc(100vw - 32px);
-  max-height: 80vh;
-  overflow-y: auto;
-  padding: 28px 32px;
-  box-shadow: 0 20px 60px rgba(73, 115, 229, 0.15), 0 4px 16px rgba(0,0,0,0.08);
-}
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.modal-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.modal-cat {
-  font-size: 12px;
-  color: #777;
-  background: #F0F2F6;
-  padding: 3px 8px;
-  border-radius: 4px;
-}
-.modal-close {
-  width: 32px; height: 32px;
-  border: 1px solid #E8EBF0;
-  border-radius: 8px;
-  background: #fff;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  color: #666;
-  transition: background 0.12s;
-}
-.modal-close:hover { background: #F5F6FA; }
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1A1A2E;
-  line-height: 1.4;
-  margin-bottom: 10px;
-}
-.modal-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #999;
-  flex-wrap: wrap;
-}
-.modal-divider {
-  height: 1px;
-  background: #E8EBF0;
-  margin: 16px 0;
-}
-.modal-body {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #444;
-}
-.modal-body strong { color: #1A1A2E; }
-
-/* ── 트랜지션 ────────────────────────────────────────────────── */
-.modal-fade-enter-active,
-.modal-fade-leave-active { transition: opacity 0.2s ease; }
-.modal-fade-enter-from,
-.modal-fade-leave-to { opacity: 0; }
 </style>
