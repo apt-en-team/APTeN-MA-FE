@@ -14,7 +14,7 @@ async function handleSubmit() {
   successMsg.value = ''
   try {
     await api.post('/mail/password-reset', {email: email.value})
-    successMsg.value = '비밀번호 재설정 메일이 발송되었습니다. 이메일을 확인해주세요.'
+    successMsg.value = '비밀번호 재설정 메일이 발송되었습니다. <br> 이메일을 확인해주세요.'
   } catch (e) {
     errorMsg.value = e.response?.data?.resultMessage || '메일 발송에 실패했습니다'
   }
@@ -39,7 +39,7 @@ async function handleSubmit() {
         </div>
 
         <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
-        <p v-if="successMsg" class="success">{{ successMsg }}</p>
+        <p v-if="successMsg" class="success" v-html="successMsg"></p>
 
         <button type="submit" class="btn-login" :disabled="loading">
           {{ loading ? '발송 중...' : '재설정 메일 발송' }}
