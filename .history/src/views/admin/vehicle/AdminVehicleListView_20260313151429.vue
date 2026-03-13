@@ -7,7 +7,7 @@ import StatsCards from '@/components/admin/StatsCards.vue'
 import FilterBar  from '@/components/admin/FilterBar.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/admin/Pagination.vue'
-import BaseModal  from '@/components/common/BeseModel.vue'
+import BaseModal from '@/components/common/BeseModel.vue'
 
 const vehicleStore = useVehicleStore()
 
@@ -158,39 +158,30 @@ onMounted(() => { fetchVehicles(); fetchStats() })
       <AdminTable :columns="columns" :rows="state.list">
 
         <template #cell-checkbox="{ row }">
-          <input type="checkbox" :value="row.vehicleId" v-model="selectedIds" @click.stop />
+          <input type="checkbox" :value="row.vehicleId" v-model="selectedIds" />
         </template>
 
-        <!-- 클릭 시 상세 모달 — 각 셀에 클릭 이벤트 -->
         <template #cell-vehicleId="{ row }">
-          <span class="td-id td-clickable" @click="openDetailModal(row)">#{{ row.vehicleId }}</span>
+          <span class="td-id">#{{ row.vehicleId }}</span>
         </template>
 
         <template #cell-licensePlate="{ row }">
-          <span class="td-plate td-clickable" @click="openDetailModal(row)">{{ row.licensePlate }}</span>
-        </template>
-
-        <template #cell-carModel="{ row }">
-          <span class="td-clickable" @click="openDetailModal(row)">{{ row.carModel ?? '-' }}</span>
+          <span class="td-plate">{{ row.licensePlate }}</span>
         </template>
 
         <template #cell-status="{ row }">
-          <span class="status-badge td-clickable" :class="statusClass(row.status)" @click="openDetailModal(row)">
+          <span class="status-badge" :class="statusClass(row.status)">
             {{ statusLabel(row.status) }}
           </span>
         </template>
 
-        <template #cell-createdAt="{ row }">
-          <span class="td-clickable" @click="openDetailModal(row)">{{ row.createdAt ?? '-' }}</span>
-        </template>
-
-        <!-- 승인/거부 버튼만 action에 — 가운데 정렬 -->
         <template #action="{ row }">
           <div class="action-buttons">
             <template v-if="row.status === 'PENDING'">
               <button class="btn-approve" @click.stop="openApproveModal(row)">승인</button>
               <button class="btn-reject"  @click.stop="openRejectModal(row)">거부</button>
             </template>
+            <button class="btn-detail" @click.stop="openDetailModal(row)">상세</button>
           </div>
         </template>
 
@@ -348,15 +339,13 @@ onMounted(() => { fetchVehicles(); fetchStats() })
 .td-id    { color: #A0AEC0; font-size: 12px; }
 .td-plate { font-weight: 600; }
 
-/* 행 클릭 커서 */
-.td-clickable { cursor: pointer; }
-.td-clickable:hover { opacity: 0.7; }
-
-.action-buttons { display: flex; gap: 6px; align-items: center; justify-content: center; }
+.action-buttons { display: flex; gap: 6px; align-items: center; }
 .btn-approve { padding: 4px 14px; background: #EBF5EE; color: #4D8B5A; border: 1px solid #C6E6CC; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-approve:hover { background: #d4edda; }
 .btn-reject  { padding: 4px 14px; background: #FEE2E2; color: #E53E3E; border: 1px solid #FECACA; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-reject:hover  { background: #fecaca; }
+.btn-detail  { padding: 4px 14px; background: #EFF6FF; color: #3B82F6; border: 1px solid #BFDBFE; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+.btn-detail:hover  { background: #DBEAFE; }
 
 /* 모달 공통 */
 .detail-hero { margin-bottom: 14px; }
