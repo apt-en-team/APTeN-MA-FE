@@ -16,11 +16,11 @@ import VisitorVehicleModals from '@/components/vehicle/Visitorvehiclemodal.vue' 
 const router = useRouter() // 페이지 이동에 사용 (등록 페이지로 이동 등)
 
 // 목록 데이터
-const list = ref([])            // API에서 받아온 방문차량 목록 배열
-const loading = ref(false)      // true면 "불러오는 중..." 표시
-const currentPage = ref(1)      // 현재 보고 있는 페이지 번호
-const totalPages = ref(0)       // 전체 페이지 수 (백엔드에서 계산해서 내려줌)
-const totalCount = ref(0)       // 필터 적용된 건수 (페이징 "총 N건 중 N건 조회"에 사용)
+const list = ref([]) // API에서 받아온 방문차량 목록 배열
+const loading = ref(false)  // true면 "불러오는 중..." 표시
+const currentPage = ref(1) // 현재 보고 있는 페이지 번호
+const totalPages = ref(0) // 전체 페이지 수 (백엔드에서 계산해서 내려줌)
+const totalCount = ref(0) // 필터 적용된 건수 (페이징 "총 N건 중 N건 조회"에 사용)
 
 // 검색 필터 (입력값이 없으면 전체 조회)
 const filter = ref({
@@ -46,7 +46,7 @@ const allCount = ref(0)         // 전체 누적 등록 건수
 // 목록 조회 함수 (API-031 호출)
 // 페이지 진입, 검색, 페이지 변경, 초기화 시 실행됨
 const fetchList = async () => {
-  loading.value = true
+  loading.value = true // 데이터 불러오는 동안 화면에 "불러오는 중..."표시
   try {
 
     // GET /api/visitor-vehicles/my?page=1&size=10&licensePlate=... 형태로 요청
@@ -57,10 +57,10 @@ const fetchList = async () => {
       visitorName: filter.value.visitorName || undefined,
       visitDate: filter.value.visitDate || undefined
     })
-    const data = res.data
+    const data = res.data // axios 응답에서 실제 데이터만 꺼냄.
 
     // 백엔드 응답 형태에 따라 분기 (배열이면 페이징 없는 응답, 객체면 페이징 응답)
-    list.value = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : []
+    list.value = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [] // 방어 코드
     totalCount.value = data?.totalCount ?? list.value.length
     totalPages.value = data?.totalPages ?? 1
 

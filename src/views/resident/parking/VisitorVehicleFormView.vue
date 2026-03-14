@@ -14,10 +14,10 @@ const today = new Date().toISOString().split('T')[0]
 
 // 폼 데이터 (백엔드 VisitorVehicleReq와 동일한 구조)
 const form = ref({
-  licensePlate: '',   // 차량번호
-  visitorName: '',    // 방문자 이름
-  visitPurpose: '',   // 방문 목적
-  visitDate: ''       // 방문 예정일
+  licensePlate: '', // 차량번호
+  visitorName: '', // 방문자 이름
+  visitPurpose: '', // 방문 목적
+  visitDate: ''// 방문 예정일
 })
 
 // 등록 버튼 클릭 시 실행
@@ -26,11 +26,14 @@ const handleSubmit = async () => {
   successMsg.value = ''
   loading.value = true
   try {
-    // POST /api/visitor-vehicles 호출
+    // 1. POST /api/visitor-vehicles 호출
     await registerVisitorVehicle(form.value)
+
+    // 2. 성공하면 이 줄이 실행
     successMsg.value = '방문차량이 등록되었습니다.'
-    // 1초 후 목록 페이지로 이동
-    setTimeout(() => router.push({name: 'VisitorVehiclesList'}), 1000)
+
+    // 3. 0.3초 후 목록 페이지로 이동
+    setTimeout(() => router.push({name: 'VisitorVehiclesList'}), 300)
   } catch (error) {
     if (error.response?.status === 400) {
       errorMsg.value = '과거 날짜는 선택할 수 없습니다.'
