@@ -87,7 +87,7 @@ async function handleDeactivate() {
         <div class="card">
           <div class="card-header">
             <span class="card-header-icon">⚡</span>
-            <h3>빠른 메뉴</h3>
+            <h3>빠른 메뉴</h3>a
           </div>
           <div class="quick-grid">
             <router-link to="/resident/my-vehicle" class="quick-item">

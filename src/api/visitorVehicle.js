@@ -34,3 +34,14 @@ export const deleteVisitorVehicle = (id) => {
 export const cancelVisitorVehicle = (id) => {
     return api.patch(`/visitor-vehicles/${id}/cancel`)
 }
+
+// ==================== 관리자 ====================
+
+// API-069 | 관리자 방문 예정 현황 조회
+export const getAdminVisitorVehicles = (params) => {
+    return api.get('/admin/visitor-vehicles', {params})
+}
+
+export const getAdminVisitorVehicleStats = () => {
+    return api.get('/admin/visitor-vehicles/stats')
+}

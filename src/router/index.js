@@ -60,7 +60,7 @@ import AdminVehicleListView from '@/views/admin/vehicle/AdminVehicleListView.vue
 import AdminParkingLogView from '@/views/admin/parking/AdminParkingLogView.vue'
 import ParkingDashboardView from '@/views/admin/parking/ParkingDashboardView.vue'
 import ParkingStatsView from '@/views/admin/parking/ParkingStatsView.vue'
-import VisitorVehicleListView from '@/views/admin/parking/VisitorVehicleListView.vue'
+import AdminVisitorVehicleStatusView from '@/views/admin/parking/AdminVisitorVehicleStatusView.vue'
 
 // 관리자 - 시설/예약
 // 시설/예약
@@ -140,7 +140,7 @@ const routes = [
             { path: 'parking-logs',      name: 'AdminParkingLog',          component: AdminParkingLogView,    meta: { title: '입출차 기록' } },
             { path: 'parking-dashboard', name: 'AdminParkingDashboard',    component: ParkingDashboardView,   meta: { title: '주차 현황' } },
             { path: 'parking-stats',     name: 'AdminParkingStats',        component: ParkingStatsView,       meta: { title: '주차 통계' } },
-            { path: 'visitor-vehicles',  name: 'AdminVisitorVehicleList',  component: VisitorVehicleListView, meta: { title: '방문 차량 관리' } },
+            { path: 'visitor-vehicles',  name: 'AdminVisitorVehicleList',  component: AdminVisitorVehicleStatusView, meta: { title: '방문 차량 관리' } },
 
             // 시설/예약
             { path: 'facility',                name: 'AdminFacilityManage',    component: FacilityManageView,         meta: { title: '시설 관리' } },
