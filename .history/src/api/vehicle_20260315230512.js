@@ -23,19 +23,19 @@ export default {
   },
 
   // API-042 | 전체 차량 목록 조회 (관리자)
-  getAllVehicles({ householdId = null, status = null, carType = null, dong = null, search = null, page = 0, size = 10 } = {}) {
-      return axios.get('/admin/vehicles', {
-          params: {
-              householdId: householdId || undefined,
-              status:      status      || undefined,
-              carType:     carType     || undefined,
-              dong:        dong        || undefined,
-              search:      search      || undefined,  // ← 추가
-              page,
-              size,
-          }
-      })
-  },
+    getAllVehicles({ householdId = null, status = null, carType = null, dong = null, search = null, page = 0, size = 10 } = {}) {
+        return axios.get('/admin/vehicles', {
+            params: {
+                householdId: householdId || undefined,
+                status:      status      || undefined,
+                carType:     carType     || undefined,
+                dong:        dong        || undefined,
+                search:      search      || undefined,  // ← 추가
+                page,
+                size,
+            }
+        })
+    },
 
   // ADMIN | 차량 통계 조회
   getVehicleStats() {
