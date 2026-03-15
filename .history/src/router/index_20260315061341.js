@@ -134,7 +134,7 @@ const routes = [
             { path: 'boards/modify/:id',  name: 'AdminBoardModify', component: AdminBoardModifyView, meta: { title: '게시글 수정' } },
 
             // 차량
-            { path: 'vehicles', name: 'AdminVehicleListView', component: AdminVehicleListView, meta: { title: '전체 차량 목록' } },
+            { path: 'vehicles', name: 'AdminVehicleListView', component: AdminVehicleListView, meta: { title: ' 차량 목록' } },
 
             // 주차/방문차량
             { path: 'parking-logs',      name: 'AdminParkingLog',          component: AdminParkingLogView,    meta: { title: '입출차 기록' } },

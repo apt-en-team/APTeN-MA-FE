@@ -330,34 +330,4 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
 .detail-status-badge.approved { background: #EBF5EE; color: #4D8B5A; }
 .detail-status-badge.pending  { background: #FEF9C3; color: #ca8a04; }
 .detail-status-badge.rejected { background: #FEE2E2; color: #E53E3E; }
-.detail-title  { font-size: 26px; font-weight: 700; color: #1A202C; margin-bottom: 2px; margin-top: 8px; }
-.detail-sub    { font-size: 13px; color: #A0AEC0; }
-.detail-divider { height: 1px; background: #E2E8F0; margin: 14px 0; }
-.detail-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.detail-cell   { display: flex; flex-direction: column; gap: 4px; }
-.detail-cell-label { font-size: 12px; color: #A0AEC0; }
-.detail-cell-value { font-size: 14px; font-weight: 600; color: #1A202C; }
-.confirm-vehicle-card { background: #F5F6F8; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
-.confirm-vehicle-info { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-.confirm-plate { font-size: 15px; font-weight: 700; color: #1A202C; }
-.confirm-vehicle-sub { font-size: 12px; color: #718096; }
-.confirm-hint  { font-size: 12px; color: #A0AEC0; text-align: center; margin-top: 8px; }
-.form-group  { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-.form-label  { font-size: 13px; font-weight: 600; color: #4A5568; }
-.required    { color: #E53E3E; }
-.form-select { border: 1px solid #E2E8F0; border-radius: 7px; padding: 9px 32px 9px 12px; font-size: 13px; color: #333; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A0AEC0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center; appearance: none; outline: none; width: 100%; font-family: 'Noto Sans KR', sans-serif; }
-.reason-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-.reason-chip  { padding: 6px 14px; border: 1px solid #E2E8F0; border-radius: 20px; font-size: 12px; color: #718096; background: #fff; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
-.reason-chip.active { background: #2B3A55; color: #fff; border-color: #2B3A55; }
-.reason-chip:hover:not(.active) { background: #F5F6F8; }
-.form-textarea { border: 1px solid #E2E8F0; border-radius: 7px; padding: 10px 14px; font-size: 13px; color: #333; outline: none; resize: none; width: 100%; font-family: 'Noto Sans KR', sans-serif; }
-.form-textarea:focus { border-color: #2B3A55; }
-.btn-cancel { padding: 9px 20px; border: 1px solid #E2E8F0; border-radius: 7px; background: #fff; font-size: 13px; color: #718096; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-cancel:hover { background: #F5F6F8; }
-.btn-submit-approve { padding: 9px 24px; background: #2B3A55; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-submit-approve:hover:not(:disabled) { background: #1E2A3E; }
-.btn-submit-reject { padding: 9px 24px; background: #E53E3E; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-submit-reject:hover:not(:disabled) { background: #c53030; }
-.btn-submit-approve:disabled,
-.btn-submit-reject:disabled { opacity: 0.5; cursor: default; }
-</style>
+.detail-title

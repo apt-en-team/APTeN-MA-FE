@@ -1,3 +1,4 @@
+
 import { defineStore } from 'pinia'
 import vehicleAPI from '@/api/vehicle.js'
 

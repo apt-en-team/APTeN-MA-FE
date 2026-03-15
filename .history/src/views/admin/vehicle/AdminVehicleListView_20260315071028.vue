@@ -17,8 +17,6 @@ const state = reactive({
   filterStatus:     '',
   filterHousehold:  '',
   filterType:       '',
-  filterDong:       '',   // ← 추가
-  dongs:            [],   // ← 추가
   size:             10,
   currentPage:      1,
   maxPage:          0,
@@ -27,12 +25,14 @@ const state = reactive({
 
 const selectedIds = reactive([])
 
+// 모달 상태
 const detailModal  = reactive({ show: false, vehicle: null })
 const approveModal = reactive({ show: false, vehicle: null, loading: false })
 const rejectModal  = reactive({ show: false, vehicle: null, loading: false, reason: '', memo: '' })
 
 const rejectReasons = ['중복 차량', '세대 한도 초과', '정보 불일치', '직접 입력']
 
+// 테이블 컬럼
 const columns = [
   { label: '',         key: 'checkbox' },
   { label: 'ID',       key: 'vehicleId' },
@@ -44,6 +44,7 @@ const columns = [
   { label: '등록일',    key: 'createdAt' },
 ]
 
+// 통계 카드
 const statsCards = computed(() => [
   { label: '전체 등록 차량', value: vehicleStore.total,    unit: '대', desc: '승인 완료 기준' },
   { label: '승인 대기',      value: vehicleStore.pending,  unit: '대', desc: '즉시 처리 필요', descClass: 'urgent' },
@@ -51,35 +52,30 @@ const statsCards = computed(() => [
   { label: '거부',           value: vehicleStore.rejected, unit: '대', desc: '재신청 가능' },
 ])
 
+// 유틸
 const statusLabel = (s) => ({ APPROVED: '승인', PENDING: '대기', REJECTED: '거부' }[s] ?? s)
 const statusClass = (s) => ({ APPROVED: 'approved', PENDING: 'pending', REJECTED: 'rejected' }[s] ?? '')
-const formatDate  = (val) => val ? val.replace('T', ' ') : '-'
+// 날짜 포맷: "2026-03-13T12:01:54" → "2026-03-13 12:01:54"
+const formatDate = (val) => val ? val.replace('T', ' ') : '-'
 
 const householdLabel = (household) => {
   if (!household) return '-'
   return `${household.dong ?? ''} ${household.ho ?? ''}`.trim() || '-'
 }
 
-const sortByPendingFirst = (list) =>
-  [...list].sort((a, b) => {
-    if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
-    if (a.status !== 'PENDING' && b.status === 'PENDING') return 1
-    return 0
-  })
-
+// API: 전체 차량 목록 조회 (페이징)
 const fetchVehicles = async () => {
   try {
     const { data } = await vehicleAPI.getAllVehicles({
-      search:      state.searchQuery  || null,
-      status:      state.filterStatus || null,
+      search:      state.searchQuery     || null,
+      status:      state.filterStatus    || null,
       householdId: state.filterHousehold || null,
-      carType:     state.filterType   || null,
-      dong:        state.filterDong   || null,  // ← 추가
+      carType:     state.filterType      || null,
       page:        state.currentPage - 1,
       size:        state.size,
     })
     const result        = data.resultData
-    state.list          = sortByPendingFirst(result.content ?? [])
+    state.list          = result.content    ?? []
     state.maxPage       = result.totalPages ?? 0
     state.totalFiltered = result.content?.length ?? 0
   } catch (e) { console.error('차량 목록 조회 실패', e) }
@@ -87,17 +83,11 @@ const fetchVehicles = async () => {
 
 const fetchStats = () => vehicleStore.fetchStats()
 
-// ← 추가
-const fetchDongs = async () => {
-  try {
-    const { data } = await vehicleAPI.getDongs()
-    state.dongs = data.resultData ?? []
-  } catch (e) { console.error('동 목록 조회 실패', e) }
-}
-
+// 상세 모달
 const openDetailModal  = (vehicle) => { detailModal.vehicle = vehicle; detailModal.show = true }
 const closeDetailModal = () => { detailModal.show = false; detailModal.vehicle = null }
 
+// 승인 모달
 const openApproveModal  = (vehicle) => { approveModal.vehicle = vehicle; approveModal.loading = false; approveModal.show = true }
 const closeApproveModal = () => { approveModal.show = false; approveModal.vehicle = null }
 
@@ -111,6 +101,7 @@ const handleApprove = async () => {
   finally { approveModal.loading = false }
 }
 
+// 거부 모달
 const openRejectModal = (vehicle) => {
   rejectModal.vehicle = vehicle
   rejectModal.loading = false
@@ -130,6 +121,7 @@ const handleReject = async () => {
   finally { rejectModal.loading = false }
 }
 
+// 필터/페이지
 const doSearch = () => { state.currentPage = 1; fetchVehicles() }
 
 let searchTimer = null
@@ -143,13 +135,12 @@ const resetFilters = () => {
   state.filterStatus    = ''
   state.filterHousehold = ''
   state.filterType      = ''
-  state.filterDong      = ''  // ← 추가
   state.currentPage     = 1
   fetchVehicles()
 }
 const goToPage = (page) => { state.currentPage = page; fetchVehicles() }
 
-onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDongs 추가
+onMounted(() => { fetchVehicles(); fetchStats() })
 </script>
 
 <template>
@@ -172,47 +163,54 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
           <option value="PENDING">대기</option>
           <option value="REJECTED">거부</option>
         </select>
-        <!-- ← 동 목록 동적으로 -->
-        <select v-model="state.filterDong" class="filter-select" @change="doSearch">
+        <select v-model="state.filterHousehold" class="filter-select" @change="doSearch">
           <option value="">세대 선택</option>
-          <option v-for="dong in state.dongs" :key="dong" :value="dong">{{ dong }}</option>
         </select>
         <select v-model="state.filterType" class="filter-select" @change="doSearch">
           <option value="">차종</option>
-          <option value="경차">경차</option>
-          <option value="승용차">승용차</option>
-          <option value="SUV">SUV</option>
-          <option value="승합차">승합차</option>
+          <option value="compact">경차</option>
+          <option value="sedan">승용차</option>
+          <option value="suv">SUV</option>
+          <option value="van">승합차</option>
         </select>
       </FilterBar>
 
       <AdminTable :columns="columns" :rows="state.list" @row-click="openDetailModal">
+
         <template #cell-checkbox="{ row }">
           <input type="checkbox" :value="row.vehicleId" v-model="selectedIds" @click.stop />
         </template>
+
         <template #cell-vehicleId="{ row }">
           <span class="td-cell td-id">#{{ row.vehicleId }}</span>
         </template>
+
         <template #cell-licensePlate="{ row }">
           <span class="td-cell td-plate">{{ row.licensePlate }}</span>
         </template>
+
         <template #cell-carModel="{ row }">
           <span class="td-cell">{{ row.carModel ?? '-' }}</span>
         </template>
+
         <template #cell-household="{ row }">
           <span class="td-cell">{{ householdLabel(row.household) }}</span>
         </template>
+
         <template #cell-user="{ row }">
           <span class="td-cell">{{ row.user?.name ?? '-' }}</span>
         </template>
+
         <template #cell-status="{ row }">
           <span class="td-cell status-badge" :class="statusClass(row.status)">
             {{ statusLabel(row.status) }}
           </span>
         </template>
+
         <template #cell-createdAt="{ row }">
           <span class="td-cell">{{ formatDate(row.createdAt) }}</span>
         </template>
+
         <template #action="{ row }">
           <div class="action-buttons">
             <template v-if="row.status === 'PENDING'">
@@ -221,6 +219,7 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
             </template>
           </div>
         </template>
+
       </AdminTable>
 
       <Pagination
@@ -234,22 +233,57 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
     </div>
 
     <!-- 상세 모달 -->
-    <BaseModal v-if="detailModal.show" title="차량 상세 정보" :subtitle="'ID #' + detailModal.vehicle?.vehicleId" @close="closeDetailModal">
+    <BaseModal
+      v-if="detailModal.show"
+      title="차량 상세 정보"
+      :subtitle="'ID #' + detailModal.vehicle?.vehicleId"
+      @close="closeDetailModal"
+    >
       <div class="detail-hero">
-        <span :class="['detail-status-badge', statusClass(detailModal.vehicle?.status)]">{{ statusLabel(detailModal.vehicle?.status) }}</span>
+        <span :class="['detail-status-badge', statusClass(detailModal.vehicle?.status)]">
+          {{ statusLabel(detailModal.vehicle?.status) }}
+        </span>
         <h2 class="detail-title">{{ detailModal.vehicle?.licensePlate }}</h2>
-        <p class="detail-sub">{{ detailModal.vehicle?.carModel ?? '-' }} · {{ householdLabel(detailModal.vehicle?.household) }}</p>
+        <p class="detail-sub">
+          {{ detailModal.vehicle?.carModel ?? '-' }} · {{ householdLabel(detailModal.vehicle?.household) }}
+        </p>
       </div>
       <div class="detail-divider"></div>
       <div class="detail-grid">
-        <div class="detail-cell"><span class="detail-cell-label">차량 ID</span><span class="detail-cell-value">#{{ detailModal.vehicle?.vehicleId }}</span></div>
-        <div class="detail-cell"><span class="detail-cell-label">차량번호</span><span class="detail-cell-value">{{ detailModal.vehicle?.licensePlate }}</span></div>
-        <div class="detail-cell"><span class="detail-cell-label">차종</span><span class="detail-cell-value">{{ detailModal.vehicle?.carModel ?? '-' }}</span></div>
-        <div class="detail-cell"><span class="detail-cell-label">소속 세대</span><span class="detail-cell-value">{{ householdLabel(detailModal.vehicle?.household) }}</span></div>
-        <div class="detail-cell"><span class="detail-cell-label">등록자</span><span class="detail-cell-value">{{ detailModal.vehicle?.user?.name ?? '-' }}</span></div>
-        <div class="detail-cell"><span class="detail-cell-label">등록일</span><span class="detail-cell-value">{{ formatDate(detailModal.vehicle?.createdAt) }}</span></div>
-        <div class="detail-cell"><span class="detail-cell-label">승인 상태</span><span :class="['detail-status-badge', statusClass(detailModal.vehicle?.status)]">{{ statusLabel(detailModal.vehicle?.status) }}</span></div>
-        <div class="detail-cell"><span class="detail-cell-label">승인/거부일</span><span class="detail-cell-value">{{ detailModal.vehicle?.approvedAt ?? '-' }}</span></div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">차량 ID</span>
+          <span class="detail-cell-value">#{{ detailModal.vehicle?.vehicleId }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">차량번호</span>
+          <span class="detail-cell-value">{{ detailModal.vehicle?.licensePlate }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">차종</span>
+          <span class="detail-cell-value">{{ detailModal.vehicle?.carModel ?? '-' }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">소속 세대</span>
+          <span class="detail-cell-value">{{ householdLabel(detailModal.vehicle?.household) }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">등록자</span>
+          <span class="detail-cell-value">{{ detailModal.vehicle?.user?.name ?? '-' }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">등록일</span>
+          <span class="detail-cell-value">{{ formatDate(detailModal.vehicle?.createdAt) }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">승인 상태</span>
+          <span :class="['detail-status-badge', statusClass(detailModal.vehicle?.status)]">
+            {{ statusLabel(detailModal.vehicle?.status) }}
+          </span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">승인/거부일</span>
+          <span class="detail-cell-value">{{ detailModal.vehicle?.approvedAt ?? '-' }}</span>
+        </div>
       </div>
       <template #footer>
         <button class="btn-cancel" @click="closeDetailModal">닫기</button>
@@ -257,29 +291,44 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
     </BaseModal>
 
     <!-- 승인 모달 -->
-    <BaseModal v-if="approveModal.show" title="차량을 승인하시겠습니까?" @close="closeApproveModal">
+    <BaseModal
+      v-if="approveModal.show"
+      title="차량을 승인하시겠습니까?"
+      @close="closeApproveModal"
+    >
       <div class="confirm-vehicle-card">
         <div class="confirm-vehicle-info">
           <span class="confirm-plate">{{ approveModal.vehicle?.licensePlate }}</span>
           <span class="status-badge pending">대기</span>
         </div>
-        <p class="confirm-vehicle-sub">{{ approveModal.vehicle?.carModel ?? '-' }} · {{ householdLabel(approveModal.vehicle?.household) }}</p>
+        <p class="confirm-vehicle-sub">
+          {{ approveModal.vehicle?.carModel ?? '-' }} · {{ householdLabel(approveModal.vehicle?.household) }}
+        </p>
       </div>
       <p class="confirm-hint">승인 시 해당 세대에 알림이 발송됩니다.</p>
       <template #footer>
         <button class="btn-cancel" @click="closeApproveModal">취소</button>
-        <button class="btn-submit-approve" @click="handleApprove" :disabled="approveModal.loading">{{ approveModal.loading ? '처리 중...' : '승인' }}</button>
+        <button class="btn-submit-approve" @click="handleApprove" :disabled="approveModal.loading">
+          {{ approveModal.loading ? '처리 중...' : '승인' }}
+        </button>
       </template>
     </BaseModal>
 
     <!-- 거부 모달 -->
-    <BaseModal v-if="rejectModal.show" title="차량 거부" :subtitle="'ID ' + rejectModal.vehicle?.vehicleId" @close="closeRejectModal">
+    <BaseModal
+      v-if="rejectModal.show"
+      title="차량 거부"
+      :subtitle="'ID ' + rejectModal.vehicle?.vehicleId"
+      @close="closeRejectModal"
+    >
       <div class="confirm-vehicle-card">
         <div class="confirm-vehicle-info">
           <span class="confirm-plate">{{ rejectModal.vehicle?.licensePlate }}</span>
           <span class="status-badge pending">대기</span>
         </div>
-        <p class="confirm-vehicle-sub">{{ rejectModal.vehicle?.carModel ?? '-' }} · {{ householdLabel(rejectModal.vehicle?.household) }}</p>
+        <p class="confirm-vehicle-sub">
+          {{ rejectModal.vehicle?.carModel ?? '-' }} · {{ householdLabel(rejectModal.vehicle?.household) }}
+        </p>
       </div>
       <div class="form-group">
         <label class="form-label">거부 사유 <span class="required">*</span></label>
@@ -289,15 +338,31 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
         </select>
       </div>
       <div class="reason-chips">
-        <button v-for="r in rejectReasons" :key="r" :class="['reason-chip', { active: rejectModal.reason === r }]" @click="rejectModal.reason = r">{{ r }}</button>
+        <button
+          v-for="r in rejectReasons"
+          :key="r"
+          :class="['reason-chip', { active: rejectModal.reason === r }]"
+          @click="rejectModal.reason = r"
+        >{{ r }}</button>
       </div>
       <div class="form-group">
         <label class="form-label">상세 내용 (선택)</label>
-        <textarea class="form-textarea" v-model="rejectModal.memo" placeholder="거부 사유를 상세히 입력해주세요." rows="3" />
+        <textarea
+          class="form-textarea"
+          v-model="rejectModal.memo"
+          placeholder="거부 사유를 상세히 입력해주세요."
+          rows="3"
+        />
       </div>
       <template #footer>
         <button class="btn-cancel" @click="closeRejectModal">취소</button>
-        <button class="btn-submit-reject" @click="handleReject" :disabled="rejectModal.loading || !rejectModal.reason">{{ rejectModal.loading ? '처리 중...' : '거부 확인' }}</button>
+        <button
+          class="btn-submit-reject"
+          @click="handleReject"
+          :disabled="rejectModal.loading || !rejectModal.reason"
+        >
+          {{ rejectModal.loading ? '처리 중...' : '거부 확인' }}
+        </button>
       </template>
     </BaseModal>
 
@@ -320,6 +385,7 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
 .td-cell  { display: block; width: 100%; height: 100%; padding: 13px 16px; box-sizing: border-box; }
 .td-id    { color: #A0AEC0; font-size: 12px; }
 .td-plate { font-weight: 600; }
+
 .action-buttons { display: flex; gap: 6px; align-items: center; justify-content: center; }
 .btn-approve { padding: 4px 14px; background: #EBF5EE; color: #4D8B5A; border: 1px solid #C6E6CC; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-approve:hover { background: #d4edda; }

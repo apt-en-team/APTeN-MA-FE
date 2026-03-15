@@ -17,8 +17,6 @@ const state = reactive({
   filterStatus:     '',
   filterHousehold:  '',
   filterType:       '',
-  filterDong:       '',   // ← 추가
-  dongs:            [],   // ← 추가
   size:             10,
   currentPage:      1,
   maxPage:          0,
@@ -60,6 +58,7 @@ const householdLabel = (household) => {
   return `${household.dong ?? ''} ${household.ho ?? ''}`.trim() || '-'
 }
 
+// ★ PENDING 항상 위로 정렬
 const sortByPendingFirst = (list) =>
   [...list].sort((a, b) => {
     if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
@@ -70,30 +69,21 @@ const sortByPendingFirst = (list) =>
 const fetchVehicles = async () => {
   try {
     const { data } = await vehicleAPI.getAllVehicles({
-      search:      state.searchQuery  || null,
-      status:      state.filterStatus || null,
+      search:      state.searchQuery     || null,
+      status:      state.filterStatus    || null,
       householdId: state.filterHousehold || null,
-      carType:     state.filterType   || null,
-      dong:        state.filterDong   || null,  // ← 추가
+      carType:     state.filterType      || null,
       page:        state.currentPage - 1,
       size:        state.size,
     })
     const result        = data.resultData
-    state.list          = sortByPendingFirst(result.content ?? [])
+    state.list          = sortByPendingFirst(result.content ?? []) // ★ 정렬 적용
     state.maxPage       = result.totalPages ?? 0
     state.totalFiltered = result.content?.length ?? 0
   } catch (e) { console.error('차량 목록 조회 실패', e) }
 }
 
 const fetchStats = () => vehicleStore.fetchStats()
-
-// ← 추가
-const fetchDongs = async () => {
-  try {
-    const { data } = await vehicleAPI.getDongs()
-    state.dongs = data.resultData ?? []
-  } catch (e) { console.error('동 목록 조회 실패', e) }
-}
 
 const openDetailModal  = (vehicle) => { detailModal.vehicle = vehicle; detailModal.show = true }
 const closeDetailModal = () => { detailModal.show = false; detailModal.vehicle = null }
@@ -143,13 +133,12 @@ const resetFilters = () => {
   state.filterStatus    = ''
   state.filterHousehold = ''
   state.filterType      = ''
-  state.filterDong      = ''  // ← 추가
   state.currentPage     = 1
   fetchVehicles()
 }
 const goToPage = (page) => { state.currentPage = page; fetchVehicles() }
 
-onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDongs 추가
+onMounted(() => { fetchVehicles(); fetchStats() })
 </script>
 
 <template>
@@ -172,11 +161,10 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
           <option value="PENDING">대기</option>
           <option value="REJECTED">거부</option>
         </select>
-        <!-- ← 동 목록 동적으로 -->
-        <select v-model="state.filterDong" class="filter-select" @change="doSearch">
+        <select v-model="state.filterHousehold" class="filter-select" @change="doSearch">
           <option value="">세대 선택</option>
-          <option v-for="dong in state.dongs" :key="dong" :value="dong">{{ dong }}</option>
         </select>
+        <!-- ★ 차종 옵션값 DB값으로 수정 -->
         <select v-model="state.filterType" class="filter-select" @change="doSearch">
           <option value="">차종</option>
           <option value="경차">경차</option>
@@ -187,6 +175,7 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
       </FilterBar>
 
       <AdminTable :columns="columns" :rows="state.list" @row-click="openDetailModal">
+
         <template #cell-checkbox="{ row }">
           <input type="checkbox" :value="row.vehicleId" v-model="selectedIds" @click.stop />
         </template>
@@ -221,6 +210,7 @@ onMounted(() => { fetchVehicles(); fetchStats(); fetchDongs() })  // ← fetchDo
             </template>
           </div>
         </template>
+
       </AdminTable>
 
       <Pagination
