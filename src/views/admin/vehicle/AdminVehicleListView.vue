@@ -9,7 +9,7 @@ import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/admin/Pagination.vue'
 import BaseModal  from '@/components/common/BeseModel.vue'
 
-const vehicleStore = useVehicleStore()
+const vehicleStore = useVehicleStore();
 
 const state = reactive({
   list:             [],

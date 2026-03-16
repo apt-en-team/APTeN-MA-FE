@@ -22,7 +22,7 @@ const fetchDashboardData = async () => {
   try {
     await Promise.all([
       householdStore.fetchStats(),   // 세대 통계
-      vehicleStore.fetchStats() // 전체주차 목록
+      vehicleStore.fetchStats() // 전체 주차 승인 대기 목록
       // parkingStore.fetchStats(),  // 나중에 주차 추가
       // reservationStore.fetchStats(), // 나중에 예약 추가
     ])
