@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/modules/auth'
 import { useBoardStore } from '@/stores/modules/board'
 import { getPostDetail } from '@/api/board'
+import BoardEditor from '@/components/board/BoardEditor.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -142,25 +143,8 @@ function getAvatarColor(name) {
           <!-- 내용 -->
           <div class="form-group">
             <label class="form-label">내용 <span class="required">*</span></label>
-            <div class="editor-wrap">
-              <div class="editor-toolbar">
-                <button class="toolbar-btn">B</button>
-                <button class="toolbar-btn italic">I</button>
-                <button class="toolbar-btn underline">U</button>
-                <button class="toolbar-btn">H1</button>
-                <button class="toolbar-btn">H2</button>
-                <div class="toolbar-divider"/>
-                <button class="toolbar-btn">링크</button>
-                <button class="toolbar-btn">이미지</button>
-              </div>
-              <textarea
-                v-model="content"
-                class="form-textarea"
-                placeholder="내용을 입력해주세요."
-                maxlength="5000"
-              />
-              <div class="char-count">{{ content.length }} / 5000자</div>
-            </div>
+            <BoardEditor v-model="content" />
+            <div class="char-count">{{ content.length }} / 5000자</div>
           </div>
 
           <!-- 수정 이력 -->

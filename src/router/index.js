@@ -99,8 +99,8 @@ const routes = [
             { path: 'board/notice/:id', name: 'NoticeDetail', component: NoticeDetailView, meta: { title: '공지사항 상세' } },
             { path: 'board',        name: 'BoardList',   component: BoardListView,   meta: { title: '자유게시판' } },
             { path: 'board/form',   name: 'BoardForm',   component: BoardFormView,   meta: { title: '게시글 작성' } },
+            { path: 'board/my-posts',     name: 'MyPosts',     component: MyPostsView,     meta: { title: '내가 쓴 글' } },
             { path: 'board/:id',    name: 'BoardDetail', component: BoardDetailView, meta: { title: '게시글 상세보기' } },
-            { path: 'my-posts',     name: 'MyPosts',     component: MyPostsView,     meta: { title: '내가 쓴 글' } },
 
             // 시설/예약
             {path: 'facility', name: 'FacilityList', component: FacilityListView, meta: {title: '시설'}},

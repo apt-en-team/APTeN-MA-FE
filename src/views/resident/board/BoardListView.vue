@@ -21,7 +21,7 @@ const myPosts = computed(() => boardStore.myPosts || [])
 
 // ─── 데이터 불러오기 ──────────────────────────────────────────
 async function fetchData() {
-  await boardStore.fetchPosts({ type: activeTab.value, page: currentPage.value, size: PAGE_SIZE })
+  await boardStore.fetchPosts({ category: activeTab.value, page: currentPage.value, size: PAGE_SIZE })
   
   // 500 에러가 나도 메인 목록에 영향 없게 분리
   boardStore.fetchPopularPosts().catch(() => {})
@@ -34,13 +34,13 @@ onMounted(() => fetchData())
 function setTab(tab) {
   activeTab.value = tab
   currentPage.value = 1
-  boardStore.fetchPosts({ type: activeTab.value, page: 1, size: PAGE_SIZE })
+  boardStore.fetchPosts({ category: activeTab.value, page: 1, size: PAGE_SIZE })
 }
 
 // ─── 페이지 변경 ──────────────────────────────────────────────
 function changePage(page) {
   currentPage.value = page
-  boardStore.fetchPosts({ type: activeTab.value, page, size: PAGE_SIZE })
+  boardStore.fetchPosts({ category: activeTab.value, page, size: PAGE_SIZE })
 }
 
 // ─── 내가 쓴 글 삭제 ──────────────────────────────────────────
@@ -58,6 +58,12 @@ function getAvatarStyle(name) {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return dateStr.replace('T', ' ').slice(0, 16)
+}
+
+// ─── HTML 태그 제거 ──────────────────────────────────────────
+function stripHtml(html) {
+  if (!html) return ''
+  return html.replace(/<[^>]*>/g, '').slice(0, 100)
 }
 </script>
 
@@ -119,7 +125,7 @@ function formatDate(dateStr) {
                 <span class="post-date">{{ formatDate(post.createdAt) }}</span>
               </div>
               <h3 class="card-title">{{ post.title }}</h3>
-              <p class="card-preview">{{ post.content }}</p>
+              <p class="card-preview">{{ stripHtml(post.content) }}</p>
               <div class="card-footer">
                 <span class="stat-item">
                   <!-- heroicons: chat-bubble-left (outline) -->

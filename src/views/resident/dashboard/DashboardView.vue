@@ -23,14 +23,30 @@ const notices = ref([])
 
 const reservations = ref([])
 
+// onMounted(async () => {
+//   try {
+//     const { data } = await axios.get('/dashboard')
+//     stats.value = data.stats ?? stats.value
+//     notices.value = data.notices ?? []
+//     reservations.value = data.reservations ?? []
+//   } catch (e) {
+//     console.warn('대시보드 API 오류:', e)
+//   }
+// })
+
 onMounted(async () => {
   try {
-    const { data } = await axios.get('/dashboard')
-    stats.value = data.stats ?? stats.value
-    notices.value = data.notices ?? []
-    reservations.value = data.reservations ?? []
+    // 공지사항
+    const noticeRes = await axios.get('/boards', { params: { category: 'NOTICE', page: 1, size: 3 } })
+    notices.value = noticeRes.data.content ?? []
+
+    // 예약 현황
+    const reservationRes = await axios.get('/reservations/my')
+    reservations.value = reservationRes.data ?? []
+
+    // stats는 차량/방문차량/주차 API 붙으면 그때 채우기
   } catch (e) {
-    console.warn('대시보드 API 오류:', e)
+    console.warn('대시보드 로딩 오류:', e)
   }
 })
 
@@ -193,12 +209,12 @@ const banners = [
           </div>
           <div
             v-for="notice in notices"
-            :key="notice.id"
+            :key="notice.boardId"
             class="notice-item"
-            @click="router.push('/resident/boards')"
+            @click="router.push(`/resident/board/notice/${notice.boardId}`)"
           >
             <div class="notice-row">
-              <span v-if="notice.type" class="notice-badge">{{ notice.type }}</span>
+              <span v-if="notice.category" class="notice-badge">{{ notice.category }}</span>
               <span v-else class="notice-dot">•</span>
               <span class="notice-title">{{ notice.title }}</span>
             </div>
@@ -224,9 +240,9 @@ const banners = [
           </div>
           <div
             v-for="res in reservations"
-            :key="res.id"
+            :key="res.reservationId"
             class="reservation-item"
-            @click="router.push('/resident/reservations')"
+            @click="router.push(`/resident/reservations/${res.reservationId}`)"
           >
             <div class="res-left">
               <span

@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from '@/api/axios.js'
+import { onMounted } from 'vue'
 
 const router = useRouter()
 
@@ -9,24 +11,24 @@ const myPosts = ref([])
 const loading = ref(false)
 
 // TODO: Spring Boot API 연동 시 아래 주석 해제
-// async function fetchMyPosts() {
-//   loading.value = true
-//   try {
-//     const res = await axios.get('/api/posts/my')
-//     myPosts.value = res.data
-//   } catch (e) {
-//     console.error('내가 쓴 글 조회 실패', e)
-//   } finally {
-//     loading.value = false
-//   }
-// }
-// onMounted(fetchMyPosts)
+async function fetchMyPosts() {
+  loading.value = true
+  try {
+    // const res = await api.get('/boards/my')
+    // myPosts.value = res.data
+  } catch (e) {
+    console.error('내가 쓴 글 조회 실패', e)
+  } finally {
+    loading.value = false
+  }
+}
+onMounted(fetchMyPosts)
 
 // ─── 탭 ───────────────────────────────────────────────────────
-const activeTab = ref('free') // 'free' | 'inquiry'
+const activeTab = ref('FREE') // 'FREE' | 'INQUIRY'
 
 const filteredPosts = computed(() =>
-  myPosts.value.filter(p => p.type === activeTab.value)
+  myPosts.value.filter(p => p.category === activeTab.value)
 )
 
 function setTab(tab) {
@@ -46,23 +48,23 @@ const currentPosts = computed(() => {
 
 // ─── 액션 ─────────────────────────────────────────────────────
 function editPost(id) {
-  router.push(`/resident/board/form/${id}`)
+  router.push(`/resident/board/form?id=${id}`)
 }
 
 function deletePost(id) {
   if (!confirm('삭제하시겠습니까?')) return
-  myPosts.value = myPosts.value.filter(p => p.id !== id)
+  myPosts.value = myPosts.value.filter(p => p.boardId !== id)
 }
 
 // ─── 인기글 (사이드바) ────────────────────────────────────────
 const popularPosts = ref([])
 
 // TODO: Spring Boot API 연동 시 아래 주석 해제
-// async function fetchPopularPosts() {
-//   const res = await axios.get('/api/posts/popular')
-//   popularPosts.value = res.data
-// }
-// onMounted(fetchPopularPosts)
+async function fetchPopularPosts() {
+  // const res = await api.get('/boards/popular')
+  // popularPosts.value = res.data
+}
+onMounted(fetchPopularPosts)
 
 // ─── 아바타 색상 ──────────────────────────────────────────────
 const avatarColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
@@ -82,8 +84,8 @@ function getAvatarStyle(name) {
         <!-- 탭바 -->
         <div class="tab-bar">
           <div class="tabs">
-            <button class="tab-btn" :class="{ active: activeTab === 'free' }" @click="setTab('free')">자유게시판</button>
-            <button class="tab-btn" :class="{ active: activeTab === 'inquiry' }" @click="setTab('inquiry')">문의사항</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'FREE' }" @click="setTab('FREE')">자유게시판</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'INQUIRY' }" @click="setTab('INQUIRY')">문의사항</button>
           </div>
         </div>
 
@@ -115,8 +117,8 @@ function getAvatarStyle(name) {
           <div
             class="board-card"
             v-for="post in currentPosts"
-            :key="post.id"
-            @click="router.push(`/resident/board/${post.id}`)"
+            :key="post.boardId"
+            @click="router.push(`/resident/board/${post.boardId}`)"
           >
             <div v-if="post.thumbnail" class="card-thumb">
               <img :src="post.thumbnail" :alt="post.title" />
@@ -135,13 +137,13 @@ function getAvatarStyle(name) {
                 <div class="card-right">
                   <span class="post-date">{{ post.createdAt }}</span>
                   <div class="post-actions" @click.stop>
-                    <button class="action-btn edit" @click="editPost(post.id)">
+                    <button class="action-btn edit" @click="editPost(post.boardId)">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="12" height="12">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                       </svg>
                       수정
                     </button>
-                    <button class="action-btn delete" @click="deletePost(post.id)">
+                    <button class="action-btn delete" @click="deletePost(post.boardId)">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="12" height="12">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                       </svg>
@@ -207,7 +209,7 @@ function getAvatarStyle(name) {
             <span>아직 인기글이 없어요</span>
           </div>
           <ul v-else class="popular-list">
-            <li class="popular-item" v-for="post in popularPosts" :key="post.id" @click="router.push(`/resident/board/${post.id}`)">
+            <li class="popular-item" v-for="post in popularPosts" :key="post.boardId" @click="router.push(`/resident/board/${post.boardId}`)">
               <div class="popular-text-wrap">
                 <p class="popular-title">{{ post.title }}</p>
                 <div class="popular-meta">

@@ -4,6 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/modules/auth'
 import { getPostDetail } from '@/api/board'
 import { useBoardStore } from '@/stores/modules/board'
+import 'quill/dist/quill.snow.css'
+import CommentItem from '@/components/board/CommentItem.vue'
+
+
 
 const route  = useRoute()
 const router = useRouter()
@@ -70,6 +74,15 @@ const dummyComments = ref([
   { commentId: 2, authorName: '김가은', userId: 102, content: '다 찼나요?', createdAt: '2026-03-13T11:00:00', isDeleted: 0 },
   { commentId: 3, authorName: '이윤주', userId: 103, content: '저도 참여하고 싶어요!', createdAt: '2026-03-13T11:20:00', isDeleted: 1 },
 ])
+
+function deleteComment(commentId) {
+  // TODO: API 연동
+  console.log('delete', commentId)
+}
+function editComment({ commentId, content }) {
+  // TODO: API 연동
+  console.log('edit', commentId, content)
+}
 </script>
 
 <template>
@@ -105,7 +118,7 @@ const dummyComments = ref([
           <div class="divider"/>
 
           <!-- 본문 -->
-          <div class="detail-body">{{ post.content }}</div>
+          <div class="detail-body ql-editor" v-html="post.content" />
 
         </div>
       </div>
@@ -144,41 +157,19 @@ const dummyComments = ref([
         <div class="sidebar-card">
           <p class="sidebar-title">
             댓글
-            <span class="comment-badge">{{ dummyComments.length }}</span>
+            <span class="comment-badge">{{ dummyComments.filter(c => c.isDeleted !== 1).length }}</span>
           </p>
 
           <div class="comment-list">
-            <div
+            <CommentItem
               v-for="comment in dummyComments"
               :key="comment.commentId"
-              class="comment-item"
-            >
-              <template v-if="comment.isDeleted === 1">
-                <p class="comment-deleted">(삭제된 댓글입니다.)</p>
-              </template>
-              <template v-else>
-                <div class="comment-header">
-                  <div class="comment-author-wrap">
-                    <div class="comment-avatar" :style="{ background: getAvatarColor(comment.authorName) }">
-                      {{ comment.authorName?.[0] }}
-                    </div>
-                    <span class="comment-author">{{ comment.authorName }}</span>
-                    <!-- 작성자 배지: 글 작성자 댓글인데 내가 쓴 게 아닐 때 -->
-                    <span 
-                      v-if="comment.userId === post.userId && comment.userId !== auth.user?.userId" 
-                      class="badge-writer">작성자</span>
-                  </div>
-                  <div class="comment-right">
-                    <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
-                    <!-- 삭제 버튼: 내가 쓴 댓글일 때 -->
-                    <button 
-                      v-if="comment.userId === auth.user?.userId" 
-                      class="btn-delete-comment">삭제</button>
-                  </div>
-                </div>
-                <p class="comment-content">{{ comment.content }}</p>
-              </template>
-            </div>
+              :comment="{ ...comment, isPostAuthor: comment.userId === post.userId }"
+              mode="resident"
+              :current-user-id="auth.user?.userId"
+              @delete="deleteComment"
+              @edit="editComment"
+            />
           </div>
 
           <!-- 댓글 입력 -->
@@ -298,33 +289,6 @@ const dummyComments = ref([
   scrollbar-width: none;
 }
 .comment-list::-webkit-scrollbar { display: none; }
-
-.comment-item { padding: 10px; border-radius: 8px; background: #F8F9FC; }
-.comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: nowrap; gap: 6px; }
-.comment-author-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; flex-shrink: 1; }
-.comment-avatar {
-  width: 24px; height: 24px; border-radius: 50%;
-  color: #fff; font-size: 11px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.comment-author { font-size: 12px; font-weight: 600; color: #333; white-space: nowrap; }
-.badge-writer {
-  font-size: 10px; font-weight: 700;
-  background: #EEF3FB; color: #4973E5;
-  padding: 2px 6px; border-radius: 4px;
-  white-space: nowrap;
-}
-.comment-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.comment-date { font-size: 11px; color: #bbb; white-space: nowrap; }
-.btn-delete-comment {
-  font-size: 11px; padding: 2px 8px;
-  border: 1px solid #fecaca; border-radius: 4px;
-  background: #fff; color: #dc2626;
-  cursor: pointer; transition: background 0.12s;
-}
-.btn-delete-comment:hover { background: #fee2e2; }
-.comment-content { font-size: 13px; color: #444; line-height: 1.5; }
-.comment-deleted { font-size: 13px; color: #bbb; font-style: italic; text-align: center; padding: 4px 0; }
 
 /* 댓글 입력 */
 .comment-input-wrap { display: flex; gap: 8px; margin-top: 4px; width: 100%; }

@@ -8,7 +8,7 @@ import {
   removePost,
 } from '@/api/board'
 
-export const useBoardStore = defineStore('board', {
+export const useBoardStore = defineStore('boards', {
   state: () => ({
     posts:        [],
     notices:      [],
@@ -17,12 +17,18 @@ export const useBoardStore = defineStore('board', {
     currentPost:  null,
     popularPosts: [],
     myPosts:      [],
+    // 아래는 관리자용
+    adminPosts: [],
+    adminTotalCount: 0,
+    adminMaxPage: 0,
+    adminNoticeTotalCount: 0,
+    adminFreeTotalCount: 0,
   }),
 
   actions: {
     // ── 게시글 목록 ──────────────────────────────────────────
-    async fetchPosts({ type = 'FREE', page = 1, size = 10 } = {}) {
-      const res = await getPostList({ type, page, size })
+    async fetchPosts({ category = 'FREE', page = 1, size = 10 } = {}) {
+      const res = await getPostList({ category, page, size })
       this.posts      = res.data.content
       this.totalCount = res.data.totalCount
       this.maxPage    = res.data.maxPage
@@ -31,7 +37,7 @@ export const useBoardStore = defineStore('board', {
 
     // ── 공지사항 ──────────────────────────────────────────
     async fetchNotices({ size = 100 } = {}) {
-      const res = await getPostList({ type: 'NOTICE', page: 1, size })
+      const res = await getPostList({ category: 'NOTICE', page: 1, size })
       this.notices = res.data.content
       return res.data
     },
@@ -46,7 +52,7 @@ export const useBoardStore = defineStore('board', {
     // ── 내가 쓴 글 ──────────────────────────────────────────
     async fetchMyPosts({ size = 3 } = {}) {
       const res = await getMyPosts({ size })
-      this.myPosts = res.data
+      this.myPosts = res.data.content
       return res.data
     },
 
@@ -68,6 +74,16 @@ export const useBoardStore = defineStore('board', {
       this.posts   = this.posts.filter((p) => p.boardId !== id)
       this.myPosts = this.myPosts.filter((p) => p.boardId !== id)
       this.totalCount = Math.max(0, this.totalCount - 1)
+    },
+
+    // ── 관리자 게시글 목록 ──────────────────────────────────────────
+    async fetchAdminPosts({ category = '', page = 1, size = 9 } = {}) {
+      const params = { page, size }
+      if (category) params.category = category
+      const res = await getPostList({ category, page, size })
+      this.adminPosts = res.data.content
+      this.adminTotalCount = res.data.totalCount
+      this.adminMaxPage = res.data.maxPage
     },
   },
 })
