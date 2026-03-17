@@ -3,7 +3,7 @@ import {reactive, computed, onMounted} from 'vue'
 import householdAPI from '@/api/household.js'
 import {useHouseholdStore} from '@/stores/modules/household.js'
 
-import BaseModal from '@/components/common/BeseModel.vue'
+import Modal from '@/components/common/BeseModel.vue'
 import StatsCards from '@/components/admin/StatsCards.vue'
 import FilterBar from '@/components/layout/FilterBar.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
@@ -331,7 +331,7 @@ onMounted(() => {
     </div>
 
     <!-- 상세 모달 -->
-    <BaseModal v-if="detailModal.show" title="세대 상세 정보" :subtitle="'ID #' + detailModal.item?.householdId"
+    <Modal v-if="detailModal.show" title="세대 상세 정보" :subtitle="'ID #' + detailModal.item?.householdId"
                @close="closeDetailModal">
       <div class="detail-hero">
         <span :class="['detail-status-badge', statusClass(detailModal.item?.status)]">{{
@@ -372,10 +372,10 @@ onMounted(() => {
         <button class="btn-cancel" @click="closeDetailModal">닫기</button>
         <button class="btn-submit" @click="openEditModal">수정</button>
       </template>
-    </BaseModal>
+    </Modal>
 
     <!-- 수정 모달 -->
-    <BaseModal v-if="editModal.show" title="세대 정보 수정"
+    <Modal v-if="editModal.show" title="세대 정보 수정"
                :subtitle="'ID #' + editModal.item?.householdId + ' · ' + editModal.item?.dong + ' ' + editModal.item?.ho"
                @close="closeEditModal">
       <div class="form-row">
@@ -417,10 +417,10 @@ onMounted(() => {
           {{ editModal.loading ? '처리 중...' : '수정 완료' }}
         </button>
       </template>
-    </BaseModal>
+    </Modal>
 
     <!-- 승인 모달 -->
-    <BaseModal v-if="confirmModal.show" title="승인 처리" @close="closeConfirmModal">
+    <Modal v-if="confirmModal.show" title="승인 처리" @close="closeConfirmModal">
       <p class="confirm-message">{{ confirmModal.item?.dong }} {{ confirmModal.item?.ho }} 세대<br>승인 대기 중인 회원
         {{ confirmModal.users.length }}명</p>
       <div v-if="confirmModal.loading" class="detail-empty">조회 중...</div>
@@ -439,7 +439,7 @@ onMounted(() => {
       <template #footer>
         <button class="btn-cancel" @click="closeConfirmModal">닫기</button>
       </template>
-    </BaseModal>
+    </Modal>
 
   </div>
 </template>
