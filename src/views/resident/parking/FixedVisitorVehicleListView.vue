@@ -5,7 +5,7 @@ import {getMyFixedVisitorVehicles, deleteFixedVisitorVehicle} from '@/api/visito
 
 import Pagination from '@/components/layout/Pagination.vue'
 import FilterBar from '@/components/layout/FilterBar.vue'
-import BaseModal from '@/components/Modal.vue'
+import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
 
@@ -224,8 +224,8 @@ onMounted(() => fetchList())
 
     </div>
 
-    <!-- 삭제 확인 모달 (BaseModal 직접 사용) -->
-    <BaseModal v-if="showDeleteModal" title="고정 방문차량 삭제" @close="closeDeleteModal">
+    <!-- 삭제 확인 모달 (Modal 직접 사용) -->
+    <Modal v-if="showDeleteModal" title="고정 방문차량 삭제" @close="closeDeleteModal">
       <p class="confirm-msg">
         해당 차량을 고정 방문차량에서 삭제하시겠습니까?<br/>
         <span class="confirm-sub">이 작업은 되돌릴 수 없습니다.</span>
@@ -237,7 +237,7 @@ onMounted(() => fetchList())
           {{ deleteLoading ? '삭제 중...' : '삭제 확인' }}
         </button>
       </template>
-    </BaseModal>
+    </Modal>
 
   </div>
 </template>
