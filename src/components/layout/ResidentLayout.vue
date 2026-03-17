@@ -61,18 +61,6 @@ async function handleLogout() {
           내 차량
         </router-link>
 
-        <router-link to="/resident/visitor-vehicles" class="nav-item">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-3h10l2 3h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
-            <circle cx="7.5" cy="17.5" r="2.5"/>
-            <circle cx="16.5" cy="17.5" r="2.5"/>
-            <line x1="12" y1="5" x2="12" y2="1"/>
-            <line x1="10" y1="3" x2="14" y2="3"/>
-          </svg>
-          방문차량 등록
-          <span v-if="visitorBadge > 0" class="badge">{{ visitorBadge }}</span>
-        </router-link>
-
         <router-link to="/resident/visitor-vehicles/list" class="nav-item">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <line x1="8" y1="6" x2="21" y2="6"/>
@@ -83,6 +71,17 @@ async function handleLogout() {
             <line x1="3" y1="18" x2="3.01" y2="18"/>
           </svg>
           방문차량 목록
+        </router-link>
+
+        <router-link to="/resident/visitor-vehicles/fixed" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-3h10l2 3h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
+            <circle cx="7.5" cy="17.5" r="2.5"/>
+            <circle cx="16.5" cy="17.5" r="2.5"/>
+            <path d="M12 2v4M10 4h4"/>
+            <path d="M17 9l2 2-2 2"/>
+          </svg>
+          고정 방문차량 목록
         </router-link>
 
         <router-link to="/resident/parking/status" class="nav-item">
@@ -294,7 +293,7 @@ async function handleLogout() {
 }
 
 .topbar {
-  height: 60px;
+  height: 62px;
   display: flex;
   align-items: center;
   justify-content: space-between;

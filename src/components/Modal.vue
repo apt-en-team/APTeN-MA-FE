@@ -1,4 +1,4 @@
-<!-- components/common/BaseModal.vue -->
+<!-- components/common/Modal.vue -->
 <script setup>
 // 모달 제목
 defineProps({

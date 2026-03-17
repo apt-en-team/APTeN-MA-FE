@@ -87,16 +87,16 @@ async function handleDeactivate() {
         <div class="card">
           <div class="card-header">
             <span class="card-header-icon">⚡</span>
-            <h3>빠른 메뉴</h3>
+            <h3>빠른 메뉴</h3>a
           </div>
           <div class="quick-grid">
             <router-link to="/resident/my-vehicle" class="quick-item">
               <div class="quick-icon" style="background:#EBF5FF;">🚗</div>
-              <span>차량 등록</span>
+              <span>내 차량 등록</span>
             </router-link>
-            <router-link to="/resident/my-vehicle" class="quick-item">
-              <div class="quick-icon" style="background:#FFF8E8;">📋</div>
-              <span>방문 등록</span>
+            <router-link to="/resident/visitor-vehicles" class="quick-item">
+              <div class="quick-icon" style="background:#FFF8E8;">🚙</div>
+              <span>방문차량 등록</span>
             </router-link>
             <router-link to="/resident/board" class="quick-item">
               <div class="quick-icon" style="background:#F0F0FF;">👤</div>
