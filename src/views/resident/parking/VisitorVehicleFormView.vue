@@ -17,7 +17,7 @@ const form = ref({
   licensePlate: '', // 차량번호
   visitorName: '', // 방문자 이름
   visitPurpose: '', // 방문 목적
-  visitDate: ''// 방문 예정일
+  visitDate: ''// 방문 예정일a
 })
 
 // 등록 버튼 클릭 시 실행
