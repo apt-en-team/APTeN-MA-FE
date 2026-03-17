@@ -17,7 +17,7 @@ const state = reactive({
     monthCount: 0,
   },
   // 활성 탭: 'all' | 'today' | 'tomorrow'
-  activeTab: 'today',
+  activeTab: 'all',
   // 차량번호 검색 필터
   licensePlate: '',
   // 페이지네이션
