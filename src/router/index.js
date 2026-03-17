@@ -63,6 +63,7 @@ import ParkingStatsView from '@/views/admin/parking/ParkingStatsView.vue'
 import AdminVisitorVehicleStatusView from '@/views/admin/parking/AdminVisitorVehicleStatusView.vue'
 import FixedVisitorVehicleFormView from "@/views/resident/parking/FixedVisitorVehicleFormView.vue";
 import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue";
+import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVisitorVehicleListView.vue'
 
 // 관리자 - 시설/예약
 // 시설/예약
@@ -188,6 +189,12 @@ const routes = [
                 name: 'AdminVisitorVehicleList',
                 component: AdminVisitorVehicleStatusView,
                 meta: {title: '방문 차량 관리'}
+            },
+            {
+                path: 'visitor-vehicles/fixed',
+                name: 'AdminFixedVisitorVehicleList',
+                component: AdminFixedVisitorVehicleListView,
+                meta: {title: '고정 방문차량 관리'}
             },
 
             // 시설/예약
