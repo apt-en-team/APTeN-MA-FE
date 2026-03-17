@@ -96,6 +96,24 @@ const banners = [
   },
 ]
 
+function stripHtml(html) {
+  if (!html) return ''
+  
+  return html
+    .replace(/<[^>]*>/g, '')         // 1. 모든 HTML 태그 제거
+    .replace(/&nbsp;/g, ' ')         // 2. 연속 공백 기호 변환
+    .replace(/&lt;/g, '<')           // 3. 부등호 변환
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim()                          // 4. 앞뒤 쓸데없는 공백 제거
+    .slice(0, 100)                   // 5. 요약
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return dateStr.split('T')[0] // '2024-03-27' 형태로 출력
+}
+
 </script>
 
 <template>
@@ -218,8 +236,8 @@ const banners = [
               <span v-else class="notice-dot">•</span>
               <span class="notice-title">{{ notice.title }}</span>
             </div>
-            <p class="notice-content">{{ notice.content }}</p>
-            <p class="notice-meta">{{ notice.date }} · {{ notice.author }}</p>
+            <p class="notice-content">{{ stripHtml(notice.content) }}</p>
+            <p class="notice-meta">{{ notice.createdAt?.split('T')[0] }} · {{ notice.authorName }}</p>
           </div>
         </div>
       </div>

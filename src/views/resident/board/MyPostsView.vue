@@ -72,6 +72,19 @@ function getAvatarStyle(name) {
   const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
   return { background: avatarColors[idx] }
 }
+
+function stripHtml(html) {
+  if (!html) return ''
+  
+  return html
+    .replace(/<[^>]*>/g, '')         // 1. 모든 HTML 태그 제거
+    .replace(/&nbsp;/g, ' ')         // 2. 연속 공백 기호 변환
+    .replace(/&lt;/g, '<')           // 3. 부등호 변환
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim()                          // 4. 앞뒤 쓸데없는 공백 제거
+    .slice(0, 100)                   // 5. 요약
+}
 </script>
 
 <template>
@@ -153,7 +166,7 @@ function getAvatarStyle(name) {
                 </div>
               </div>
               <h3 class="card-title">{{ post.title }}</h3>
-              <p class="card-preview">{{ post.content }}</p>
+              <p class="card-preview">{{ stripHtml(post.content) }}</p>
               <div class="card-footer">
                 <span class="stat-item">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="15" height="15">

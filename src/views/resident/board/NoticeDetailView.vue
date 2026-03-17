@@ -11,13 +11,7 @@ const auth   = useAuthStore()
 const notice  = ref(null)
 const loading = ref(false)
 
-const dummyComments = ref([
-  { commentId: 1, authorName: '김가은',   role: 'RESIDENT', content: '일시는 확정인가요?',      createdAt: '2026-03-13T10:30:00', isDeleted: 0 },
-  { commentId: 2, authorName: '관리사무소', role: 'ADMIN',    content: '네, 변동 사항 없습니다.', createdAt: '2026-03-13T11:00:00', isDeleted: 0 },
-  { commentId: 3, authorName: '이윤주',   role: 'RESIDENT', content: '정수기 사용은 가능한가요?', createdAt: '2026-03-13T11:20:00', isDeleted: 1 },
-  { commentId: 4, authorName: '박철수',   role: 'RESIDENT', content: '감사합니다!',             createdAt: '2026-03-13T12:00:00', isDeleted: 0 },
-  { commentId: 5, authorName: '최민지',   role: 'RESIDENT', content: '안내 감사해요.',           createdAt: '2026-03-13T13:00:00', isDeleted: 0 },
-])
+const dummyComments = ref([])
 
 onMounted(async () => {
   loading.value = true
@@ -67,7 +61,10 @@ function getAvatarColor(name) {
                   <span class="author-name">{{ notice.authorName }}</span>
                   <span class="badge-admin">관리자</span>
                 </div>
-                <span class="author-unit">{{ notice.authorUnit }} · {{ formatDate(notice.createdAt) }}</span>
+                <div class="author-sub">
+                  <span class="author-unit">{{ notice.authorUnit }}</span>
+                  <span class="author-date">{{ formatDate(notice.createdAt) }}</span>
+                </div>
               </div>
             </div>
             <span class="view-count">조회 {{ notice.viewCount }}</span>
@@ -75,7 +72,7 @@ function getAvatarColor(name) {
 
           <div class="divider"/>
 
-          <div class="detail-body">{{ notice.content }}</div>
+          <div class="detail-body ql-editor" v-html="notice.content" />
         </div>
       </div>
 
@@ -96,27 +93,33 @@ function getAvatarColor(name) {
           </p>
 
           <div class="comment-list">
-            <div
-              v-for="comment in dummyComments"
-              :key="comment.commentId"
-              class="comment-item"
-            >
-              <template v-if="comment.isDeleted === 1">
-                <p class="comment-deleted">(삭제된 댓글입니다.)</p>
-              </template>
-              <template v-else>
-                <div class="comment-header">
-                  <div class="comment-author-wrap">
-                    <div class="comment-avatar" :style="{ background: getAvatarColor(comment.authorName) }">
-                      {{ comment.authorName?.[0] }}
+            <template v-if="dummyComments && dummyComments.length > 0">
+              <div
+                v-for="comment in dummyComments"
+                :key="comment.commentId"
+                class="comment-item"
+              >
+                <template v-if="comment.isDeleted === 1">
+                  <p class="comment-deleted">(삭제된 댓글입니다.)</p>
+                </template>
+                <template v-else>
+                  <div class="comment-header">
+                    <div class="comment-author-wrap">
+                      <div class="comment-avatar" :style="{ background: getAvatarColor(comment.authorName) }">
+                        {{ comment.authorName?.[0] }}
+                      </div>
+                      <span class="comment-author">{{ comment.authorName }}</span>
+                      <span v-if="comment.role === 'ADMIN'" class="badge-admin">관리자</span>
                     </div>
-                    <span class="comment-author">{{ comment.authorName }}</span>
-                    <span v-if="comment.role === 'ADMIN'" class="badge-admin">관리자</span>
+                    <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
                   </div>
-                  <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
-                </div>
-                <p class="comment-content">{{ comment.content }}</p>
-              </template>
+                  <p class="comment-content">{{ comment.content }}</p>
+                </template>
+              </div>
+            </template>
+
+            <div v-else class="no-comments">
+              등록된 댓글이 없습니다.
             </div>
           </div>
 
@@ -160,7 +163,7 @@ function getAvatarColor(name) {
   width: fit-content;
 }
 
-.detail-title { font-size: 22px; font-weight: 700; color: #1A1A2E; line-height: 1.4; }
+.detail-title { font-size: 22px; font-weight: 700; color: #1A1A2E; line-height: 1.4; margin: 6px 0; }
 
 .detail-meta { display: flex; justify-content: space-between; align-items: center; }
 .author-info { display: flex; align-items: center; gap: 10px; }
@@ -176,6 +179,13 @@ function getAvatarColor(name) {
   font-size: 10px; font-weight: 700;
   background: #4973E5; color: #fff;
   padding: 2px 6px; border-radius: 4px;
+}
+.author-sub {
+  display: flex;
+  align-items: center;
+  color: #999;
+  font-size: 12px;
+  white-space: nowrap;
 }
 .author-unit { font-size: 12px; color: #999; }
 .view-count { font-size: 12px; color: #999; }
@@ -219,18 +229,12 @@ function getAvatarColor(name) {
 /* 댓글 목록 */
 .comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; max-height: 400px; overflow-y: auto; scrollbar-width: none; }
 .comment-list::-webkit-scrollbar { display: none; }
-.comment-item { padding: 10px; border-radius: 8px; background: #F8F9FC; }
-.comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.comment-author-wrap { display: flex; align-items: center; gap: 6px; }
-.comment-avatar {
-  width: 24px; height: 24px; border-radius: 50%;
-  color: #fff; font-size: 11px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+.no-comments {
+  text-align: center;
+  padding: 32px 0;
+  color: #9ca3af;
+  font-size: 13px;
 }
-.comment-author { font-size: 12px; font-weight: 600; color: #333; }
-.comment-date { font-size: 11px; color: #bbb; }
-.comment-content { font-size: 13px; color: #444; line-height: 1.5; }
-.comment-deleted { font-size: 13px; color: #bbb; font-style: italic; text-align: center; padding: 4px 0; }
 
 /* 댓글 입력 */
 .comment-input-wrap { display: flex; gap: 8px; margin-top: 4px; width: 100%; }

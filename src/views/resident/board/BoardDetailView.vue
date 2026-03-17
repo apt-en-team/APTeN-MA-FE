@@ -7,8 +7,6 @@ import { useBoardStore } from '@/stores/modules/board'
 import 'quill/dist/quill.snow.css'
 import CommentItem from '@/components/board/CommentItem.vue'
 
-
-
 const route  = useRoute()
 const router = useRouter()
 const auth   = useAuthStore()
@@ -69,11 +67,7 @@ function getAvatarColor(name) {
 }
 
 // 더미 댓글
-const dummyComments = ref([
-  { commentId: 1, authorName: '김다빈', userId: 101, content: '한분만 더 받을게요!!', createdAt: '2026-03-13T10:30:00', isDeleted: 0 },
-  { commentId: 2, authorName: '김가은', userId: 102, content: '다 찼나요?', createdAt: '2026-03-13T11:00:00', isDeleted: 0 },
-  { commentId: 3, authorName: '이윤주', userId: 103, content: '저도 참여하고 싶어요!', createdAt: '2026-03-13T11:20:00', isDeleted: 1 },
-])
+const dummyComments = ref([])
 
 function deleteComment(commentId) {
   // TODO: API 연동
@@ -109,7 +103,10 @@ function editComment({ commentId, content }) {
                 <div class="author-name-wrap">
                   <span class="author-name">{{ post.authorName }}</span>
                 </div>
-                <span class="author-unit">{{ post.authorUnit }} · {{ formatDate(post.createdAt) }}</span>
+                <div class="author-sub">
+                  <span class="author-unit">{{ post.authorUnit }}</span>
+                  <span class="author-date">{{ formatDate(post.createdAt) }}</span>
+                </div>
               </div>
             </div>
             <span class="view-count">조회 {{ post.viewCount }}</span>
@@ -161,18 +158,23 @@ function editComment({ commentId, content }) {
           </p>
 
           <div class="comment-list">
-            <CommentItem
-              v-for="comment in dummyComments"
-              :key="comment.commentId"
-              :comment="{ ...comment, isPostAuthor: comment.userId === post.userId }"
-              mode="resident"
-              :current-user-id="auth.user?.userId"
-              @delete="deleteComment"
-              @edit="editComment"
-            />
+            <template v-if="dummyComments.length > 0">
+              <CommentItem
+                v-for="comment in dummyComments"
+                :key="comment.commentId"
+                :comment="{ ...comment, isPostAuthor: comment.userId === post.userId }"
+                mode="resident"
+                :current-user-id="auth.user?.userId"
+                @delete="deleteComment"
+                @edit="editComment"
+              />
+            </template>
+
+            <div v-else class="no-comments">
+              등록된 댓글이 없습니다.
+            </div>
           </div>
 
-          <!-- 댓글 입력 -->
           <div class="comment-input-wrap">
             <input class="comment-input" placeholder="댓글을 입력해주세요..." />
             <button class="comment-submit">등록</button>
@@ -213,7 +215,7 @@ function editComment({ commentId, content }) {
   width: fit-content;
 }
 
-.detail-title { font-size: 22px; font-weight: 700; color: #1A1A2E; line-height: 1.4; }
+.detail-title { font-size: 22px; font-weight: 700; color: #1A1A2E; line-height: 1.4; margin: 6px 0; }
 
 .detail-meta { display: flex; justify-content: space-between; align-items: center; }
 .author-info { display: flex; align-items: center; gap: 10px; }
@@ -225,6 +227,13 @@ function editComment({ commentId, content }) {
 }
 .author-name-wrap { display: flex; align-items: center; gap: 6px; }
 .author-name { font-size: 14px; font-weight: 600; color: #333; }
+.author-sub {
+  display: flex;
+  align-items: center;
+  color: #999;
+  font-size: 12px;
+  white-space: nowrap;
+}
 .author-unit { font-size: 12px; color: #999; }
 .view-count { font-size: 12px; color: #999; }
 
@@ -232,7 +241,7 @@ function editComment({ commentId, content }) {
 
 .detail-body {
   font-size: 15px; line-height: 1.9;
-  color: #444; white-space: pre-wrap;
+  color: #444;
   min-height: 100px;
 }
 
@@ -289,6 +298,12 @@ function editComment({ commentId, content }) {
   scrollbar-width: none;
 }
 .comment-list::-webkit-scrollbar { display: none; }
+.no-comments {
+  text-align: center;
+  padding: 32px 0;
+  color: #9ca3af;
+  font-size: 13px;
+}
 
 /* 댓글 입력 */
 .comment-input-wrap { display: flex; gap: 8px; margin-top: 4px; width: 100%; }

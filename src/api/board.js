@@ -39,3 +39,15 @@ export const removePost = (id) =>
 // POST /api/boards/:id/like
 export const toggleLike = (id) =>
   api.post(`/boards/${id}/like`)
+
+// ── 이미지 업로드 ────────────────────────────────────────────
+// POST /api/boards/image
+// Content-Type: multipart/form-data
+// 글 등록/수정 전에 먼저 이미지를 올리고 imageUrl을 받아온 뒤 createPost/updatePost에 포함
+/* export const uploadBoardImage = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/boards/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+} */
