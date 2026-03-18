@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed ,ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/modules/auth.js'
+import reservationAPI from '@/api/reservation'
 
 const route  = useRoute()
 const router = useRouter()
@@ -23,6 +24,22 @@ async function handleLogout() {
   await auth.logout()
   router.push('/')
 }
+
+const gxPendingCount = ref(0)
+
+const fetchGxPendingCount = async () => {
+  try {
+    const res = await reservationAPI.getAdminReservations({ status: 'PENDING', size: 1, page: 1 })
+    gxPendingCount.value = res.data.resultData?.totalElements || 0
+  } catch (e) { console.error(e) }
+}
+
+const goToGxPage = () => {
+  router.push({ name: 'AdminFacilityCalendar', params: { facilityId: 'gx' } })
+}
+
+onMounted(fetchGxPendingCount)
+
 </script>
 
 <template>
@@ -134,7 +151,8 @@ async function handleLogout() {
           <button v-if="route.name === 'AdminFacilityManage'"  class="btn-action">+ 시설 추가</button>
           <button v-if="route.name === 'AdminBoardList'"  class="btn-action">+ 공지 작성</button>
           <button v-if="route.name === 'AdminParkingLog'"  class="btn-action">+ 기록 등록</button>
-          <button v-if="route.name === 'AdminVehicleListView'"  class="btn-action">+ 차량 등록</button>  
+          <button v-if="route.name === 'AdminVehicleListView'"  class="btn-action">+ 차량 등록</button> 
+          <button v-if="gxPendingCount > 0 && route.name === 'AdminReservationListView'" class="gx-pending-badge" @click="goToGxPage"> GX 승인 대기 {{ gxPendingCount }}건 </button> 
         </div>
       </header>
 

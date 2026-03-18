@@ -66,8 +66,7 @@ import VisitorVehicleListView from '@/views/admin/parking/VisitorVehicleListView
 // 시설/예약
 import FacilityManageView from '@/views/admin/facility/FacilityManageView.vue'
 import AdminReservationListView from '@/views/admin/reservation/AdminReservationListView.vue'
-import AdminReservationDetailView from '@/views/admin/reservation/AdminReservationDetailView.vue'
-import AdminGxApprovalView from '@/views/admin/reservation/AdminGxApprovalView.vue'
+import AdminFacilityCalendarView from '@/views/admin/reservation/Adminfacilitycalendar.vue'
 
 const routes = [
 
@@ -145,8 +144,8 @@ const routes = [
             // 시설/예약
             { path: 'facility',                name: 'AdminFacilityManage',    component: FacilityManageView,         meta: { title: '시설 관리' } },
             { path: 'reservations',            name: 'AdminReservationListView', component: AdminReservationListView,  meta: { title: '전체 예약 현황' } },
-            { path: 'reservations/:id',        name: 'AdminReservationDetail',  component: AdminReservationDetailView, meta: { title: '시설별 예약 현황' } },
-            { path: 'reservations/gx-approve', name: 'AdminGxApproval',        component: AdminGxApprovalView,        meta: { title: 'GX승인' } },
+            { path: 'reservations/facility/:typeId', name: 'AdminFacilityCalendar', component: AdminFacilityCalendarView, meta: { title: '시설별 예약 현황' } },
+
         ]
     }
 ]
