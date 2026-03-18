@@ -23,14 +23,30 @@ const notices = ref([])
 
 const reservations = ref([])
 
+// onMounted(async () => {
+//   try {
+//     const { data } = await axios.get('/dashboard')
+//     stats.value = data.stats ?? stats.value
+//     notices.value = data.notices ?? []
+//     reservations.value = data.reservations ?? []
+//   } catch (e) {
+//     console.warn('대시보드 API 오류:', e)
+//   }
+// })
+
 onMounted(async () => {
   try {
-    const { data } = await axios.get('/dashboard')
-    stats.value = data.stats
-    notices.value = data.notices
-    reservations.value = data.reservations
+    // 공지사항
+    const noticeRes = await axios.get('/boards', { params: { category: 'NOTICE', page: 1, size: 3 } })
+    notices.value = noticeRes.data.content ?? []
+
+    // 예약 현황
+    const reservationRes = await axios.get('/reservations/my')
+    reservations.value = reservationRes.data ?? []
+
+    // stats는 차량/방문차량/주차 API 붙으면 그때 채우기
   } catch (e) {
-    console.warn('대시보드 API 오류:', e)
+    console.warn('대시보드 로딩 오류:', e)
   }
 })
 
@@ -80,6 +96,24 @@ const banners = [
   },
 ]
 
+function stripHtml(html) {
+  if (!html) return ''
+  
+  return html
+    .replace(/<[^>]*>/g, '')         // 1. 모든 HTML 태그 제거
+    .replace(/&nbsp;/g, ' ')         // 2. 연속 공백 기호 변환
+    .replace(/&lt;/g, '<')           // 3. 부등호 변환
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim()                          // 4. 앞뒤 쓸데없는 공백 제거
+    .slice(0, 100)                   // 5. 요약
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return dateStr.split('T')[0] // '2024-03-27' 형태로 출력
+}
+
 </script>
 
 <template>
@@ -125,28 +159,25 @@ const banners = [
         </div>
         <div class="stat-desc">{{ stats.vehicles === 0 ? '등록된 차량이 없습니다' : '최대 2대 등록 가능' }}</div>
         <div class="stat-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5">
-            <path d="M1 3h15v13H1z"/>
-            <path d="M16 8h4l3 3v5h-7V8z"/>
-            <circle cx="5.5" cy="18.5" r="2.5"/>
-            <circle cx="18.5" cy="18.5" r="2.5"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <path d="M9 17h6"/>
+            <circle cx="17" cy="17" r="2"/>
           </svg>
         </div>
       </div>
 
       <!-- 예약 현황 -->
-      <div class="stat-card" @click="router.push('/resident/facility')">
+      <div class="stat-card" @click="router.push('/resident/my-reservation')">
         <div class="stat-label">예약 현황</div>
         <div class="stat-value" :class="{ empty: stats.reservations === 0 }">
           {{ stats.reservations }} <span class="stat-unit">건</span>
         </div>
         <div class="stat-desc">{{ stats.reservations === 0 ? '예약 내역이 없습니다' : '이번 주 예약' }}</div>
         <div class="stat-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
           </svg>
         </div>
       </div>
@@ -159,11 +190,8 @@ const banners = [
         </div>
         <div class="stat-desc">{{ stats.visitorVehicles === 0 ? '방문 차량이 없습니다' : '승인 대기' }}</div>
         <div class="stat-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
           </svg>
         </div>
       </div>
@@ -187,32 +215,29 @@ const banners = [
       <!-- 최근 공지사항 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📢 최근 공지사항</span>
+          <span class="card-title">📢최근 공지사항</span>
           <span class="card-more" @click="router.push('/resident/board/notice')">전체보기 →</span>
         </div>
         <div class="card-body">
           <div v-if="notices.length === 0" class="empty-state">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="9" y1="13" x2="15" y2="13"/>
-              <line x1="9" y1="17" x2="12" y2="17"/>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
             </svg>
             <p>등록된 공지사항이 없습니다.</p>
           </div>
           <div
             v-for="notice in notices"
-            :key="notice.id"
+            :key="notice.boardId"
             class="notice-item"
-            @click="router.push('/resident/boards')"
+            @click="router.push(`/resident/board/notice/${notice.boardId}`)"
           >
             <div class="notice-row">
-              <span v-if="notice.type" class="notice-badge">{{ notice.type }}</span>
+              <span v-if="notice.category" class="notice-badge">{{ notice.category }}</span>
               <span v-else class="notice-dot">•</span>
               <span class="notice-title">{{ notice.title }}</span>
             </div>
-            <p class="notice-content">{{ notice.content }}</p>
-            <p class="notice-meta">{{ notice.date }} · {{ notice.author }}</p>
+            <p class="notice-content">{{ stripHtml(notice.content) }}</p>
+            <p class="notice-meta">{{ notice.createdAt?.split('T')[0] }} · {{ notice.authorName }}</p>
           </div>
         </div>
       </div>
@@ -221,24 +246,21 @@ const banners = [
       <div class="card">
         <div class="card-header">
           <span class="card-title">📅내 예약 현황</span>
-          <span class="card-more" @click="router.push('/resident/reservations')">전체보기 →</span>
+          <span class="card-more" @click="router.push('/resident/my-reservation')">전체보기 →</span>
 
         </div>
         <div class="card-body">
           <div v-if="reservations.length === 0" class="empty-state">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
             </svg>
             <p>예약 내역이 없습니다.</p>
           </div>
           <div
             v-for="res in reservations"
-            :key="res.id"
+            :key="res.reservationId"
             class="reservation-item"
-            @click="router.push('/resident/reservations')"
+            @click="router.push(`/resident/reservations/${res.reservationId}`)"
           >
             <div class="res-left">
               <span
