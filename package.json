@@ -16,6 +16,7 @@
     "bootstrap-vue-3": "^0.5.1",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
+    "quill": "^2.0.3",
     "swiper": "^11.2.10",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"

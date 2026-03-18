@@ -11,8 +11,10 @@ const emit = defineEmits(['row-click'])
     <thead>
       <tr>
         <th v-for="col in columns" :key="col.key">{{ col.label }}</th>
-        <!-- 관리 컬럼 슬롯 -->
-        <th v-if="$slots.action">관리</th>
+        <!-- action 헤더: 슬롯이 있으면 슬롯 내용, 없으면 기본 "관리" -->
+        <th v-if="$slots.action">
+          <slot name="action-header">관리</slot>
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -31,7 +33,6 @@ const emit = defineEmits(['row-click'])
             {{ row[col.key] ?? '-' }}
           </slot>
         </td>
-        <!-- 관리 버튼 슬롯 -->
         <td v-if="$slots.action">
           <slot name="action" :row="row" />
         </td>
