@@ -3,8 +3,8 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useBoardStore } from '@/stores/modules/board'
 import { useRouter } from 'vue-router'
 import AdminTable from '@/components/admin/AdminTable.vue'
-import FilterBar from '@/components/admin/FilterBar.vue'
-import Pagination from '@/components/admin/Pagination.vue'
+import FilterBar from '@/components/layout/FilterBar.vue'
+import Pagination from '@/components/layout/Pagination.vue'
 
 const router = useRouter()
 const boardStore = useBoardStore()

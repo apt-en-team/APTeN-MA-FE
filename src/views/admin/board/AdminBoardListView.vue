@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import { useBoardStore } from '@/stores/modules/board'
 import StatsGrid  from '@/components/admin/StatsCards.vue'
 import DataTable  from '@/components/admin/AdminTable.vue'
-import FilterBar  from '@/components/admin/FilterBar.vue'
-import Pagination from '@/components/admin/Pagination.vue'
+import FilterBar  from '@/components/layout/FilterBar.vue'
+import Pagination from '@/components/layout/Pagination.vue'
 import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
