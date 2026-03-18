@@ -218,6 +218,8 @@ const closeDetailModal = () => {
 // 소프트 삭제: DB에서 실제로 지우지 않고 is_deleted = 1 로 표시
 // 관리자 삭제는 소유권 체크 없음 (입주민 삭제는 userId 일치 여부 확인)
 const handleDelete = async () => {
+  console.log('삭제할 fixedId:', detailModal.value.item.fixedId)  // ← 추가
+  console.log('item 전체:', detailModal.value.item)
   confirmModal.value.loading = true
   try {
     await deleteAdminFixedVisitorVehicle(detailModal.value.item.fixedId)
@@ -376,8 +378,11 @@ onMounted(() => {
       </div>
 
       <template #footer>
-        <!-- 삭제 버튼: confirmModal만 열고 실제 삭제는 confirmModal에서 처리 -->
-        <button class="btn-danger" @click="confirmModal.show = true">삭제</button>
+        <button class="btn-danger"
+                @click="confirmModal.show = true"
+                :disabled="detailModal.item?.isDeleted === 1">
+          {{ detailModal.item?.isDeleted === 1 ? '이미 삭제됨' : '삭제' }}
+        </button>
         <button class="btn-cancel" @click="closeDetailModal">닫기</button>
       </template>
     </Modal>
