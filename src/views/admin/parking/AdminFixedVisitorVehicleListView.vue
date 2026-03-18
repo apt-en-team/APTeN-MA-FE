@@ -3,7 +3,8 @@ import {ref, computed, inject, onMounted} from 'vue'
 import {
   getAdminFixedVisitorVehicles,
   getAdminFixedVisitorVehicleStats,
-  registerFixedVisitorVehicle
+  registerFixedVisitorVehicle,
+  deleteAdminFixedVisitorVehicle
 } from '@/api/visitorVehicle.js'
 import householdAPI from '@/api/household.js'
 
@@ -28,10 +29,16 @@ const statActive = ref(0)
 
 const vehicleNumber = ref('')
 const dong = ref('')
-const dongOptions = ref([])  // ← 추가
+const dongOptions = ref([])
 
 const registerModal = ref({show: false, loading: false, error: ''})
 const form = ref({vehicleNumber: '', visitorName: '', purpose: '', startDate: '', endDate: ''})
+
+// 상세 모달
+const detailModal = ref({show: false, item: null, loading: false})
+
+// 삭제 모달
+const confirmModal = ref({show: false, loading: false})
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -89,7 +96,6 @@ const fetchList = async () => {
   }
 }
 
-// ← 추가
 const fetchDongs = async () => {
   try {
     const res = await householdAPI.getDongs()
@@ -147,6 +153,34 @@ const submitRegister = async () => {
   }
 }
 
+// 상세 모달 열기
+const openDetailModal = (item) => {
+  detailModal.value.item = item
+  detailModal.value.show = true
+}
+
+// 상세 모달 닫기
+const closeDetailModal = () => {
+  detailModal.value.show = false
+  detailModal.value.item = null
+}
+
+// 관리자 삭제
+const handleDelete = async () => {
+  confirmModal.value.loading = true
+  try {
+    await deleteAdminFixedVisitorVehicle(detailModal.value.item.fixedId)
+    confirmModal.value.show = false
+    closeDetailModal()
+    fetchList()
+    fetchStats()
+  } catch (e) {
+    console.error('고정 방문차량 삭제 실패', e)
+  } finally {
+    confirmModal.value.loading = false
+  }
+}
+
 onMounted(() => {
   registerOpenModal(openRegisterModal)
   fetchDongs()
@@ -172,16 +206,14 @@ onMounted(() => {
           <input class="search-input" type="text" placeholder="차량번호 검색"
                  v-model="vehicleNumber" @keyup.enter="doSearch"/>
         </div>
-
-        <!-- ← 텍스트 인풋 제거 후 셀렉트로 교체 -->
         <select class="filter-select" v-model="dong" @change="doSearch">
           <option value="">전체 동</option>
           <option v-for="d in dongOptions" :key="d" :value="d">{{ d }}</option>
         </select>
-
       </FilterBar>
 
-      <AdminTable :columns="columns" :rows="tableRows"/>
+      <!-- ← 행 클릭 시 상세 모달 오픈 -->
+      <AdminTable :columns="columns" :rows="tableRows" @row-click="openDetailModal"/>
 
       <Pagination
           :currentPage="currentPage"
@@ -194,9 +226,9 @@ onMounted(() => {
 
     </div>
 
+    <!-- 등록 모달 -->
     <Modal v-if="registerModal.show" title="고정 방문차량 등록"
-               subtitle="종료일 미입력 시 무기한으로 등록됩니다." @close="closeRegisterModal">
-
+           subtitle="종료일 미입력 시 무기한으로 등록됩니다." @close="closeRegisterModal">
       <div class="form-group">
         <label class="form-label">차량번호 <span class="required">*</span></label>
         <input class="form-input" v-model="form.vehicleNumber" type="text" placeholder="예: 12가3456"/>
@@ -220,16 +252,92 @@ onMounted(() => {
         </div>
       </div>
       <p v-if="registerModal.error" class="form-error">{{ registerModal.error }}</p>
-
       <template #footer>
         <button class="btn-cancel" @click="closeRegisterModal">취소</button>
         <button class="btn-submit" @click="submitRegister" :disabled="registerModal.loading">
           {{ registerModal.loading ? '등록 중...' : '등록하기' }}
         </button>
       </template>
-
     </Modal>
 
+    <!-- 상세 모달 -->
+    <Modal v-if="detailModal.show" title="고정 방문차량 상세"
+           :subtitle="'ID #' + detailModal.item?.fixedId" @close="closeDetailModal">
+
+      <div class="detail-hero">
+        <h2 class="detail-title">{{ detailModal.item?.vehicleNumber }}</h2>
+        <p class="detail-sub">{{ detailModal.item?.visitorName }}</p>
+      </div>
+      <div class="detail-divider"></div>
+      <div class="detail-grid">
+        <div class="detail-cell">
+          <span class="detail-cell-label">차량번호</span>
+          <span class="detail-cell-value">{{ detailModal.item?.vehicleNumber }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">방문자</span>
+          <span class="detail-cell-value">{{ detailModal.item?.visitorName || '-' }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">방문 목적</span>
+          <span class="detail-cell-value">{{ detailModal.item?.purpose || '-' }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">세대</span>
+          <span class="detail-cell-value">{{ detailModal.item?.unit || '-' }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">시작일</span>
+          <span class="detail-cell-value">{{ detailModal.item?.startDate }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">종료일</span>
+          <span class="detail-cell-value">{{ detailModal.item?.endDate || '무기한' }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">등록자</span>
+          <span class="detail-cell-value">{{ detailModal.item?.userName || '-' }}</span>
+        </div>
+        <div class="detail-cell">
+          <span class="detail-cell-label">등록일</span>
+          <span class="detail-cell-value">{{ detailModal.item?.createdAt || '-' }}</span>
+        </div>
+      </div>
+
+      <!-- 상세 모달 footer — 삭제 버튼 @click만 변경 -->
+      <template #footer>
+        <button class="btn-danger" @click="confirmModal.show = true">삭제</button>
+        <button class="btn-cancel" @click="closeDetailModal">닫기</button>
+      </template>
+    </Modal>
+
+    <!-- 삭제 확인 모달 -->
+    <Modal v-if="confirmModal.show" title="고정 방문차량 삭제"
+           subtitle="삭제된 데이터는 복구할 수 없습니다." @close="confirmModal.show = false">
+
+      <!-- 삭제 대상 카드 -->
+      <div class="confirm-target-card">
+        <div class="confirm-target-info">
+          <span class="confirm-target-name">{{ detailModal.item?.vehicleNumber }}</span>
+          <span class="confirm-target-sub">
+        {{ detailModal.item?.visitorName || '-' }} · {{ detailModal.item?.unit || '-' }}
+      </span>
+        </div>
+      </div>
+
+      <!-- 경고 문구 -->
+      <p class="confirm-warn">
+        <span class="confirm-warn-icon">⚠</span>
+        삭제 시 해당 고정 방문차량 데이터가 함께 삭제됩니다.
+      </p>
+
+      <template #footer>
+        <button class="btn-cancel" @click="confirmModal.show = false">취소</button>
+        <button class="btn-danger" @click="handleDelete" :disabled="confirmModal.loading">
+          {{ confirmModal.loading ? '삭제 중...' : '삭제' }}
+        </button>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -281,7 +389,6 @@ onMounted(() => {
   color: #CBD5E0;
 }
 
-/* ← 추가 */
 .filter-select {
   border: 1px solid #E2E8F0;
   border-radius: 7px;
@@ -294,6 +401,7 @@ onMounted(() => {
   outline: none;
 }
 
+/* 등록 모달 폼 */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -345,6 +453,53 @@ onMounted(() => {
   margin-top: 6px;
 }
 
+/* 상세 모달 */
+.detail-hero {
+  margin-bottom: 14px;
+}
+
+.detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A202C;
+  margin-bottom: 2px;
+}
+
+.detail-sub {
+  font-size: 13px;
+  color: #A0AEC0;
+}
+
+.detail-divider {
+  height: 1px;
+  background: #E2E8F0;
+  margin: 14px 0;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detail-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-cell-label {
+  font-size: 12px;
+  color: #A0AEC0;
+}
+
+.detail-cell-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A202C;
+}
+
+/* 버튼 */
 .btn-cancel {
   padding: 9px 20px;
   border: 1px solid #E2E8F0;
@@ -357,6 +512,83 @@ onMounted(() => {
 
 .btn-cancel:hover {
   background: #F5F6F8;
+}
+
+.btn-danger {
+  padding: 9px 14px;
+  background: #FFF5F5;
+  color: #E53E3E;
+  border: 1px solid #FECACA;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #FECACA;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.confirm-icon-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.confirm-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #E53E3E;
+  color: #E53E3E;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-target-card {
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  background: #FFF5F5;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.confirm-target-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.confirm-target-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A202C;
+}
+
+.confirm-target-sub {
+  font-size: 12px;
+  color: #718096;
+}
+
+.confirm-warn {
+  font-size: 12px;
+  color: #E53E3E;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.confirm-warn-icon {
+  font-size: 13px;
 }
 
 .btn-submit {
