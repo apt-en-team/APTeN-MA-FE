@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch, inject  } from 'vue'
 import { useRoute } from 'vue-router'
 import vehicleAPI from '@/api/vehicle.js'
 import { useVehicleStore } from '@/stores/modules/vehicle.js'
@@ -12,6 +12,8 @@ import BaseModal  from '@/components/common/BeseModel.vue'
 
 const route        = useRoute()
 const vehicleStore = useVehicleStore()
+const registerOpenModal = inject('registerOpenModal')
+
 
 // 상태 관리
 const state = reactive({
@@ -26,6 +28,7 @@ const state = reactive({
   currentPage:      1,
   maxPage:          0,
   totalFiltered:    0,
+  totalAll:         0,
 })
 
 // 모달 상태
@@ -97,7 +100,7 @@ const getInitial = (name) => {
 
 const getApprovalDate = (vehicle) => {
   if (vehicle?.approvedAt) return formatDate(vehicle.approvedAt)
-  if (vehicle?.rejectedAt) return formatDate(vehicle.rejectedAt)
+  if (vehicle?.status === 'REJECTED' && vehicle?.deletedAt) return formatDate(vehicle.deletedAt)
   if (vehicle?.updatedAt && vehicle?.status !== 'PENDING') return formatDate(vehicle.updatedAt)
   return '-'
 }
@@ -129,10 +132,13 @@ const fetchVehicles = async () => {
       page:        state.currentPage - 1,
       size:        state.size,
     })
+    
     const result        = data.resultData
     state.list          = sortByPendingFirst(result.content ?? [])
     state.maxPage       = result.totalPages ?? 0
-    state.totalFiltered = result.content?.length ?? 0
+    state.totalFiltered = result.content?.length ?? 0 
+    state.totalAll      = vehicleStore.total ?? 0
+    
   } catch (e) { console.error('차량 목록 조회 실패', e) }
 }
 
@@ -436,6 +442,11 @@ onMounted(() => {
   fetchVehicles()
   fetchStats()
   fetchDongs() 
+
+  // 모달 열기 함수 등록
+  if (registerOpenModal) {
+    registerOpenModal(openRegisterModal)
+  }
 })
 </script>
 
@@ -527,11 +538,11 @@ onMounted(() => {
       <Pagination
         :currentPage="state.currentPage"
         :maxPage="state.maxPage"
+        :totalAll="state.totalAll"
         :totalFiltered="state.totalFiltered"
         unit="대"
         @change="goToPage"
       />
-
     </div>
 
     <!-- 상세 모달 -->
