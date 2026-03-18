@@ -604,7 +604,7 @@ onMounted(() => {
 }
 
 .license {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   letter-spacing: 0.5px;
 }
@@ -617,25 +617,25 @@ onMounted(() => {
 /* 뱃지 */
 .badge-entry {
   display: inline-block;
-  padding: 3px 12px;
-  border-radius: 20px;
+  padding: 4px 18px;
+  border-radius: 18px;
   font-size: 11px;
   font-weight: 700;
 }
 
 .badge-in {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
 .badge-out {
-  background: #FEF3F2;
+  background: #FFF5F5;
   color: #E53E3E;
 }
 
 .badge-type {
   display: inline-block;
-  padding: 5px 10px;
+  padding: 6px 10px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
@@ -647,8 +647,8 @@ onMounted(() => {
 }
 
 .type-visitor {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #EBF4FF;
+  color: #2B6CB0;
 }
 
 .type-fixed {
@@ -658,7 +658,7 @@ onMounted(() => {
 
 .type-unknown {
   background: #EDF2F7;
-  color: #718096;
+  color: #687282;
 }
 
 /* ── 등록 모달 폼 ── */
