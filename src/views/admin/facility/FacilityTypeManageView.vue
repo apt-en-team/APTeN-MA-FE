@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import facilityAPI from '@/api/facility.js'
 import BaseModal from '@/components/common/BeseModel.vue'
-import FilterBar from '@/components/admin/FilterBar.vue'
+import FilterBar from '@/components/layout/FilterBar.vue';
 
 const state = reactive({
   list:        [],

@@ -6,10 +6,8 @@
     box-sizing: border-box;
 }
 
-svg, svg * {
-    color: inherit;
-}
+svg, svg * { color: inherit; }
 
-body {
-    margin: 0;
-}
+body { margin: 0; }
+
+html { scrollbar-gutter: stable; }

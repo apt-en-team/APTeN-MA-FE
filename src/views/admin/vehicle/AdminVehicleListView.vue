@@ -5,9 +5,9 @@ import vehicleAPI from '@/api/vehicle.js'
 import { useVehicleStore } from '@/stores/modules/vehicle.js'
 
 import StatsCards from '@/components/admin/StatsCards.vue'
-import FilterBar  from '@/components/admin/FilterBar.vue'
+import FilterBar from '@/components/layout/FilterBar.vue';
 import AdminTable from '@/components/admin/AdminTable.vue'
-import Pagination from '@/components/admin/Pagination.vue'
+import Pagination from '@/components/layout/Pagination.vue'
 import BaseModal  from '@/components/common/BeseModel.vue'
 
 const route        = useRoute()

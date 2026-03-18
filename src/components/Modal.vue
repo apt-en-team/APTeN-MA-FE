@@ -1,4 +1,4 @@
-<!-- components/common/BaseModal.vue -->
+<!-- components/common/Modal.vue -->
 <script setup>
 // 모달 제목
 defineProps({
@@ -100,5 +100,6 @@ const emit = defineEmits(['close'])
   border: none;
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
 }
 </style>

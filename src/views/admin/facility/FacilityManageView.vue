@@ -5,9 +5,9 @@ import { useFacilityStore } from '@/stores/modules/facility';
 import facilityAPI from '@/api/facility.js'
 
 import StatsCards from '@/components/admin/StatsCards.vue'
-import FilterBar  from '@/components/admin/FilterBar.vue'
+import FilterBar from '@/components/layout/FilterBar.vue';
 import BaseModal  from '@/components/common/BeseModel.vue'
-import Pagination from '@/components/admin/Pagination.vue'
+import Pagination from '@/components/layout/Pagination.vue'; 
 
 const router = useRouter()
 const facilityStore = useFacilityStore()

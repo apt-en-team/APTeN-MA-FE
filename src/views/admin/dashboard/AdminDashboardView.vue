@@ -28,10 +28,10 @@ const fetchDashboardData = async () => {
     ])
 
     // 패널 데이터 - API 연결 후 교체
-    dashboardState.visitors   = []
+    dashboardState.visitors = []
     dashboardState.facilities = []
-    dashboardState.records    = []
-    dashboardState.posts      = []
+    dashboardState.records = []
+    dashboardState.posts = []
 
   } catch (e) {
     console.error('대시보드 데이터 오류:', e)

@@ -2,7 +2,6 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import vehicleAPI from '@/api/vehicle.js'
 import BaseModal  from '@/components/common/BeseModel.vue'
-import FilterBar  from '@/components/admin/FilterBar.vue'
 
 const state = reactive({
   list: [],
