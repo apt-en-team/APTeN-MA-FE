@@ -89,7 +89,7 @@ const displayedPages = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .page-btn:hover {

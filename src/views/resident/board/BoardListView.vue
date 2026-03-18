@@ -266,7 +266,7 @@ function stripHtml(html) {
 </template>
 
 <style scoped>
-.board-list-view { max-width: 1200px; margin: 0 auto; font-family: 'Noto Sans KR', sans-serif; }
+.board-list-view { max-width: 1200px; margin: 0 auto;  }
 
 /* 레이아웃 */
 .board-layout { display: grid; grid-template-columns: 1fr 268px; gap: 34px; align-items: start; }
@@ -278,14 +278,14 @@ function stripHtml(html) {
 .tab-btn {
   padding: 8px 22px; border: none; background: transparent; border-radius: 8px;
   font-size: 14px; font-weight: 500; color: #6b7280; cursor: pointer; transition: all 0.18s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .tab-btn.active { background: #fff; color: #3b82f6; font-weight: 700; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
 .write-btn {
   display: flex; align-items: center; gap: 6px;
   background: #3b82f6; color: #fff; border: none; border-radius: 10px;
   padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
-  transition: background 0.15s; font-family: 'Noto Sans KR', sans-serif;
+  transition: background 0.15s;
 }
 .write-btn:hover { background: #2563eb; }
 
@@ -302,7 +302,7 @@ function stripHtml(html) {
   display: flex; align-items: center; gap: 7px;
   background: #3b82f6; color: #fff; border: none; border-radius: 10px;
   padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 /* 카드 슬롯 내부 스타일 */
@@ -340,7 +340,7 @@ function stripHtml(html) {
 .sidebar-card { background: #fff; border-radius: 16px; border: 1px solid #f0f0f0; padding: 20px; margin-bottom: 16px; }
 .sidebar-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .sidebar-card-title { font-size: 14px; font-weight: 700; color: #111827; }
-.more-btn { font-size: 12px; color: #9ca3af; background: none; border: none; cursor: pointer; transition: color 0.15s; font-family: 'Noto Sans KR', sans-serif; }
+.more-btn { font-size: 12px; color: #9ca3af; background: none; border: none; cursor: pointer; transition: color 0.15s;  }
 .more-btn:hover { color: #3b82f6; }
 .sidebar-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 0; color: #d1d5db; font-size: 13px; }
 
@@ -364,7 +364,7 @@ function stripHtml(html) {
 .action-btn {
   font-size: 11px; padding: 3px 9px; border-radius: 6px; border: none;
   cursor: pointer; display: flex; align-items: center; gap: 3px; font-weight: 600;
-  transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.15s;
 }
 .action-btn.edit { background: #f3f4f6; color: #374151; }
 .action-btn.edit:hover { background: #e5e7eb; }

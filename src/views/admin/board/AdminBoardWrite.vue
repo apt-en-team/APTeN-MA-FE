@@ -121,7 +121,7 @@ function handleCancel() {
 </template>
 
 <style scoped>
-.admin-board-write { width: 100%; font-family: 'Noto Sans KR', sans-serif; }
+.admin-board-write { width: 100%;  }
 
 .write-layout {
   display: grid;
@@ -153,7 +153,7 @@ function handleCancel() {
   border: 1px solid #E2E8F0; border-radius: 8px;
   font-size: 14px; color: #1A202C; outline: none;
   transition: border-color 0.15s; box-sizing: border-box;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .form-input:focus { border-color: #2B3A55; }
 .form-input::placeholder { color: #A0AEC0; }
@@ -175,7 +175,7 @@ function handleCancel() {
   border: 1px solid #E2E8F0; background: #fff;
   font-size: 13px; color: #718096;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-draft:hover { background: #F5F6F8; }
 .btn-cancel {
@@ -183,7 +183,7 @@ function handleCancel() {
   border: 1px solid #E2E8F0; background: #fff;
   font-size: 13px; color: #555;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-cancel:hover { background: #F5F6F8; }
 .btn-submit {
@@ -191,7 +191,7 @@ function handleCancel() {
   border: none; background: #2B3A55;
   color: #fff; font-size: 13px; font-weight: 700;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-submit:hover { background: #1E2A3E; }
 

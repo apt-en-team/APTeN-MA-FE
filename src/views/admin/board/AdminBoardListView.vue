@@ -252,7 +252,7 @@ const tabCounts = computed(() => ({
   font-size: 13px; font-weight: 500; color: #718096;
   cursor: pointer; border-bottom: 2px solid transparent;
   margin-bottom: -1px; transition: all 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
   display: flex; align-items: center; gap: 6px;
 }
 .tab-btn:hover { color: #2B3A55; }
@@ -274,7 +274,7 @@ const tabCounts = computed(() => ({
   padding: 7px 12px 7px 28px;
   border: 1px solid #E2E8F0; border-radius: 7px;
   font-size: 13px; outline: none; width: 200px;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .search-input:focus { border-color: #2B3A55; }
 
@@ -284,7 +284,7 @@ const tabCounts = computed(() => ({
   border: 1px solid #E2E8F0; border-radius: 7px;
   font-size: 13px; color: #374151; outline: none;
   background: #fff; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A0AEC0'/%3E%3C/svg%3E");
   background-repeat: no-repeat;

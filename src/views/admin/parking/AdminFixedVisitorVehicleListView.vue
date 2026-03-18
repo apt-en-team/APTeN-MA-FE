@@ -51,7 +51,8 @@ const detailModal = ref({show: false, item: null, loading: false})
 const confirmModal = ref({show: false, loading: false})
 
 // 날짜 input의 min 속성에 사용 (오늘 이전 날짜 선택 불가)
-const today = new Date().toISOString().slice(0, 10)
+const now = new Date()
+const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
 // ── 테이블 컬럼 정의
 // key는 tableRows의 필드명과 일치해야 AdminTable이 올바르게 렌더링함

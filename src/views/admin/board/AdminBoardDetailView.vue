@@ -267,14 +267,14 @@ function editComment({ commentId, content }) {
   flex: 1; padding: 9px 12px;
   border: 1px solid #E2E8F0; border-radius: 8px;
   font-size: 13px; outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .comment-input:focus { border-color: #2B3A55; }
 .comment-submit {
   padding: 9px 18px; background: #2B3A55;
   color: #fff; border: none; border-radius: 8px;
   font-size: 13px; font-weight: 600; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .comment-submit:hover { background: #1E2A3E; }
 
@@ -316,7 +316,7 @@ function editComment({ commentId, content }) {
   border: 1px solid #E2E8F0; border-radius: 8px;
   background: #fff; font-size: 13px; color: #555;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-back:hover { background: #F5F6F8; }
 .btn-edit {
@@ -325,7 +325,7 @@ function editComment({ commentId, content }) {
   background: #2B3A55; color: #fff;
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-edit:hover { background: #1E2A3E; }
 .btn-delete {
@@ -334,7 +334,7 @@ function editComment({ commentId, content }) {
   background: #fff; color: #E53E3E;
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-delete:hover { background: #FFF5F5; }
 

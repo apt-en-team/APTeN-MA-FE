@@ -185,7 +185,7 @@ const handleCancel = () => {
   display: flex;
   gap: 24px;
   align-items: flex-start;
-  font-family: 'Noto Sans KR', sans-serif;
+
   color: #333;
 }
 
@@ -235,7 +235,7 @@ const handleCancel = () => {
   font-size: 13px;
   color: #2D3748;
   outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
   background: #fff;
   transition: border-color 0.15s;
 }
@@ -256,7 +256,7 @@ const handleCancel = () => {
   border: 1px solid #E2E8F0;
   border-radius: 8px; padding: 10px 20px;
   font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
   transition: background 0.15s;
 }
 .btn-cancel:hover { background: #F5F6FA; }
@@ -265,7 +265,7 @@ const handleCancel = () => {
   background: #4973E5; color: #fff;
   border: none; border-radius: 8px;
   padding: 10px 24px; font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
   transition: background 0.15s;
 }
 .btn-submit:hover { background: #3560d4; }

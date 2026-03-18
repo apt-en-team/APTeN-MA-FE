@@ -42,7 +42,7 @@ const emit = defineEmits(['search', 'reset'])
   font-size: 12px;
   color: #718096;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-reset:hover {

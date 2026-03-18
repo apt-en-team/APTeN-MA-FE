@@ -255,7 +255,7 @@ function stripHtml(html) {
 <style scoped>
 .my-posts-view {
   max-width: 1200px;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 /* 2컬럼 레이아웃 */

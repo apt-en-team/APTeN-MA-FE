@@ -455,7 +455,7 @@ onMounted(() => {
 .household-page {
   display: flex;
   flex-direction: column;
-  font-family: 'Noto Sans KR', sans-serif;
+
   color: #333;
 }
 
@@ -489,7 +489,7 @@ onMounted(() => {
   outline: none;
   color: #333;
   width: 150px;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .search-input::placeholder {
@@ -506,7 +506,7 @@ onMounted(() => {
   appearance: none;
   cursor: pointer;
   outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 /* 배지/버튼 */
@@ -546,7 +546,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-warning {
@@ -558,7 +558,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   cursor: default;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-cancel {
@@ -569,7 +569,7 @@ onMounted(() => {
   font-size: 13px;
   color: #718096;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-cancel:hover {
@@ -585,7 +585,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-submit {
@@ -597,7 +597,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-submit:hover:not(:disabled) {
@@ -761,7 +761,7 @@ onMounted(() => {
   font-size: 13px;
   color: #333;
   outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
   width: 100%;
 }
 
