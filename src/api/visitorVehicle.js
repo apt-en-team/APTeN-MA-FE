@@ -72,14 +72,20 @@ export const deleteFixedVisitorVehicle = (id) => {
         .then(res => ({ ...res, data: res.data.resultData }))
 }
 
-// API-071 | 관리자 고정 방문차량 목록 조회
+// 관리자 고정 방문차량 목록 조회
 export const getAdminFixedVisitorVehicles = (params) => {
     return api.get('/admin/visitor-vehicles/fixed', { params })
         .then(res => ({ ...res, data: res.data.resultData }))
 }
 
-// API-072 | 관리자 고정 방문차량 통계
+// 관리자 고정 방문차량 통계
 export const getAdminFixedVisitorVehicleStats = () => {
     return api.get('/admin/visitor-vehicles/fixed/stats')
+        .then(res => ({ ...res, data: res.data.resultData }))
+}
+
+// 관리자 고정 방문차량 삭제
+export const deleteAdminFixedVisitorVehicle = (fixedId) => {
+    return api.delete(`/admin/visitor-vehicles/fixed/${fixedId}`)
         .then(res => ({ ...res, data: res.data.resultData }))
 }

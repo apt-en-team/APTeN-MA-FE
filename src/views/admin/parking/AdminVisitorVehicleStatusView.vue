@@ -7,27 +7,27 @@ import FilterBar from '@/components/layout/FilterBar.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/layout/Pagination.vue'
 
+// 전체 상태를 reactive 하나로 관리
+// ref를 여러 개 쓰는 대신 reactive로 묶어서 관련 상태를 한 곳에서 관리
 const state = reactive({
-  list: [],
+  list: [],            // API에서 받아온 원본 목록 데이터
   // 통계 카드 데이터 (API-070)
   stats: {
-    todayCount: 0,
-    tomorrowCount: 0,
-    totalCount: 0,
-    monthCount: 0,
+    todayCount: 0,     // 오늘 방문 예정 건수
+    tomorrowCount: 0,  // 내일 방문 예정 건수
+    totalCount: 0,     // 전체 등록 건수
+    monthCount: 0,     // 이번 달 방문 건수
   },
-  // 활성 탭: 'all' | 'today' | 'tomorrow'
-  activeTab: 'all',
-  // 차량번호 검색 필터
-  licensePlate: '',
-  // 페이지네이션
-  size: 10,
-  currentPage: 1,
-  totalPages: 0,
-  totalCount: 0,
+  activeTab: 'all',    // 활성 탭 상태 (all / today / tomorrow)
+  licensePlate: '',    // 차량번호 검색 필터
+  size: 10,            // 한 페이지에 표시할 데이터 수
+  currentPage: 1,      // 현재 페이지 번호
+  totalPages: 0,       // 전체 페이지 수 (페이지네이션에 사용)
+  totalCount: 0,       // 전체 데이터 건수
 })
 
 // 테이블 컬럼 정의
+// key는 tableRows의 필드명과 일치해야 AdminTable이 올바르게 렌더링함
 // TODO: parking_log 연동 후 { label: '입차 여부', key: 'isEntered' } 추가
 const columns = [
   {label: '차량번호', key: 'licensePlate'},
@@ -36,6 +36,7 @@ const columns = [
   {label: '방문일', key: 'visitDate'},
   {label: '등록자', key: 'userName'},
   {label: '세대', key: 'unit'},
+  {label: '상태', key: 'statusLabel'},  // isDeleted + status 조합으로 배지 표시
 ]
 
 // 탭 목록 정의
@@ -46,6 +47,8 @@ const tabs = [
 ]
 
 // 날짜 문자열 반환 (YYYY-MM-DD, 로컬 시간 기준)
+// toISOString() 대신 직접 계산하는 이유:
+// toISOString()은 UTC 기준이라 KST와 최대 9시간 차이가 날 수 있음
 const getDateString = (offset = 0) => {
   const d = new Date()
   d.setDate(d.getDate() + offset)
@@ -55,39 +58,31 @@ const getDateString = (offset = 0) => {
   return `${year}-${month}-${day}`
 }
 
-// StatsCards에 넘길 통계 데이터
+// 통계 카드 배열
+// StatsCards 컴포넌트에 :stats로 전달, stats 값이 바뀌면 자동 재계산
 const statsData = computed(() => [
-  {
-    label: '오늘 방문 예정',
-    value: state.stats.todayCount,
-    unit: '대',
-    desc: `${getDateString(0)} 기준`,
-  },
-  {
-    label: '내일 방문 예정',
-    value: state.stats.tomorrowCount,
-    unit: '대',
-    desc: `${getDateString(1)} 기준`,
-  },
-  {
-    label: '이번 달 방문',
-    value: state.stats.monthCount,
-    unit: '건',
-    desc: '월간 누적',
-  },
-  {
-    label: '전체 등록 건수',
-    value: state.stats.totalCount,
-    unit: '건',
-    desc: '전체 누적',
-  },
+  {label: '오늘 방문 예정', value: state.stats.todayCount, unit: '대', desc: `${getDateString(0)} 기준`},
+  {label: '내일 방문 예정', value: state.stats.tomorrowCount, unit: '대', desc: `${getDateString(1)} 기준`},
+  {label: '이번 달 방문', value: state.stats.monthCount, unit: '건', desc: '월간 누적'},
+  {label: '전체 등록 건수', value: state.stats.totalCount, unit: '건', desc: '전체 누적'},
 ])
 
-// dong + ho 합쳐서 세대 컬럼 표시
+// 테이블 표시용 데이터 가공
+// list(원본)를 직접 수정하지 않고 화면 표시용으로 따로 가공
+// list가 바뀌면 자동으로 재계산됨
 const tableRows = computed(() =>
     state.list.map(item => ({
       ...item,
+      // dong + ho를 합쳐서 세대 컬럼으로 표시 (백엔드는 각각 내려줌)
       unit: item.dong && item.ho ? `${item.dong} ${item.ho}` : '-',
+      // isDeleted=1이면 삭제됨, status=CANCELLED이면 취소됨, 나머지는 승인
+      statusLabel: item.isDeleted === 1 ? '삭제됨'
+          : item.status === 'CANCELLED' ? '취소됨'
+              : '승인',
+      // 배지 CSS 클래스 결정용
+      statusType: item.isDeleted === 1 ? 'deleted'
+          : item.status === 'CANCELLED' ? 'cancelled'
+              : 'approved',
     }))
 )
 
@@ -106,19 +101,18 @@ const fetchStats = async () => {
 }
 
 // 목록 조회 (API-069)
+// 탭 상태에 따라 visitDate 파라미터를 추가해서 오늘/내일 필터링
 const fetchList = async () => {
   try {
-    const params = {
-      page: state.currentPage,
-      size: state.size,
-    }
+    const params = {page: state.currentPage, size: state.size}
+    // 탭이 today/tomorrow면 해당 날짜를 파라미터로 전달
     if (state.activeTab === 'today') params.visitDate = getDateString(0)
     if (state.activeTab === 'tomorrow') params.visitDate = getDateString(1)
+    // 값이 있을 때만 파라미터에 추가 (빈 문자열은 전송 안 함)
     if (state.licensePlate) params.licensePlate = state.licensePlate
 
     const res = await getAdminVisitorVehicles(params)
     const data = res.data
-
     state.list = data.content
     state.totalPages = data.totalPages
     state.totalCount = data.totalCount
@@ -127,7 +121,7 @@ const fetchList = async () => {
   }
 }
 
-// 탭 전환
+// 탭 전환: 탭 변경 시 필터와 페이지를 초기화하고 목록 재조회
 const switchTab = (tabKey) => {
   state.activeTab = tabKey
   state.currentPage = 1
@@ -135,7 +129,7 @@ const switchTab = (tabKey) => {
   fetchList()
 }
 
-// 검색
+// 검색 실행: 페이지를 1로 초기화 후 목록 재조회
 const doSearch = () => {
   state.currentPage = 1
   fetchList()
@@ -153,6 +147,7 @@ const goToPage = (page) => {
   fetchList()
 }
 
+// 컴포넌트가 DOM에 마운트된 후 통계와 목록을 최초 조회
 onMounted(() => {
   fetchStats()
   fetchList()
@@ -162,13 +157,13 @@ onMounted(() => {
 <template>
   <div class="visitor-vehicle-page">
 
-    <!-- 통계 카드 (StatsCards 컴포넌트) -->
+    <!-- 통계 카드 4개: 오늘/내일/이번달/전체 -->
     <StatsCards :stats="statsData"/>
 
-    <!-- 테이블 섹션 -->
     <div class="table-section">
 
-      <!-- 탭: 전체 / 오늘 방문 / 내일 방문 -->
+      <!-- 탭: 전체 / 오늘 방문 / 내일 방문
+           탭 전환 시 visitDate 파라미터가 자동으로 변경되어 목록 재조회 -->
       <div class="tab-bar">
         <button
             v-for="tab in tabs"
@@ -177,12 +172,9 @@ onMounted(() => {
             @click="switchTab(tab.key)"
         >
           {{ tab.label }}
-          <span v-if="tab.key === 'today'" class="tab-badge">
-            {{ state.stats.todayCount }}
-          </span>
-          <span v-if="tab.key === 'tomorrow'" class="tab-badge">
-            {{ state.stats.tomorrowCount }}
-          </span>
+          <!-- 오늘/내일 탭에만 건수 배지 표시 -->
+          <span v-if="tab.key === 'today'" class="tab-badge">{{ state.stats.todayCount }}</span>
+          <span v-if="tab.key === 'tomorrow'" class="tab-badge">{{ state.stats.tomorrowCount }}</span>
         </button>
       </div>
 
@@ -204,19 +196,24 @@ onMounted(() => {
         </div>
       </FilterBar>
 
-      <!-- 방문차량 목록 테이블 -->
+      <!-- 방문차량 목록 테이블
+           상태 배지 슬롯: statusType에 따라 승인/취소됨/삭제됨 배지 표시 -->
       <AdminTable :columns="columns" :rows="tableRows">
+        <template #cell-statusLabel="{ row }">
+          <span :class="['status-badge', `status-${row.statusType}`]">
+            {{ row.statusLabel }}
+          </span>
+        </template>
         <!--
           TODO: parking_log 연동 후 주석 해제
           <template #cell-isEntered="{ row }">
-            <span :class="['status-badge', row.isEntered ? 'status-success' : 'status-gray']">
+            <span :class="['status-badge', row.isEntered ? 'status-approved' : 'status-grey']">
               {{ row.isEntered ? '입차완료' : '미입차' }}
             </span>
           </template>
         -->
       </AdminTable>
 
-      <!-- 페이지네이션 -->
       <Pagination
           :currentPage="state.currentPage"
           :maxPage="state.totalPages"
@@ -242,7 +239,6 @@ onMounted(() => {
   flex-direction: column;
 }
 
-/* 테이블 섹션 */
 .table-section {
   background: #fff;
   border-radius: 10px;
@@ -250,7 +246,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 탭 */
 .tab-bar {
   display: flex;
   gap: 0;
@@ -274,9 +269,7 @@ onMounted(() => {
   transition: color 0.15s, border-color 0.15s;
 }
 
-.tab-btn:hover {
-  color: #4A5568;
-}
+.tab-btn:hover { color: #4A5568; }
 
 .tab-btn.active {
   color: #2D3748;
@@ -298,7 +291,6 @@ onMounted(() => {
   color: #4D8B5A;
 }
 
-/* 필터 */
 .search-wrap {
   display: flex;
   align-items: center;
@@ -309,10 +301,7 @@ onMounted(() => {
   background: #F5F6F8;
 }
 
-.search-icon {
-  color: #A0AEC0;
-  flex-shrink: 0;
-}
+.search-icon { color: #A0AEC0; flex-shrink: 0; }
 
 .search-input {
   border: none;
@@ -322,11 +311,9 @@ onMounted(() => {
   width: 160px;
 }
 
-.search-input::placeholder {
-  color: #CBD5E0;
-}
+.search-input::placeholder { color: #CBD5E0; }
 
-/* 상태 배지 (parking_log 연동 후 사용) */
+/* 상태 배지 공통 스타일 */
 .status-badge {
   display: inline-block;
   padding: 3px 10px;
@@ -335,13 +322,21 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.status-success {
+/* 승인 — 초록 */
+.status-approved {
   background: #EBF5EE;
   color: #4D8B5A;
 }
 
-.status-gray {
+/* 취소됨 — 회색 */
+.status-cancelled {
   background: #EDF2F7;
   color: #718096;
+}
+
+/* 삭제됨 — 빨강 */
+.status-deleted {
+  background: #FEE2E2;
+  color: #E53E3E;
 }
 </style>
