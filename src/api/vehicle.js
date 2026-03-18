@@ -24,17 +24,17 @@ export default {
 
   // API-042 | 전체 차량 목록 조회 (관리자)
   getAllVehicles({ householdId = null, status = null, carType = null, dong = null, search = null, page = 0, size = 10 } = {}) {
-      return axios.get('/admin/vehicles', {
-          params: {
-              householdId: householdId || undefined,
-              status:      status      || undefined,
-              carType:     carType     || undefined,
-              dong:        dong        || undefined,
-              search:      search      || undefined,  // ← 추가
-              page,
-              size,
-          }
-      })
+    return axios.get('/admin/vehicles', {
+      params: {
+        householdId: householdId || undefined,
+        status:      status      || undefined,
+        carType:     carType     || undefined,
+        dong:        dong        || undefined,
+        search:      search      || undefined,
+        page,
+        size,
+      }
+    })
   },
 
   // ADMIN | 차량 통계 조회
@@ -42,7 +42,12 @@ export default {
     return axios.get('/admin/vehicles/stats')
   },
 
-  // ADMIN | 동 목록 조회 ← 추가
+  // ADMIN | 차량 등록
+  adminRegisterVehicle(data) {
+    return axios.post('/admin/vehicles', data)
+  },
+
+  // ADMIN | 동 목록 조회
   getDongs() {
     return axios.get('/admin/vehicles/dongs')
   },
@@ -60,5 +65,31 @@ export default {
   // API-043 | 내 차량 입출차 기록 조회
   getMyVehicleLogs() {
     return axios.get('/vehicles/my-logs')
+  },
+
+  // ADMIN | 세대 동 목록 조회
+  getHouseholdDongs() {
+    return axios.get('/admin/households/dongs')
+  },
+
+  // ADMIN | 세대 목록 조회
+  getHouseholds(params) {
+    return axios.get('/admin/households', {
+      params: {
+        dong: params.dong,
+        page: 1,
+        size: 999
+      }
+    })
+  },
+
+  // ADMIN | 세대 입주민 목록 조회
+  getResidents(householdId) {
+    return axios.get(`/admin/households/${householdId}/residents`)
+  },
+
+  // ADMIN | 차량번호 중복 확인
+  checkLicensePlate(licensePlate) {
+    return axios.get('/admin/vehicles/check-plate', { params: { licensePlate } })
   },
 }

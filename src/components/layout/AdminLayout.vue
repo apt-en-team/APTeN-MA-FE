@@ -134,7 +134,8 @@ async function handleLogout() {
           <button v-if="route.name === 'AdminFacilityManage'" class="btn-action" @click="router.push('/admin/facilities/register')">+ 시설 추가</button>
           <button v-if="route.name === 'AdminBoardList'"  class="btn-action">+ 공지 작성</button>
           <button v-if="route.name === 'AdminParkingLog'"  class="btn-action">+ 기록 등록</button>
-          <button v-if="route.name === 'AdminVehicleListView'"  class="btn-action">+ 차량 등록</button>  
+          <button v-if="route.name === 'AdminVehicleListView'" class="btn-action" @click="router.push({ name: 'AdminVehicleListView', query: { register: Date.now() } })">+ 차량 등록</button>
+
         </div>
       </header>
 
