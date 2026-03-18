@@ -1,36 +1,66 @@
 <script setup>
-import { reactive, ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useHouseholdStore } from '@/stores/modules/household.js'
-import { useVehicleStore }   from '@/stores/modules/vehicle.js'
+import {reactive, ref, computed, onMounted} from 'vue'
+import {useRouter} from 'vue-router'
+import {useHouseholdStore} from '@/stores/modules/household.js'
+import {useParkingStore} from '@/stores/modules/parking.js'
+import axios from '@/api/axios.js'
 import StatsCards from '@/components/admin/StatsCards.vue'
 
 const router = useRouter()
-const vehicleStore   = useVehicleStore()    
 
 // ── 로딩 / 에러 상태 ──
 const isLoading = ref(false)
-const hasError  = ref(false)
+const hasError = ref(false)
 
 // ── 피니아 스토어 ──
 const householdStore = useHouseholdStore()
+const parkingStore = useParkingStore()
+
+// ── 차량 유형별 뱃지 클래스 ──
+const typeClass = (type) => {
+  switch (type) {
+    case '등록차량':
+      return 'type-registered'
+    case '방문차량':
+      return 'type-visitor'
+    case '고정방문차량':
+      return 'type-fixed'
+    default:
+      return 'type-unknown'
+  }
+}
+
+// ── 시각 포맷 (HH:mm) ──
+const formatTime = (val) => {
+  if (!val) return '-'
+  return val.replace('T', ' ').slice(11, 16)
+}
 
 // ── 대시보드 데이터 fetch ──
 const fetchDashboardData = async () => {
   isLoading.value = true
-  hasError.value  = false
+  hasError.value = false
   try {
     await Promise.all([
-      householdStore.fetchStats(),   // 세대 통계
-      vehicleStore.fetchStats() // 전체 주차 승인 대기 목록
-      // parkingStore.fetchStats(),  // 나중에 주차 추가
-      // reservationStore.fetchStats(), // 나중에 예약 추가
+      householdStore.fetchStats(),  // 세대 통계
+      parkingStore.fetchStats(),    // 주차 현황
     ])
+
+    // 최근 입출차 기록 (최신 5건)
+    const logsRes = await axios.get('/parking/logs', {params: {page: 1, size: 5}})
+    const logsData = logsRes.data?.resultData ?? logsRes.data
+    dashboardState.records = (logsData.content ?? []).map(r => ({
+      plate: r.licensePlate,
+      direction: r.entryType,
+      type: r.vehicleType ?? '미등록차량',
+      typeClass: typeClass(r.vehicleType),
+      unit: r.vehicleInfo ?? '-',
+      time: formatTime(r.loggedAt),
+    }))
 
     // 패널 데이터 - API 연결 후 교체
     dashboardState.visitors = []
     dashboardState.facilities = []
-    dashboardState.records = []
     dashboardState.posts = []
 
   } catch (e) {
@@ -41,29 +71,22 @@ const fetchDashboardData = async () => {
   }
 }
 
-// ── 주차/예약 summary (나중에 피니아 스토어로 대체) ──
+// ── 주차/예약 summary (승인대기/예약은 나중에 피니아 스토어로 대체) ──
 const summary = reactive({
   pendingCount: null,  // 승인 대기 건수
-  parkingUsed:  null,  // 주차 사용 면수
-  parkingTotal: null,  // 주차 전체 면수
   todayReserve: null,  // 오늘 예약 건수
-  reserveDiff:  null,  // 전일 대비 증감
+  reserveDiff: null,  // 전일 대비 증감
 })
 
 // ── 패널 목록 ──
 const dashboardState = reactive({
-  visitors:   [],
+  visitors: [],
   facilities: [],
-  records:    [],
-  posts:      [],
+  records: [],
+  posts: [],
 })
 
 // ── computed ──
-const parkingPercent = computed(() => {
-  if (!summary.parkingUsed || !summary.parkingTotal) return null
-  return Math.round((summary.parkingUsed / summary.parkingTotal) * 100)
-})
-
 const reserveDiffLabel = computed(() => {
   if (summary.reserveDiff === null) return null
   return (summary.reserveDiff >= 0 ? '+' : '') + summary.reserveDiff + '건'
@@ -72,40 +95,40 @@ const reserveDiffLabel = computed(() => {
 // ── StatsCards 에 넘길 데이터 ──
 const dashboardStats = computed(() => [
   {
-    label:     '승인 대기',
-    value:     vehicleStore.pending ?? '-',             
-    unit:      vehicleStore.pending !== null ? '건' : '',
-    desc:      vehicleStore.pending !== null ? '입주민차량 승인 필요' : '데이터 없음',
+    label: '승인 대기',
+    value: summary.pendingCount ?? '-',
+    unit: summary.pendingCount !== null ? '건' : '',
+    desc: summary.pendingCount !== null ? '입주민차량 승인 필요' : '데이터 없음',
     descClass: 'highlight-orange',
     iconClass: 'icon-orange',
   },
   {
-    label:     '주차 현황',
-    value:     parkingPercent.value ?? '-',
-    unit:      parkingPercent.value !== null ? '%' : '',
-    desc:      summary.parkingUsed !== null
-                 ? `${summary.parkingUsed} / ${summary.parkingTotal}면 사용중`
-                 : '데이터 없음',
-    progress:  parkingPercent.value,
+    label: '주차 현황',
+    value: parkingStore.parkingPercent ?? '-',
+    unit: parkingStore.parkingPercent !== null ? '%' : '',
+    desc: parkingStore.totalSpaces > 0
+        ? `${parkingStore.currentCount} / ${parkingStore.totalSpaces}면 사용중`
+        : '데이터 없음',
+    progress: parkingStore.parkingPercent,
     iconClass: 'icon-blue',
   },
   {
-    label:     '오늘 예약',
-    value:     summary.todayReserve ?? '-',
-    unit:      summary.todayReserve !== null ? '건' : '',
-    desc:      reserveDiffLabel.value !== null
-                 ? `전일 대비 ${reserveDiffLabel.value}`
-                 : '데이터 없음',
+    label: '오늘 예약',
+    value: summary.todayReserve ?? '-',
+    unit: summary.todayReserve !== null ? '건' : '',
+    desc: reserveDiffLabel.value !== null
+        ? `전일 대비 ${reserveDiffLabel.value}`
+        : '데이터 없음',
     descClass: 'highlight-green',
     iconClass: 'icon-green',
   },
   {
-    label:     '전체 세대',
-    value:     householdStore.total || '-',
-    unit:      householdStore.total ? '세대' : '',
-    desc:      householdStore.total
-                 ? `입주 ${householdStore.occupied}세대 · 공실 ${householdStore.empty}세대`
-                 : '데이터 없음',
+    label: '전체 세대',
+    value: householdStore.total || '-',
+    unit: householdStore.total ? '세대' : '',
+    desc: householdStore.total
+        ? `입주 ${householdStore.occupied}세대 · 공실 ${householdStore.empty}세대`
+        : '데이터 없음',
     iconClass: 'icon-gray',
   },
 ])
@@ -121,7 +144,7 @@ onMounted(() => {
 
     <!-- 로딩 -->
     <div v-if="isLoading" class="status-overlay">
-      <span class="status-spinner" />
+      <span class="status-spinner"/>
       <p class="status-text">데이터를 불러오는 중입니다...</p>
     </div>
 
@@ -129,7 +152,7 @@ onMounted(() => {
     <div v-else-if="hasError" class="status-overlay status-error">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8"  x2="12"    y2="12"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <p class="status-text">데이터를 불러오는 중 오류가 발생했습니다.</p>
@@ -142,25 +165,22 @@ onMounted(() => {
       <!-- ── 요약 카드 4개 ── -->
       <section class="summary-section">
         <StatsCards :stats="dashboardStats" :showIcon="true"
-          @click-0="router.push({ name: 'AdminVehicleListView' })"
-          @click-1="router.push({ name: 'ParkingDashboardView' })"
-          @click-2="router.push({ name: 'AdminReservationListView' })"
-          @click-3="router.push({ name: 'HouseholdManage' })"
+                    @click-0="router.push({ name: 'AdminVehicleListView' })"
+                    @click-1="router.push({ name: 'ParkingDashboardView' })"
+                    @click-2="router.push({ name: 'AdminReservationListView' })"
+                    @click-3="router.push({ name: 'HouseholdManage' })"
         >
-          <!-- 승인 대기 아이콘 -->
           <template #icon-0>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </template>
-          <!-- 주차 현황 아이콘 -->
           <template #icon-1>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
               <path d="M9 17V9h4a2 2 0 010 4H9"/>
             </svg>
           </template>
-          <!-- 오늘 예약 아이콘 -->
           <template #icon-2>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -169,7 +189,6 @@ onMounted(() => {
               <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
           </template>
-          <!-- 전체 세대 아이콘 -->
           <template #icon-3>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
@@ -190,10 +209,10 @@ onMounted(() => {
           </div>
           <div v-if="dashboardState.visitors.length > 0" class="visitor-list">
             <div
-              v-for="vehicle in dashboardState.visitors"
-              :key="vehicle.plate"
-              class="visitor-item card-clickable"
-              @click="router.push({ name: 'AdminVehicleListView' })"
+                v-for="vehicle in dashboardState.visitors"
+                :key="vehicle.plate"
+                class="visitor-item card-clickable"
+                @click="router.push({ name: 'AdminVehicleListView' })"
             >
               <div class="visitor-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -229,10 +248,10 @@ onMounted(() => {
           </div>
           <div v-if="dashboardState.facilities.length > 0" class="facility-list">
             <div
-              v-for="facility in dashboardState.facilities"
-              :key="facility.name"
-              class="facility-item card-clickable"
-              @click="router.push({ name: 'AdminReservationListView' })"
+                v-for="facility in dashboardState.facilities"
+                :key="facility.name"
+                class="facility-item card-clickable"
+                @click="router.push({ name: 'AdminReservationListView' })"
             >
               <div class="facility-bar" :class="'bar-' + facility.barColor"></div>
               <div class="facility-left">
@@ -242,7 +261,8 @@ onMounted(() => {
               <div class="facility-right">
                 <div class="facility-name-row">
                   <div class="progress-bar">
-                    <div class="progress-fill" :class="facility.barColor" :style="{ width: facility.percent + '%' }"></div>
+                    <div class="progress-fill" :class="facility.barColor"
+                         :style="{ width: facility.percent + '%' }"></div>
                   </div>
                   <span class="facility-count">
                     <span :class="['count-current', facility.isFull ? 'count-red' : '']">{{ facility.current }}</span>
@@ -278,28 +298,28 @@ onMounted(() => {
           <template v-if="dashboardState.records.length > 0">
             <table class="entry-table">
               <thead>
-                <tr>
-                  <th>구분</th>
-                  <th>차량번호</th>
-                  <th>유형</th>
-                  <th>세대</th>
-                  <th>시각</th>
-                </tr>
+              <tr>
+                <th>구분</th>
+                <th>차량번호</th>
+                <th>유형</th>
+                <th>세대</th>
+                <th>시각</th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="record in dashboardState.records" :key="record.plate + record.time">
-                  <td>
+              <tr v-for="record in dashboardState.records" :key="record.plate + record.time">
+                <td>
                     <span :class="['tag-direction', record.direction === 'IN' ? 'tag-in' : 'tag-out']">
                       {{ record.direction }}
                     </span>
-                  </td>
-                  <td class="plate-cell">{{ record.plate }}</td>
-                  <td>
-                    <span :class="['tag-type', record.typeClass]">{{ record.type }}</span>
-                  </td>
-                  <td class="unit-cell">{{ record.unit }}</td>
-                  <td class="time-cell">{{ record.time }}</td>
-                </tr>
+                </td>
+                <td class="plate-cell">{{ record.plate }}</td>
+                <td>
+                  <span :class="['tag-type', record.typeClass]">{{ record.type }}</span>
+                </td>
+                <td class="unit-cell">{{ record.unit }}</td>
+                <td class="time-cell">{{ record.time }}</td>
+              </tr>
               </tbody>
             </table>
           </template>
@@ -322,16 +342,18 @@ onMounted(() => {
           </div>
           <div v-if="dashboardState.posts.length > 0" class="board-list">
             <div
-              v-for="post in dashboardState.posts"
-              :key="post.id"
-              class="board-item card-clickable"
-              @click="router.push({ name: 'AdminBoardList' })"
+                v-for="post in dashboardState.posts"
+                :key="post.id"
+                class="board-item card-clickable"
+                @click="router.push({ name: 'AdminBoardList' })"
             >
               <div class="board-left">
                 <span :class="['board-tag', post.tagClass]">{{ post.tag }}</span>
                 <div class="board-content">
                   <span class="board-title">{{ post.title }}</span>
-                  <span class="board-meta">{{ post.author }}<template v-if="post.views"> · {{ post.views }}</template></span>
+                  <span class="board-meta">{{ post.author }}<template v-if="post.views"> · {{
+                      post.views
+                    }}</template></span>
                 </div>
               </div>
               <div class="board-right">
@@ -360,9 +382,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-.admin-dashboard { width: 100%; min-height: 100%; }
+.admin-dashboard {
+  width: 100%;
+  min-height: 100%;
+}
 
 /* 로딩 / 에러 오버레이 */
 .status-overlay {
@@ -384,11 +413,22 @@ onMounted(() => {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-.status-text { font-size: 14px; color: #92959D; }
+.status-text {
+  font-size: 14px;
+  color: #92959D;
+}
 
-.status-error svg { width: 40px; height: 40px; color: #C08B2D; }
+.status-error svg {
+  width: 40px;
+  height: 40px;
+  color: #C08B2D;
+}
 
 .retry-btn {
   margin-top: 4px;
@@ -403,7 +443,9 @@ onMounted(() => {
   transition: background 0.2s;
 }
 
-.retry-btn:hover { background: #3D5170; }
+.retry-btn:hover {
+  background: #3D5170;
+}
 
 /* 대시보드 래퍼 */
 .dashboard-wrapper {
@@ -450,88 +492,211 @@ onMounted(() => {
   padding-bottom: 10px;
 }
 
-.panel-title { font-size: 18px; font-weight: 700; color: #333333; }
+.panel-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333333;
+}
 
-.panel-more { font-size: 13px; color: #3D5170; text-decoration: none; }
-.panel-more:hover { color: #3b6ef8; }
+.panel-more {
+  font-size: 13px;
+  color: #3D5170;
+  text-decoration: none;
+}
+
+.panel-more:hover {
+  color: #3b6ef8;
+}
 
 /* 빈 상태 */
 .empty-state {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 10px; padding: 36px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 0;
 }
 
-.empty-state svg { width: 36px; height: 36px; color: #d1d5db; }
+.empty-state svg {
+  width: 36px;
+  height: 36px;
+  color: #d1d5db;
+}
 
-.empty-text { font-size: 13px; color: #b0b8c9; font-weight: 500; }
+.empty-text {
+  font-size: 13px;
+  color: #b0b8c9;
+  font-weight: 500;
+}
 
 /* 방문차량 */
-.visitor-list { display: flex; flex-direction: column; gap: 12px; }
+.visitor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 .visitor-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px; border-radius: 10px; background: #f9fafb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f9fafb;
 }
 
 .visitor-icon {
-  width: 36px; height: 36px;
-  background: #E8EBF2; border-radius: 50px;
-  display: flex; align-items: center; justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #E8EBF2;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.visitor-icon svg { width: 18px; height: 18px; color: #2B3A55; }
-
-.visitor-info { display: flex; flex-direction: column; gap: 2px; }
-
-.visitor-plate  { font-size: 14px; font-weight: 700; color: #333333; }
-.visitor-detail { font-size: 12px; color: #687282; }
-.visitor-date   { font-size: 11px; color: #687282; }
-
-/* 시설 */
-.facility-list { display: flex; flex-direction: column; gap: 12px; }
-
-.facility-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 15px 16px; border-radius: 10px;
-  background: #f9fafb; justify-content: space-between;
+.visitor-icon svg {
+  width: 18px;
+  height: 18px;
+  color: #2B3A55;
 }
 
-.facility-bar { width: 4px; height: 44px; border-radius: 5px; flex-shrink: 0; }
+.visitor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
-.bar-dark   { background: #2B3A55; }
-.bar-green  { background: #4D8B5A; }
-.bar-yellow { background: #C08B2D; }
+.visitor-plate {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333333;
+}
+
+.visitor-detail {
+  font-size: 12px;
+  color: #687282;
+}
+
+.visitor-date {
+  font-size: 11px;
+  color: #687282;
+}
+
+/* 시설 */
+.facility-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.facility-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 16px;
+  border-radius: 10px;
+  background: #f9fafb;
+  justify-content: space-between;
+}
+
+.facility-bar {
+  width: 4px;
+  height: 44px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.bar-dark {
+  background: #2B3A55;
+}
+
+.bar-green {
+  background: #276749;
+}
+
+.bar-yellow {
+  background: #C08B2D;
+}
 
 .facility-left {
-  flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 100px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100px;
 }
 
 .facility-right {
-  width: 160px; flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 6px;
+  width: 160px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.facility-name-row { display: flex; align-items: center; gap: 10px; }
-.facility-name-row .progress-bar { flex: 1; }
+.facility-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-.facility-name    { font-size: 14px; font-weight: 600; color: #333333; }
-.facility-time    { font-size: 12px; color: #687282; }
-.facility-count   { font-size: 12px; color: #92959D; }
-.facility-percent { font-size: 12px; color: #6B7280; min-width: 32px; }
+.facility-name-row .progress-bar {
+  flex: 1;
+}
 
-.count-current { font-weight: 700; color: #4D8B5A; }
-.count-red     { color: #C08B2D !important; }
-.text-red      { color: #E53E3E !important; }
+.facility-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+}
+
+.facility-time {
+  font-size: 12px;
+  color: #687282;
+}
+
+.facility-count {
+  font-size: 12px;
+  color: #92959D;
+}
+
+.facility-percent {
+  font-size: 12px;
+  color: #6B7280;
+  min-width: 32px;
+}
+
+.count-current {
+  font-weight: 700;
+  color: #276749;
+}
+
+.count-red {
+  color: #C08B2D !important;
+}
+
+.text-red {
+  color: #E53E3E !important;
+}
 
 /* 입출차 테이블 */
-.entry-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.entry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
 
 .entry-table th {
-  text-align: left; font-size: 11px; font-weight: 600;
-  color: #687282; padding: 4px 8px 10px;
-  border-bottom: 1px solid #f3f4f6; letter-spacing: 1.5px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #687282;
+  padding: 4px 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  letter-spacing: 1.5px;
 }
 
 .entry-table td {
@@ -540,66 +705,159 @@ onMounted(() => {
   color: #374151;
 }
 
-.entry-table tr:last-child td { border-bottom: none; }
+.entry-table tr:last-child td {
+  border-bottom: none;
+}
 
 .tag-direction {
-  display: block; font-size: 10px; font-weight: 700;
-  padding: 2px 0; border-radius: 5px;
-  min-width: 36px; text-align: center;
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  min-width: 38px;
+  text-align: center;
 }
 
-.tag-in  { background: #C6F6D5; color: #4D8B5A; }
-.tag-out { background: #FFF5F5; color: #E53E3E; }
+.tag-in {
+  background: #C6F6D5;
+  color: #276749;
+}
 
-.tag-type { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 5px; }
+.tag-out {
+  background: #FFF5F5;
+  color: #E53E3E;
+}
 
-.type-registered   { background: #E8EBF2; color: #2B3A55; }
-.type-unregistered { background: #FDF6E8; color: #C08B2D; }
-.type-visitor      { background: #EDEEF2; color: #6B7280; }
+.tag-type {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
 
-.plate-cell { color: #333333; }
-.unit-cell  { color: #687282; }
-.time-cell  { color: #92959D; font-size: 13px; }
+.type-registered {
+  background: #E8EBF2;
+  color: #2B3A55;
+}
+
+.type-visitor {
+  background: #EBF4FF;
+  color: #2B6CB0;
+}
+
+.type-fixed {
+  background: #FDF6E8;
+  color: #C08B2D;
+}
+
+.type-unknown {
+  background: #EDF2F7;
+  color: #687282;
+}
+
+.plate-cell {
+  color: #333333;
+}
+
+.unit-cell {
+  color: #687282;
+}
+
+.time-cell {
+  color: #92959D;
+  font-size: 13px;
+}
 
 /* 게시판 */
-.board-list { display: flex; flex-direction: column; gap: 0; }
+.board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
 .board-item {
-  display: flex; align-items: center;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 12px 14px; background: #f9fafb;
-  border-radius: 10px; margin-bottom: 8px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 8px;
 }
 
-.board-item:last-child { margin-bottom: 0; }
+.board-item:last-child {
+  margin-bottom: 0;
+}
 
-.board-left { display: flex; align-items: flex-start; gap: 10px; flex: 1; }
+.board-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+}
 
 .board-tag {
-  display: inline-block; font-size: 10px; font-weight: 700;
-  padding: 2px 7px; border-radius: 5px;
-  flex-shrink: 0; margin-top: 1px;
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
-.tag-notice { background: #1E2A3E; color: #FFFFFF; }
-.tag-free   { background: #EDF2F7; color: #4A5568; }
+.tag-notice {
+  background: #1E2A3E;
+  color: #FFFFFF;
+}
 
-.board-content { display: flex; flex-direction: column; gap: 2px; }
+.tag-free {
+  background: #EDF2F7;
+  color: #4A5568;
+}
 
-.board-title { font-size: 13px; font-weight: 500; color: #111827; }
-.board-meta  { font-size: 11px; color: #687282; }
+.board-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.board-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.board-meta {
+  font-size: 11px;
+  color: #687282;
+}
 
 .board-right {
-  display: flex; align-items: center;
-  gap: 8px; flex-shrink: 0; margin-left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 .board-comments {
-  display: flex; align-items: center; gap: 3px;
-  font-size: 18px; color: #C08B2D; font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 18px;
+  color: #C08B2D;
+  font-weight: 600;
 }
 
-.board-comments svg { width: 13px; height: 13px; }
+.board-comments svg {
+  width: 13px;
+  height: 13px;
+}
 
-.board-date { font-size: 11px; color: #92959D; }
+.board-date {
+  font-size: 11px;
+  color: #92959D;
+}
 </style>

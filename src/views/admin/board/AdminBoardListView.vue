@@ -11,19 +11,19 @@ import Modal from '@/components/Modal.vue'
 const router = useRouter()
 const boardStore = useBoardStore()
 
-// ── 탭 ───────────────────────────────────────────────────────
+// ── 탭 ───
 const activeTab = ref('ALL') // 'ALL' | 'NOTICE' | 'FREE'
 
-// ── 필터 ─────────────────────────────────────────────────────
+// ── 필터 ─
 const searchKeyword = ref('')
 const filterCategory = ref('')
 const filterDeleted  = ref('')
 
-// ── 페이지 ───────────────────────────────────────────────────
+// ── 페이지 ────────────
 const currentPage = ref(1)
 const PAGE_SIZE   = 9
 
-// ── 데이터 불러오기 ───────────────────────────────────────────
+// ── 데이터 불러오기 ────
 const loading = ref(false)
 
 async function fetchData() {
@@ -38,7 +38,7 @@ async function fetchData() {
 
 onMounted(fetchData)
 
-// ── 탭 변경 ──────────────────────────────────────────────────
+// ── 탭 변경 ───────────
 function setTab(tab) {
   activeTab.value  = tab
   currentPage.value = 1
@@ -46,14 +46,14 @@ function setTab(tab) {
   fetchData()
 }
 
-// ── 필터 초기화 ───────────────────────────────────────────────
+// ── 필터 초기화 ────────
 function resetFilters() {
   searchKeyword.value  = ''
   filterCategory.value = ''
   filterDeleted.value  = ''
 }
 
-// ── 목록 (프론트 필터링) ──────────────────────────────────────
+// ── 목록 (프론트 필터링) ────────────
 const posts = computed(() => boardStore.adminPosts ?? [])
 
 const filteredPosts = computed(() => {
@@ -66,7 +66,7 @@ const filteredPosts = computed(() => {
   })
 })
 
-// ── 통계 카드 (API 없으므로 totalCount 활용) ──────────────────
+// ── 통계 카드 (API 없으므로 totalCount 활용) ─────
 const stats = computed(() => [
   {
     label: '전체 게시글',
@@ -94,7 +94,7 @@ const stats = computed(() => [
   },
 ])
 
-// ── 테이블 컬럼 ───────────────────────────────────────────────
+// ── 테이블 컬럼 ────────
 const columns = [
   { label: 'ID',     key: 'boardId' },
   { label: '카테고리', key: 'category' },
@@ -106,19 +106,19 @@ const columns = [
   { label: '삭제여부', key: 'isDeleted' },
 ]
 
-// ── 날짜 포맷 ─────────────────────────────────────────────────
+// ── 날짜 포맷 ──────────
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   return dateStr.replace('T', ' ').slice(0, 10)
 }
 
-// ── 페이지 변경 ───────────────────────────────────────────────
+// ── 페이지 변경 ────────
 function onPageChange(page) {
   currentPage.value = page
   fetchData()
 }
 
-// ── 탭별 카운트 ───────────────────────────────────────────────
+// ── 탭별 카운트 ────────
 const tabCounts = computed(() => ({
   ALL:    boardStore.adminTotalCount ?? 0,
   NOTICE: boardStore.adminNoticeTotalCount ?? 0,

@@ -11,17 +11,17 @@ const router = useRouter()
 const auth   = useAuthStore()
 const boardStore = useBoardStore()
 
-// ─── 작성 vs 수정 모드 ────────────────────────────────────────
+// ─── 작성 vs 수정 모드 ─
 const isEdit = computed(() => !!route.query.id)
 const postId = computed(() => route.query.id ? Number(route.query.id) : null)
 
-// ─── 폼 데이터 ────────────────────────────────────────────────
+// ─── 폼 데이터 ─────────
 const category = ref('FREE')
 const title    = ref('')
 const content  = ref('')
 const createdAt = ref(null)
 
-// ─── 권한 체크 ────────────────────────────────────────────────
+// ─── 권한 체크 ─────────
 const isOwner = ref(false)
 
 onMounted(async () => {
@@ -53,7 +53,7 @@ onMounted(async () => {
   }
 })
 
-// ─── 등록 / 수정 완료 ─────────────────────────────────────────
+// ─── 등록 / 수정 완료 ──
 async function handleSubmit() {
   if (!title.value.trim())   return alert('제목을 입력해주세요.')
   if (!content.value.trim()) return alert('내용을 입력해주세요.')
@@ -71,7 +71,7 @@ async function handleSubmit() {
   }
 }
 
-// ─── 삭제 ─────────────────────────────────────────────────────
+// ─── 삭제 ─
 async function handleDelete() {
   if (!confirm('정말 삭제하시겠습니까?')) return
   try {
@@ -82,7 +82,7 @@ async function handleDelete() {
   }
 }
 
-// ─── 취소 ─────────────────────────────────────────────────────
+// ─── 취소 ─
 function handleCancel() {
   if (isEdit.value) {
     router.push(`/resident/board/${postId.value}`)

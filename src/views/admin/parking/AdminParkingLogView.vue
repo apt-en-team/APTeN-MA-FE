@@ -307,7 +307,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- ───────────── 등록 모달 ───────────── -->
+    <!--  등록 모달  -->
     <Model
         v-if="state.showRegisterModal"
         title="입출차 기록 등록"
@@ -398,7 +398,7 @@ onMounted(() => {
       </template>
     </Model>
 
-    <!-- ───────────── 상세 모달 ───────────── -->
+    <!--  상세 모달  -->
     <Model
         v-if="state.showDetailModal && state.selectedRow"
         title="입출차 기록 상세"
@@ -827,7 +827,7 @@ onMounted(() => {
 
 .result-success {
   font-size: 12px;
-  color: #4D8B5A;
+  color: #276749;
   font-weight: 600;
   margin-top: 4px;
 }
@@ -849,7 +849,7 @@ onMounted(() => {
 .detail-plate {
   font-size: 22px;
   font-weight: 800;
-  color: #1E2533;
+
   letter-spacing: 1px;
   margin-top: 6px;
 }
@@ -885,7 +885,7 @@ onMounted(() => {
 
 .detail-value {
   font-size: 13px;
-  color: #1E2533;
+
   font-weight: 500;
 }
 

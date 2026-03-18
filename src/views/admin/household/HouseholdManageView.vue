@@ -519,8 +519,8 @@ onMounted(() => {
 }
 
 .status-success {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
 .status-danger {
@@ -539,8 +539,8 @@ onMounted(() => {
 
 .btn-register {
   padding: 4px 14px;
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
   border: 1px solid #C6E6CC;
   border-radius: 6px;
   font-size: 12px;
@@ -725,8 +725,8 @@ onMounted(() => {
 .resident-tag {
   font-size: 11px;
   font-weight: 600;
-  color: #4D8B5A;
-  background: #EBF5EE;
+  color: #276749;
+  background: #C6F6D5;
   padding: 3px 8px;
   border-radius: 10px;
 }

@@ -7,20 +7,20 @@ import BoardList from '@/components/board/BoardList.vue'
 const router = useRouter()
 const boardStore = useBoardStore()
 
-// ─── 탭 & 페이지 ──────────────────────────────────────────────
+// ─── 탭 & 페이지 ───────
 const activeTab = ref('FREE')
 const currentPage = ref(1)
 const PAGE_SIZE = 10
 
-// ─── 게시글 목록 ──────────────────────────────────────────────
+// ─── 게시글 목록 ───────
 const currentPosts = computed(() => boardStore.posts || [])
 const totalPages   = computed(() => boardStore.maxPage || 0)
 
-// ─── 인기글 & 내가 쓴 글 ──────────────────────────────────────
+// ─── 인기글 & 내가 쓴 글 ────────────
 const popularPosts = computed(() => boardStore.popularPosts || [])
 const myPosts      = computed(() => boardStore.myPosts || [])
 
-// ─── 데이터 불러오기 ──────────────────────────────────────────
+// ─── 데이터 불러오기 ───
 async function fetchData() {
   await boardStore.fetchPosts({ category: activeTab.value, page: currentPage.value, size: PAGE_SIZE })
   boardStore.fetchPopularPosts().catch(() => {})
@@ -28,26 +28,26 @@ async function fetchData() {
 }
 onMounted(() => fetchData())
 
-// ─── 탭 변경 ──────────────────────────────────────────────────
+// ─── 탭 변경 ───────────
 function setTab(tab) {
   activeTab.value = tab
   currentPage.value = 1
   boardStore.fetchPosts({ category: activeTab.value, page: 1, size: PAGE_SIZE })
 }
 
-// ─── 페이지 변경 ──────────────────────────────────────────────
+// ─── 페이지 변경 ───────
 function changePage(page) {
   currentPage.value = page
   boardStore.fetchPosts({ category: activeTab.value, page, size: PAGE_SIZE })
 }
 
-// ─── 내가 쓴 글 삭제 ──────────────────────────────────────────
+// ─── 내가 쓴 글 삭제 ───
 function deleteMyPost(id) {
   if (!confirm('삭제하시겠습니까?')) return
   boardStore.deletePost(id)
 }
 
-// ─── 유틸 ─────────────────────────────────────────────────────
+// ─── 유틸 ─
 const avatarColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 function getAvatarStyle(name) {
   const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
@@ -74,7 +74,7 @@ function stripHtml(html) {
   <div class="board-list-view">
     <div class="board-layout">
 
-      <!-- ── 메인 컨텐츠 ─────────────────────────────────────── -->
+      <!-- ── 메인 컨텐츠  -->
       <div class="board-main">
 
         <!-- 탭 + 글쓰기 버튼 -->
@@ -180,7 +180,7 @@ function stripHtml(html) {
         </div>
       </div>
 
-      <!-- ── 사이드바 ──────────────────────────────────────────── -->
+      <!-- ── 사이드바 ───── -->
       <div class="board-sidebar">
 
         <!-- 인기글 -->

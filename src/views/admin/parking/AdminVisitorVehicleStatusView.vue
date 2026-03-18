@@ -258,8 +258,8 @@ onMounted(() => {
 }
 
 .tab-btn.active .tab-badge {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
 .search-wrap {
@@ -298,8 +298,8 @@ onMounted(() => {
 }
 
 .status-approved {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
 .status-grey {

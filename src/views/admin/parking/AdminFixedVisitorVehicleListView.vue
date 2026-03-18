@@ -491,8 +491,8 @@ onMounted(() => {
 
 /* 활성 상태 — 초록 */
 .status-active {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
 /* 삭제됨 상태 — 빨강 */

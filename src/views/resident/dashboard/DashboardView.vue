@@ -98,7 +98,7 @@ const banners = [
 
 function stripHtml(html) {
   if (!html) return ''
-  
+
   return html
     .replace(/<[^>]*>/g, '')         // 1. 모든 HTML 태그 제거
     .replace(/&nbsp;/g, ' ')         // 2. 연속 공백 기호 변환
