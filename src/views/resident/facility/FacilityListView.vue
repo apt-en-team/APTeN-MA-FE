@@ -2,8 +2,10 @@
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import facilityAPI from '@/api/facility.js'
+import FacilityLayout from '@/components/layout/FacilityLayout.vue';
 
 const router = useRouter()
+
 
 const state = reactive({
   types:      [],
@@ -44,19 +46,24 @@ const displayFacilities = computed(() => {
   return state.facilities.filter(f => f.name.includes(gxSubTab.value === '오전' ? '오전' : '오후'))
 })
 
+const goToPage = async (page) => {
+  currentPage.value = page
+  await fetchFacilities('gx')
+}
+
 /** API-048 | 시설 목록 조회 */
 const fetchFacilities = async (tab) => {
   try {
     if (tab === 'facility') {
-      // 편의시설: 1,2,3 타입 전체 한번에 조회
       const results = await Promise.all(
         FACILITY_TYPE_IDS.map(id => facilityAPI.getFacilities(id))
       )
       state.facilities = results.flatMap(r => r.data.resultData ?? [])
     } else {
-      // GX: type_id 4 조회
-      const { data } = await facilityAPI.getFacilities(4)
-      state.facilities = data.resultData ?? []
+      const { data } = await facilityAPI.getFacilities(4, currentPage.value - 1, 5)
+      state.facilities = data.resultData?.content ?? data.resultData ?? []
+      maxPage.value    = data.resultData?.totalPages ?? 1
+      totalAll.value   = data.resultData?.totalElements ?? state.facilities.length
     }
   } catch (e) { console.error('시설 목록 조회 실패', e) }
 }
@@ -171,6 +178,8 @@ onMounted(() => fetchTypes())
         </div>
       </div>
 
+
+
       <!-- 오른쪽: 사이드바 -->
       <div class="sidebar">
 
@@ -207,10 +216,11 @@ onMounted(() => fetchTypes())
             </div>
           </div>
         </div>
-
+      
       </div>
     </div>
   </div>
+
 </template>
 
 <style scoped>

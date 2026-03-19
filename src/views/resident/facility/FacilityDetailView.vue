@@ -2,6 +2,8 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import facilityAPI from '@/api/facility.js'
+import FacilityLayout from '@/components/layout/FacilityLayout.vue';
+
 
 const route  = useRoute()
 const router = useRouter()
