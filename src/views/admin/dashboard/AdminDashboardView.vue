@@ -5,6 +5,7 @@ import {useHouseholdStore} from '@/stores/modules/household.js'
 import {useParkingStore} from '@/stores/modules/parking.js'
 import axios from '@/api/axios.js'
 import StatsCards from '@/components/admin/StatsCards.vue'
+import { useReservationStore } from '@/stores/modules/reservation.js'
 
 const router = useRouter()
 
@@ -14,6 +15,7 @@ const hasError = ref(false)
 
 // ── 피니아 스토어 ──
 const householdStore = useHouseholdStore()
+const reservationStore = useReservationStore()
 const parkingStore = useParkingStore()
 
 // ── 차량 유형별 뱃지 클래스 ──
@@ -42,8 +44,10 @@ const fetchDashboardData = async () => {
   hasError.value = false
   try {
     await Promise.all([
-      householdStore.fetchStats(),  // 세대 통계
-      parkingStore.fetchStats(),    // 주차 현황
+      householdStore.fetchStats(),   // 세대 통계
+      parkingStore.fetchStats(),  // 나중에 주차 추가
+      reservationStore.fetchDashboardStats(), // 예약 통계 (승인 대기, 오늘 예약 등)
+      householdStore.fetchResidentPendingCount(), // 입주민 승인 대기 건수
     ])
 
     // 최근 입출차 기록 (최신 5건)
@@ -60,7 +64,6 @@ const fetchDashboardData = async () => {
 
     // 패널 데이터 - API 연결 후 교체
     dashboardState.visitors = []
-    dashboardState.facilities = []
     dashboardState.posts = []
 
   } catch (e) {
@@ -74,8 +77,6 @@ const fetchDashboardData = async () => {
 // ── 주차/예약 summary (승인대기/예약은 나중에 피니아 스토어로 대체) ──
 const summary = reactive({
   pendingCount: null,  // 승인 대기 건수
-  todayReserve: null,  // 오늘 예약 건수
-  reserveDiff: null,  // 전일 대비 증감
 })
 
 // ── 패널 목록 ──
@@ -96,9 +97,9 @@ const reserveDiffLabel = computed(() => {
 const dashboardStats = computed(() => [
   {
     label: '승인 대기',
-    value: summary.pendingCount ?? '-',
-    unit: summary.pendingCount !== null ? '건' : '',
-    desc: summary.pendingCount !== null ? '입주민차량 승인 필요' : '데이터 없음',
+    value: (householdStore.residentPendingCount || 0) + (reservationStore.gxPendingCount || 0),
+    unit: '건',
+    desc: '전체 승인 대기',
     descClass: 'highlight-orange',
     iconClass: 'icon-orange',
   },
@@ -114,11 +115,9 @@ const dashboardStats = computed(() => [
   },
   {
     label: '오늘 예약',
-    value: summary.todayReserve ?? '-',
-    unit: summary.todayReserve !== null ? '건' : '',
-    desc: reserveDiffLabel.value !== null
-        ? `전일 대비 ${reserveDiffLabel.value}`
-        : '데이터 없음',
+    value: reservationStore.todayTotal ?? '-',
+    unit: '건',
+    desc: `확정 ${reservationStore.todayConfirmed} · 대기 ${reservationStore.todayPending} · 취소 ${reservationStore.todayCancelled}`,
     descClass: 'highlight-green',
     iconClass: 'icon-green',
   },
@@ -246,12 +245,12 @@ onMounted(() => {
             <h2 class="panel-title">오늘 시설 예약 현황</h2>
             <router-link :to="{ name: 'AdminReservationListView' }" class="panel-more">전체보기 →</router-link>
           </div>
-          <div v-if="dashboardState.facilities.length > 0" class="facility-list">
+          <div v-if="reservationStore.facilitySummaryList.length > 0" class="facility-list">
             <div
-                v-for="facility in dashboardState.facilities"
-                :key="facility.name"
-                class="facility-item card-clickable"
-                @click="router.push({ name: 'AdminReservationListView' })"
+              v-for="(facility) in reservationStore.facilitySummaryList"
+              :key="facility.name"
+              class="facility-item card-clickable"
+              @click="router.push(`/admin/reservations/facility-status/${facility.typeId}`)"
             >
               <div class="facility-bar" :class="'bar-' + facility.barColor"></div>
               <div class="facility-left">
@@ -630,18 +629,12 @@ onMounted(() => {
 }
 
 .facility-right {
-  width: 160px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  width: 220px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px;
 }
 
-.facility-name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.facility-name-row { display: flex; align-items: center; gap: 40px; }
+.facility-name-row .progress-bar { flex: 1; }
 
 .facility-name-row .progress-bar {
   flex: 1;
@@ -856,8 +849,31 @@ onMounted(() => {
   height: 13px;
 }
 
-.board-date {
-  font-size: 11px;
-  color: #92959D;
+.board-date { font-size: 11px; color: #92959D; }
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #E2E8F0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.progress-fill.dark {
+  background: #2B3A55;
+}
+
+.progress-fill.green {
+  background: #4D8B5A;
+}
+
+.progress-fill.yellow {
+  background: #C08B2D;
 }
 </style>

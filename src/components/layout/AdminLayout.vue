@@ -1,13 +1,29 @@
 <script setup>
-import {ref, computed, provide} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import {useAuthStore} from '@/stores/modules/auth.js'
+import { computed ,ref, onMounted ,provide} from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/modules/auth.js'
+import reservationAPI from '@/api/reservation'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
 const currentTitle = computed(() => route.meta.title || '관리자 대시보드')
+
+const facilityStatusSuffix = computed(() => {
+  if (route.name !== 'AdminFacilityStatus') return ''
+
+  const typeId = Number(route.params.typeId || 1)
+
+  const typeNameMap = {
+    1: '독서실',
+    2: '헬스장',
+    3: '골프연습장',
+    4: 'GX',
+  }
+
+  return typeNameMap[typeId] || ''
+})
 
 const todayStr = computed(() => {
   const days = ['일', '월', '화', '수', '목', '금', '토']
@@ -24,6 +40,26 @@ async function handleLogout() {
   router.push('/')
 }
 
+const gxPendingCount = ref(0)
+
+const fetchGxPendingCount = async () => {
+  try {
+    const res = await reservationAPI.getAdminReservations({ status: 'PENDING', size: 1, page: 1 })
+    gxPendingCount.value = res.data.resultData?.totalElements || 0
+  } catch (e) { console.error(e) }
+}
+
+const goToGxPage = () => {
+  router.push({ name: 'AdminFacilityStatus', params: { typeId: 4 } })
+}
+
+const goBackToReservationList = () => {
+  router.push('/admin/reservations')
+}
+
+onMounted(fetchGxPendingCount)
+
+
 // 자식 페이지에서 inject('registerOpenModal', fn)으로 모달 열기 함수 등록
 // 탑바 버튼 클릭 시 등록된 함수 실행
 const openModalFn = ref(null)
@@ -34,6 +70,13 @@ provide('registerOpenModal', (fn) => {
 const handleActionClick = () => {
   if (openModalFn.value) openModalFn.value()
 }
+
+// 시설별 현황 페이지 이동
+// 기본 진입은 typeId=1(독서실)
+const goToFacilityStatus = () => {
+  router.push('/admin/reservations/facility-status/1')
+}
+
 </script>
 
 <template>
@@ -199,6 +242,12 @@ const handleActionClick = () => {
           <button v-if="route.name === 'AdminBoardList'" class="btn-action" @click="handleActionClick">+ 공지 작성</button>
           <button v-if="route.name === 'AdminParkingLog'" class="btn-action" @click="handleActionClick">+ 기록 등록</button>
           <button v-if="route.name === 'AdminVehicleListView'" class="btn-action" @click="handleActionClick">+ 차량 등록
+          </button>
+          <button v-if="route.name === 'AdminFacilityStatus'" class="btn-action btn-secondary" @click="goBackToReservationList"> 목록으로 </button>
+          <button v-if="gxPendingCount > 0 && (route.name === 'AdminReservationListView' || route.name === 'AdminFacilityStatus')" class="gx-pending-badge" @click="goToGxPage">
+            GX 승인 대기 {{ gxPendingCount }}건
+          </button>
+          <button v-if="route.name === 'AdminReservationListView'" class="btn-action" @click="goToFacilityStatus">시설별 현황 →
           </button>
         </div>
       </header>
