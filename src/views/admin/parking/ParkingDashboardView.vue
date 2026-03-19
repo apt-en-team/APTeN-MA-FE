@@ -12,6 +12,7 @@ const state = reactive({
   availableCount: 0,
   registeredCount: 0,
   visitorCount: 0,
+  fixedVisitorCount: 0,  // 고정방문차량 현재 주차 수
   unregisteredCount: 0,
   loading: true,
 
@@ -20,8 +21,7 @@ const state = reactive({
   editForm: {
     id: null,
     name: '',
-    totalSpaces: '',
-    currentCount: '',
+    totalSpaces: '', // current_count는 parking_log 집계로 계산하므로 수동 입력 불가
     note: '',
   },
   submitting: false,
@@ -68,13 +68,15 @@ const statsData = computed(() => [
   },
 ])
 
-// 도넛 차트 기본/호버 색상
-const defaultColors = ['#4973E5', '#34D399', '#F59E0B']
-const hoverColors   = ['#3560D4', '#20C080', '#E08A00']
+// 도넛 차트 기본/호버 색상 (등록/방문/고정방문/미등록 순)
+const defaultColors = ['#4973E5', '#34D399', '#818CF8', '#F59E0B']
+const hoverColors = ['#3560D4', '#20C080', '#6366F1', '#E08A00']
 
+// 도넛 차트 시리즈 (등록/방문/고정방문/미등록)
 const chartSeries = computed(() => [
   state.registeredCount,
   state.visitorCount,
+  state.fixedVisitorCount,
   state.unregisteredCount,
 ])
 
@@ -92,7 +94,7 @@ const chartOptions = computed(() => ({
       },
     },
   },
-  labels: ['등록 차량', '방문 차량', '미등록'],
+  labels: ['등록 차량', '방문 차량', '고정방문 차량', '미등록'],
   colors: defaultColors,
   states: {
     hover: {filter: {type: 'none'}},
@@ -133,11 +135,11 @@ const chartOptions = computed(() => ({
   tooltip: {
     y: {formatter: (val) => `${val}대`},
     custom: ({series, seriesIndex}) => {
-      const colors = ['#4973E5', '#34D399', '#F59E0B']
-      const labels = ['등록 차량', '방문 차량', '미등록']
-      const color  = colors[seriesIndex]
-      const label  = labels[seriesIndex]
-      const value  = series[seriesIndex]
+      const colors = ['#4973E5', '#34D399', '#818CF8', '#F59E0B']
+      const labels = ['등록 차량', '방문 차량', '고정방문 차량', '미등록']
+      const color = colors[seriesIndex]
+      const label = labels[seriesIndex]
+      const value = series[seriesIndex]
       return `<div style="
         background:#fff;
         border:2px solid ${color};
@@ -159,11 +161,12 @@ const fetchStatus = async () => {
   try {
     const res = await axios.get('/parking/status')
     const data = res.data?.resultData ?? res.data
-    state.totalSpaces      = data.totalSpaces      ?? 0
-    state.currentCount     = data.currentCount     ?? 0
-    state.availableCount   = data.availableCount   ?? 0
-    state.registeredCount  = data.registeredCount  ?? 0
-    state.visitorCount     = data.visitorCount     ?? 0
+    state.totalSpaces = data.totalSpaces ?? 0
+    state.currentCount = data.currentCount ?? 0
+    state.availableCount = data.availableCount ?? 0
+    state.registeredCount = data.registeredCount ?? 0
+    state.visitorCount = data.visitorCount ?? 0
+    state.fixedVisitorCount = data.fixedVisitorCount ?? 0
     state.unregisteredCount = data.unregisteredCount ?? 0
   } catch (e) {
     console.error('주차 현황 조회 실패', e)
@@ -174,21 +177,21 @@ const fetchStatus = async () => {
 
 // 주차장 수정 모달 열기 (현재 데이터로 폼 초기화)
 const openEditModal = () => {
-  state.editForm.name         = 'APTEN 아파트 통합 주차장' // 추후 API에서 받아오면 교체
-  state.editForm.totalSpaces  = state.totalSpaces
-  state.editForm.currentCount = state.currentCount
-  state.editForm.note         = ''
-  state.submitError           = ''
-  state.showEditModal         = true
+  state.editForm.name = 'APTEN 아파트 통합 주차장' // 추후 API에서 받아오면 교체
+  state.editForm.totalSpaces = state.totalSpaces
+  state.editForm.note = ''
+  state.submitError = ''
+  state.showEditModal = true
 }
 
 // 주차장 수정 모달 닫기
 const closeEditModal = () => {
   state.showEditModal = false
-  state.submitError   = ''
+  state.submitError = ''
 }
 
 // 주차장 수정 제출 (PUT /api/admin/parking/lots/{id})
+// current_count는 parking_log 집계로 계산하므로 요청에 포함하지 않음
 const submitEdit = async () => {
   if (!state.editForm.name.trim()) {
     state.submitError = '주차장 이름을 입력해주세요.'
@@ -199,15 +202,14 @@ const submitEdit = async () => {
     return
   }
 
-  state.submitting  = true
+  state.submitting = true
   state.submitError = ''
 
   try {
     await axios.put(`/admin/parking/lots/${state.editForm.id ?? 1}`, {
-      name:         state.editForm.name.trim(),
-      totalSpaces:  Number(state.editForm.totalSpaces),
-      currentCount: Number(state.editForm.currentCount),
-      note:         state.editForm.note.trim() || null,
+      name: state.editForm.name.trim(),
+      totalSpaces: Number(state.editForm.totalSpaces),
+      note: state.editForm.note.trim() || null,
     })
     await fetchStatus() // 수정 후 현황 새로고침
     closeEditModal()
@@ -266,6 +268,7 @@ onMounted(fetchStatus)
         <div class="type-title">차량 유형별 현황</div>
         <div class="type-grid">
 
+          <!-- 등록 차량 -->
           <div class="type-card type-registered">
             <div class="type-icon icon-registered">등</div>
             <div class="type-info">
@@ -279,6 +282,7 @@ onMounted(fetchStatus)
             </div>
           </div>
 
+          <!-- 방문 차량 -->
           <div class="type-card type-visitor">
             <div class="type-icon icon-visitor">방</div>
             <div class="type-info">
@@ -292,6 +296,21 @@ onMounted(fetchStatus)
             </div>
           </div>
 
+          <!-- 고정방문 차량 -->
+          <div class="type-card type-fixed">
+            <div class="type-icon icon-fixed">고</div>
+            <div class="type-info">
+              <span class="type-name">고정방문 차량</span>
+              <div class="type-count">
+                {{ state.fixedVisitorCount }}대
+                <span class="type-rate">
+                  {{ state.currentCount > 0 ? Math.round(state.fixedVisitorCount / state.currentCount * 100) : 0 }}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 미등록 차량 -->
           <div class="type-card type-unregistered">
             <div class="type-icon icon-unregistered">미</div>
             <div class="type-info">
@@ -325,6 +344,7 @@ onMounted(fetchStatus)
           <div v-else class="chart-empty">현재 주차 중인 차량이 없습니다</div>
         </div>
 
+        <!-- 범례 (등록/방문/고정방문/미등록) -->
         <div class="legend">
           <div class="legend-item">
             <span class="legend-dot dot-registered"/>
@@ -335,6 +355,11 @@ onMounted(fetchStatus)
             <span class="legend-dot dot-visitor"/>
             <span class="legend-label">방문 차량</span>
             <span class="legend-value">{{ state.visitorCount }}대</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-fixed"/>
+            <span class="legend-label">고정방문</span>
+            <span class="legend-value">{{ state.fixedVisitorCount }}대</span>
           </div>
           <div class="legend-item">
             <span class="legend-dot dot-unregistered"/>
@@ -366,28 +391,16 @@ onMounted(fetchStatus)
           />
         </div>
 
-        <!-- 전체 주차면 / 현재 사용 중 -->
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">전체 주차면<span class="required">*</span></label>
-            <input
-                class="form-input"
-                type="number"
-                min="0"
-                placeholder="예: 120"
-                v-model="state.editForm.totalSpaces"
-            />
-          </div>
-          <div class="form-group">
-            <label class="form-label">현재 사용 중 (수동 입력)</label>
-            <input
-                class="form-input"
-                type="number"
-                min="0"
-                placeholder="예: 45"
-                v-model="state.editForm.currentCount"
-            />
-          </div>
+        <!-- 전체 주차면 (현재 사용 중은 parking_log 집계로 계산하므로 수동 입력 불가) -->
+        <div class="form-group">
+          <label class="form-label">전체 주차면<span class="required">*</span></label>
+          <input
+              class="form-input"
+              type="number"
+              min="0"
+              placeholder="예: 120"
+              v-model="state.editForm.totalSpaces"
+          />
         </div>
 
         <!-- 비고 -->
@@ -481,7 +494,9 @@ onMounted(fetchStatus)
 }
 
 /* 사용률 */
-.usage-section { margin-bottom: 28px; }
+.usage-section {
+  margin-bottom: 28px;
+}
 
 .usage-header {
   display: flex;
@@ -490,8 +505,16 @@ onMounted(fetchStatus)
   margin-bottom: 10px;
 }
 
-.usage-label { font-size: 13px; color: #687282; font-weight: 500; }
-.usage-rate  { font-size: 13px; font-weight: 700; }
+.usage-label {
+  font-size: 13px;
+  color: #687282;
+  font-weight: 500;
+}
+
+.usage-rate {
+  font-size: 13px;
+  font-weight: 700;
+}
 
 .usage-bar {
   width: 100%;
@@ -508,9 +531,17 @@ onMounted(fetchStatus)
   transition: width 0.6s ease;
 }
 
-.fill-safe    { background: #4973E5; }
-.fill-warning { background: #F59E0B; }
-.fill-danger  { background: #E53E3E; }
+.fill-safe {
+  background: #4973E5;
+}
+
+.fill-warning {
+  background: #F59E0B;
+}
+
+.fill-danger {
+  background: #E53E3E;
+}
 
 .usage-footer {
   display: flex;
@@ -542,9 +573,21 @@ onMounted(fetchStatus)
   min-height: 80px;
 }
 
-.type-registered  { background: #F0F4FF; }
-.type-visitor     { background: #F0FFF4; }
-.type-unregistered { background: #FFF7ED; }
+.type-registered {
+  background: #F0F4FF;
+}
+
+.type-visitor {
+  background: #F0FFF4;
+}
+
+.type-fixed {
+  background: #F3F0FF;
+}
+
+.type-unregistered {
+  background: #FFF7ED;
+}
 
 .type-icon {
   width: 36px;
@@ -559,9 +602,21 @@ onMounted(fetchStatus)
   flex-shrink: 0;
 }
 
-.icon-registered   { background: #4973E5; }
-.icon-visitor      { background: #34D399; }
-.icon-unregistered { background: #F59E0B; }
+.icon-registered {
+  background: #4973E5;
+}
+
+.icon-visitor {
+  background: #34D399;
+}
+
+.icon-fixed {
+  background: #818CF8;
+}
+
+.icon-unregistered {
+  background: #F59E0B;
+}
 
 .type-info {
   display: flex;
@@ -569,7 +624,11 @@ onMounted(fetchStatus)
   gap: 2px;
 }
 
-.type-name  { font-size: 12px; color: #687282; }
+.type-name {
+  font-size: 12px;
+  color: #687282;
+}
+
 .type-count {
   font-size: 16px;
   font-weight: 700;
@@ -585,17 +644,21 @@ onMounted(fetchStatus)
   align-items: center;
 }
 
-.chart-empty { font-size: 13px; color: #687282; }
+.chart-empty {
+  font-size: 13px;
+  color: #687282;
+}
 
 /* 범례 */
 .legend {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #E2E8F0;
   font-size: 14px;
+  flex-wrap: wrap;
 }
 
 .legend-item {
@@ -611,9 +674,21 @@ onMounted(fetchStatus)
   flex-shrink: 0;
 }
 
-.dot-registered   { background: #4973E5; }
-.dot-visitor      { background: #34D399; }
-.dot-unregistered { background: #F59E0B; }
+.dot-registered {
+  background: #4973E5;
+}
+
+.dot-visitor {
+  background: #34D399;
+}
+
+.dot-fixed {
+  background: #818CF8;
+}
+
+.dot-unregistered {
+  background: #F59E0B;
+}
 
 :deep(.apexcharts-pie-series path) {
   transition: transform 0.2s ease;
@@ -650,7 +725,9 @@ onMounted(fetchStatus)
   color: #687282;
 }
 
-.required { color: #E53E3E; }
+.required {
+  color: #E53E3E;
+}
 
 .form-input {
   width: 100%;
@@ -662,8 +739,13 @@ onMounted(fetchStatus)
   color: #2D3748;
 }
 
-.form-input:focus { border-color: #2B3A55; }
-.form-input::placeholder { color: #CBD5E0; }
+.form-input:focus {
+  border-color: #2B3A55;
+}
+
+.form-input::placeholder {
+  color: #CBD5E0;
+}
 
 .form-textarea {
   width: 100%;
@@ -676,8 +758,13 @@ onMounted(fetchStatus)
   color: #2D3748;
 }
 
-.form-textarea:focus { border-color: #2B3A55; }
-.form-textarea::placeholder { color: #CBD5E0; }
+.form-textarea:focus {
+  border-color: #2B3A55;
+}
+
+.form-textarea::placeholder {
+  color: #CBD5E0;
+}
 
 .form-note {
   font-size: 11px;
@@ -700,8 +787,14 @@ onMounted(fetchStatus)
   cursor: pointer;
 }
 
-.btn-primary:hover    { background: #1E2A3E; }
-.btn-primary:disabled { background: #687282; cursor: default; }
+.btn-primary:hover {
+  background: #1E2A3E;
+}
+
+.btn-primary:disabled {
+  background: #687282;
+  cursor: default;
+}
 
 .btn-cancel {
   padding: 9px 18px;
@@ -713,5 +806,7 @@ onMounted(fetchStatus)
   cursor: pointer;
 }
 
-.btn-cancel:hover { background: #F5F6F8; }
+.btn-cancel:hover {
+  background: #F5F6F8;
+}
 </style>
