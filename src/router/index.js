@@ -27,6 +27,7 @@ import NoticeDetailView from '@/views/resident/board/NoticeDetailView.vue'
 
 // 입주민 - 시설/예약
 import FacilityListView from '@/views/resident/facility/FacilityListView.vue'
+import FacilityDetailView from '@/views/resident/facility/FacilityDetailView.vue'
 import ReservationCalendarView from '@/views/resident/facility/ReservationCalendarView.vue'
 import MyReservationView from '@/views/resident/reservation/MyReservationView.vue'
 
@@ -107,6 +108,7 @@ const routes = [
 
             // 시설/예약
             {path: 'facility', name: 'FacilityList', component: FacilityListView, meta: {title: '시설'}},
+            {path: 'facilities/:id', name: 'FacilityDetail', component: FacilityDetailView, meta: {title: '시설 상세'}},
             {
                 path: 'reservation',
                 name: 'ReservationCalendar',
