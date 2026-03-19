@@ -64,13 +64,13 @@ import ParkingStatsView from '@/views/admin/parking/ParkingStatsView.vue'
 import AdminVisitorVehicleStatusView from '@/views/admin/parking/AdminVisitorVehicleStatusView.vue'
 import FixedVisitorVehicleFormView from "@/views/resident/parking/FixedVisitorVehicleFormView.vue";
 import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue";
-import AdminFixedVisitorVehicleListView from '@/views/admin/parking/Adminfixedvisitorvehiclelistview.vue'
+import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVisitorVehicleListView.vue'
 
 // 관리자 - 시설/예약
 // 시설/예약
 import FacilityManageView from '@/views/admin/facility/FacilityManageView.vue'
 import AdminReservationListView from '@/views/admin/reservation/AdminReservationListView.vue'
-import AdminFacilityCalendarView from '@/views/admin/reservation/Adminfacilitycalendar.vue'
+import AdminFacilityStatusView from '@/views/admin/reservation/AdminFacilityStatusView.vue'
 
 
 const routes = [
@@ -201,7 +201,7 @@ const routes = [
             // 시설/예약
             { path: 'facility',                name: 'AdminFacilityManage',    component: FacilityManageView,         meta: { title: '시설 관리' } },
             { path: 'reservations',            name: 'AdminReservationListView', component: AdminReservationListView,  meta: { title: '전체 예약 현황' } },
-            { path: 'reservations/facility/:typeId', name: 'AdminFacilityCalendar', component: AdminFacilityCalendarView, meta: { title: '시설별 예약 현황' } },
+            { path: 'reservations/facility-status/:typeId?', name: 'AdminFacilityStatus', component: AdminFacilityStatusView, meta: { title: '시설별 예약 현황' } },
         ]
     }
 ]

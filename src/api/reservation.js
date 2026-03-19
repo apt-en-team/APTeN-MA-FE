@@ -42,10 +42,10 @@ export default {
   getFacilities: () =>
     axios.get('/api/facilities'),
 
-  /** GX 프로그램 목록 조회 */
-  getGxPrograms: () =>
-    axios.get('/api/gx-programs'),
-  
+  /** 시설 타입 목록 조회 */
+  getFacilityTypes: () =>
+    axios.get('/api/facilities/types'),
+
   /** 최대 페이지 수 조회 */
   getMaxPage: (params) =>
     axios.get('/api/admin/reservations/count', { params }),
@@ -57,13 +57,37 @@ export default {
   /** 관리자 예약현황 통계 */
   TodayStats: () =>
     axios.get('/api/admin/reservations/today-stats'),
-  
-  /** 통계 시설목록 조회 */
+
+  /** 관리자 예약현황 시설 리스트 조회 */
   getFacilityList: () =>
     axios.get('/api/admin/reservations/facilitylist'),
 
-  /** 캘린더 데이터 조회 */
+  /** 관리자 캘린더 raw 데이터 조회 (기존 API) */
   getReservationsByFacility: (params) =>
     axios.get('/api/admin/reservations/facility', { params }),
+
+  /** GX 프로그램별 카운트 조회 */
+  getGxPrograms: (params) =>
+    axios.get('/api/admin/reservations/gx-programs', { params }),
+
+  /** 독서실 날짜별 좌석 현황 조회 */
+  getStudyRoomDetail: (params) =>
+    axios.get('/api/admin/reservations/study-room', { params }),
+
+  /** 헬스장 날짜별 이용자 목록 조회 */
+  getGymDetail: (params) =>
+    axios.get('/api/admin/reservations/gym', { params }),
+
+  /** 골프 날짜별 타석 현황 조회 */
+  getGolfDetail: (params) =>
+    axios.get('/api/admin/reservations/golf', { params }),
+
+  /** GX 프로그램별 사용자 목록 조회 */
+  getGxUsersByProgram: (params) =>
+    axios.get('/api/admin/reservations/gx-users', { params }),
+
+  /** 대시보드 오늘 시설 예약 현황 */
+  getDashboardFacilitySummary: () =>
+  axios.get('/api/admin/reservations/dashboard-facility-summary'),
 
 }

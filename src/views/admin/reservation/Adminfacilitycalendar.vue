@@ -95,6 +95,7 @@ const golfSeats = computed(() =>
  
 // ── API ───────────────────────────────────────────────────────
 const fetchMonthData = async () => {
+  console.log('facilityType:', facilityType.value)
   if (!state.facility) return
   const y = state.currentYear
   const m = String(state.currentMonth + 1).padStart(2, '0')
@@ -104,10 +105,10 @@ const fetchMonthData = async () => {
     const result = await reservationAPI.getReservationsByFacility({
       typeId: route.params.typeId,
       startDate:  `${y}-${m}-01`,
-      endDate:    `${y}-${m}-${lastDay}`
+      endDate:    `${y}-${m}-${lastDay}` 
     })
-    state.monthReservations = result.data.resultData?.content || result.data.resultData || []
-    if (facilityType.value === 'gx') buildGxPrograms()
+    state.monthReservations =  result.data.resultData || []
+    if (facilityType.value === 'gx') { buildGxPrograms(y, m, lastDay) }
   } catch (e) { console.error('월 예약 조회 실패', e) }
   finally { state.isLoading = false }
 }
@@ -116,34 +117,25 @@ const fetchDayData = async (dateStr) => {
   if (!state.facility || facilityType.value === 'gx') return
   state.isLoading = true
   try {
-    const result = await reservationAPI.getAdminReservations({
+    const result = await reservationAPI.getReservationsByFacility({
       typeId: route.params.typeId,
-      startDate: dateStr, endDate: dateStr,
-      size: 200, page: 1
+      startDate: dateStr, endDate: dateStr
     })
-    state.dayReservations = result.data.resultData?.content || result.data.resultData || []
+    state.dayReservations = result.data.resultData || []
   } catch (e) { console.error('일 예약 조회 실패', e) }
   finally { state.isLoading = false }
 }
  
-const buildGxPrograms = () => {
-  const map = {}
-  state.monthReservations.forEach(r => {
-    if (!r.programId) return
-    if (!map[r.programId]) {
-      map[r.programId] = {
-        programId:    r.programId,
-        facilityId:   r.facilityId,
-        facilityName: r.facilityName,
-        maxCapacity:  r.maxCapacity,
-        confirmed: 0, pending: 0, cancelled: 0,
-      }
-    }
-    if (r.status === 'CONFIRMED')      map[r.programId].confirmed++
-    else if (r.status === 'PENDING')   map[r.programId].pending++
-    else if (r.status === 'CANCELLED') map[r.programId].cancelled++
-  })
-  state.gxProgramList = Object.values(map)
+const buildGxPrograms = async (y, m, lastDay) => {
+  console.log('gx 프로그램 목록 조회')
+  try {
+    const result = await reservationAPI.getGxPrograms({
+      typeId: route.params.typeId,
+      startDate:  `${y}-${m}-01`,
+      endDate:    `${y}-${m}-${lastDay}` 
+    })
+    state.gxProgramList = result.data.resultData || []
+  } catch (e) { console.error('gx 프로그램 목록 조회 실패', e) }
 }
  
 // ── 달력 네비게이션 ───────────────────────────────────────────
@@ -308,18 +300,18 @@ onMounted(async () => {
               <div class="gx-card-left">
                 <p class="gx-name">{{ prog.facilityName }}</p>
                 <div class="gx-badges">
-                  <span class="gx-badge confirmed">확정 {{ prog.confirmed }}명</span>
-                  <span class="gx-badge pending">대기 {{ prog.pending }}명</span>
-                  <span class="gx-badge cancelled">취소 {{ prog.cancelled }}명</span>
+                  <span class="gx-badge confirmed">확정 {{ prog.confirmedCount }}명</span>
+                  <span class="gx-badge pending">대기 {{ prog.pendingCount }}명</span>
+                  <span class="gx-badge cancelled">취소 {{ prog.cancelledCount }}명</span>
                 </div>
                 <div class="gx-bar-wrap">
-                  <div class="gx-bar-fill" :style="{ width: Math.min(100, (prog.confirmed / prog.maxCapacity) * 100) + '%' }"></div>
+                  <div class="gx-bar-fill" :style="{ width: Math.min(100, (prog.confirmedCount / prog.maxCapacity) * 100) + '%' }"></div>
                 </div>
-                <p class="gx-capacity">{{ prog.confirmed }} / {{ prog.maxCapacity }}명 확정</p>
+                <p class="gx-capacity">{{ prog.confirmedCount }} / {{ prog.maxCapacity }}명 확정</p>
               </div>
-              <button v-if="prog.pending > 0" class="btn-approve" @click="openGxApproval(prog)">
+              <button v-if="prog.pendingCount > 0" class="btn-approve" @click="openGxApproval(prog)">
                 일괄 승인
-                <span class="btn-badge">{{ prog.pending }}</span>
+                <span class="btn-badge">{{ prog.pendingCount }}</span>
               </button>
               <span v-else class="approved-label">승인 완료</span>
             </div>

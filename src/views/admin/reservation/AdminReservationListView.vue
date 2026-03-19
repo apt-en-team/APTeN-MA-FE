@@ -4,98 +4,125 @@ import { useRouter } from 'vue-router'
 
 import StatsCards from '@/components/admin/StatsCards.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
-import Pagination from '@/components/admin/Pagination.vue'
+import Pagination from '@/components/layout/Pagination.vue'
 import AdminReservationDetailModal from '@/components/reservation/Adminreservationdetailmodal.vue'
-import AdminFacilityListModal      from '@/components/reservation/Adminfacilitylistmodal.vue'
 import reservationAPI from '@/api/reservation'
 
 const router = useRouter()
- 
-// ── 상태 ─────────────────────────────────────────────────────
+
+// 상태 관리
 const state = reactive({
-  // 목록
-  list:            [],
-  facilityTypes:     [],
- 
-  // 필터
-  userName:   '',
+  // 예약 목록
+  list: [],
+
+  // 시설 타입 목록 (시설 선택 필터용)
+  facilityTypes: [],
+
+  // 필터 값
+  userName: '',
   facilityName: '',
-  status:     '',
-  date:       '',
- 
+  status: '',
+  date: '',
+
   // 페이지네이션
-  size:          10,
-  currentPage:   1,
-  maxPage:       0,
+  size: 10,
+  currentPage: 1,
+  maxPage: 0,
   totalFiltered: 0,
- 
-  // 통계 (별도 조회)
-  todayTotal:     0,
+
+  // 상단 통계 카드
+  todayTotal: 0,
   todayConfirmed: 0,
   todayCancelled: 0,
-  monthTotal:     0,
-  totalCount:     0,
- 
-  // GX 승인 대기 건수
+  monthTotal: 0,
+  totalCount: 0,
+
+  // GX 대기 건수
   gxPendingCount: 0,
 })
- 
-// ── 모달 ─────────────────────────────────────────────────────
-const detailModal   = reactive({ show: false, reservationId: null })
-const facilityModal = reactive({ show: false })
- 
-// ── 테이블 컬럼 ───────────────────────────────────────────────
+
+// 상세 모달 상태
+const detailModal = reactive({
+  show: false,
+  reservationId: null,
+})
+
+// 테이블 컬럼 정의
 const columns = [
-  { key: 'reservationId',   label: 'ID'       },
-  { key: 'userName',        label: '예약자'    },
-  { key: 'facilityName',    label: '시설명'    },
+  { key: 'reservationId', label: 'ID' },
+  { key: 'userName', label: '예약자' },
+  { key: 'facilityName', label: '시설명' },
   { key: 'reservationDate', label: '예약 날짜' },
-  { key: 'time',            label: '시간'      },
-  { key: 'household',       label: '세대'      },
-  { key: 'status',          label: '상태'      },
-  { key: 'createdAt',       label: '예약일'    },
+  { key: 'time', label: '시간' },
+  { key: 'household', label: '세대' },
+  { key: 'status', label: '상태' },
+  { key: 'createdAt', label: '예약일' },
 ]
- 
-// ── 통계 카드 ─────────────────────────────────────────────────
+
+// 통계 카드 데이터
 const stats = computed(() => [
-  { label: '오늘 전체 예약', value: state.todayTotal     + '건', desc: '오늘 기준'    },
-  { label: '진행 중 예약',   value: state.todayConfirmed + '건', desc: '현재 이용 중' },
-  { label: '취소된 예약',    value: state.todayCancelled + '건', desc: '오늘 기준'    },
-  { label: '이번 달 누적',   value: state.totalFiltered  + '건', desc: '전체 기준'    },
+  { label: '오늘 전체 예약', value: `${state.todayTotal}건`, desc: '오늘 기준' },
+  { label: '진행 중 예약', value: `${state.todayConfirmed}건`, desc: '현재 이용 중' },
+  { label: '취소된 예약', value: `${state.todayCancelled}건`, desc: '오늘 기준' },
+  { label: '이번 달 누적', value: `${state.totalFiltered}건`, desc: '전체 기준' },
 ])
- 
-// ── computed ──────────────────────────────────────────────────
-const statusLabel = (s) => ({ CONFIRMED:'확정', PENDING:'대기', CANCELLED:'취소', COMPLETED:'완료' }[s] || s)
-const statusClass = (s) => ({ CONFIRMED:'badge-confirmed', PENDING:'badge-pending', CANCELLED:'badge-cancelled', COMPLETED:'badge-completed' }[s] || '')
- 
-// ── API ───────────────────────────────────────────────────────
+
+// 상태 텍스트 / 뱃지 클래스
+const statusLabel = (status) => {
+  return {
+    CONFIRMED: '확정',
+    PENDING: '대기',
+    CANCELLED: '취소',
+    COMPLETED: '완료',
+  }[status] || status
+}
+
+const statusClass = (status) => {
+  return {
+    CONFIRMED: 'badge-confirmed',
+    PENDING: 'badge-pending',
+    CANCELLED: 'badge-cancelled',
+    COMPLETED: 'badge-completed',
+  }[status] || ''
+}
+
+// API - 시설 목록 조회
 const fetchFacilities = async () => {
   try {
-    const result = await reservationAPI.getFacilities()
+    const result = await reservationAPI.getFacilityTypes()
     state.facilityTypes = result.data.resultData || []
-  } catch (e) { console.error('시설 목록 조회 실패', e) }
+  } catch (error) {
+    console.error('시설 목록 조회 실패:', error)
+  }
 }
- 
-// 오늘 날짜 통계 (별도 조회 - 페이지네이션과 무관)
+
+// API - 오늘 통계 조회
 const fetchTodayStats = async () => {
   try {
     const result = await reservationAPI.TodayStats()
-    state.todayTotal = result.data.resultData.todayTotal
-    state.todayConfirmed = result.data.resultData.todayConfirmed
-    state.todayCancelled = result.data.resultData.todayCancelled
-    state.monthTotal = result.data.resultData.monthTotal
-    state.totalCount = result.data.resultData.totalCount
-  } catch (e) { console.error('오늘 통계 조회 실패', e) }
+    const data = result.data.resultData || {}
+
+    state.todayTotal = data.todayTotal || 0
+    state.todayConfirmed = data.todayConfirmed || 0
+    state.todayCancelled = data.todayCancelled || 0
+    state.monthTotal = data.monthTotal || 0
+    state.totalCount = data.totalCount || 0
+  } catch (error) {
+    console.error('오늘 통계 조회 실패:', error)
+  }
 }
- 
+
+// API - GX 대기 건수 조회
 const fetchGxPendingCount = async () => {
   try {
     const result = await reservationAPI.getGxPendingCount()
-    state.gxPendingCount = result.data.resultData.pendingCount
-    console.log('GX 대기 건수:', state.gxPendingCount)
-  } catch (e) { console.error('GX 대기 건수 조회 실패', e) }
+    state.gxPendingCount = result.data.resultData?.pendingCount || 0
+  } catch (error) {
+    console.error('GX 대기 건수 조회 실패:', error)
+  }
 }
 
+// API - 최대 페이지 수 조회
 const getMaxPage = async () => {
   try {
     const result = await reservationAPI.getMaxPage({
@@ -103,15 +130,20 @@ const getMaxPage = async () => {
       userName: state.userName || undefined,
       facilityName: state.facilityName || undefined,
       status: state.status || undefined,
-      reservationDate: state.date || undefined
+      reservationDate: state.date || undefined,
     })
-    const d = result.data.resultData
-    state.maxPage       = d.maxPage
-    state.totalFiltered = d.totalCount
-  } catch (e) { console.error('maxPage 조회 실패', e) }
+
+    const data = result.data.resultData || {}
+
+    state.maxPage = data.maxPage || 1
+    state.totalFiltered = data.totalCount || 0
+  } catch (error) {
+    console.error('최대 페이지 조회 실패:', error)
+  }
 }
 
-const goToList = async () => {
+// API - 예약 목록 조회
+const fetchReservationList = async () => {
   try {
     const result = await reservationAPI.getAdminReservations({
       page: state.currentPage,
@@ -119,111 +151,165 @@ const goToList = async () => {
       userName: state.userName || undefined,
       facilityName: state.facilityName || undefined,
       status: state.status || undefined,
-      reservationDate: state.date || undefined
+      reservationDate: state.date || undefined,
     })
 
     const data = result.data.resultData
-    const list = data.content || data
+    const list = data?.content || data || []
 
-    state.list = list.map(h => ({ ...h, checked: false }))
-  } catch (e) {
-    console.error('세대 목록 조회 실패', e)
+    state.list = list.map((item) => ({
+      ...item,
+      checked: false,
+    }))
+  } catch (error) {
+    console.error('예약 목록 조회 실패:', error)
   }
 }
- 
-const doSearch = () => { state.currentPage = 1; getMaxPage(); goToList() }
-const resetFilters = () => {
-  state.userName   = ''
-  state.facilityName = ''
-  state.status     = ''
-  state.date       = ''
-  doSearch()
-}
-const goToPage = (page) => { state.currentPage = page; goToList() }
- 
-// ── 모달 ─────────────────────────────────────────────────────
-const openDetailModal  = (item) => { detailModal.reservationId = item.reservationId; detailModal.show = true }
-const closeDetailModal = () => { detailModal.show = false; detailModal.reservationId = null }
-const openFacilityModal  = () => { facilityModal.show = true }
-const closeFacilityModal = () => { facilityModal.show = false }
 
- 
-onMounted(() => {
-  fetchFacilities()
-  fetchGxPendingCount()
-  fetchTodayStats()
-  getMaxPage()
-  goToList()
+// 검색 실행
+const doSearch = async () => {
+  state.currentPage = 1
+  await getMaxPage()
+  await fetchReservationList()
+}
+
+// 필터 초기화
+const resetFilters = async () => {
+  state.userName = ''
+  state.facilityName = ''
+  state.status = ''
+  state.date = ''
+
+  await doSearch()
+}
+
+// 페이지 이동
+const goToPage = async (page) => {
+  state.currentPage = page
+  await fetchReservationList()
+}
+
+// 예약 상세 모달 열기/닫기
+const openDetailModal = (item) => {
+  detailModal.reservationId = item.reservationId
+  detailModal.show = true
+}
+
+const closeDetailModal = () => {
+  detailModal.show = false
+  detailModal.reservationId = null
+}
+
+// 초기 데이터 로딩
+onMounted(async () => {
+  await fetchFacilities()
+  await fetchGxPendingCount()
+  await fetchTodayStats()
+  await getMaxPage()
+  await fetchReservationList()
 })
 </script>
- 
+
 <template>
   <div class="reservation-page">
-    <!-- 통계 카드 -->
+    <!-- 상단 통계 카드 -->
     <StatsCards :stats="stats" />
- 
+
     <div class="table-section">
- 
-      <!-- 필터 -->
+      <!-- 필터 영역 -->
       <div class="filter-bar">
-        <div class="filter-left" style="flex: 1;">
-          <!-- 필터 요소들 왼쪽 그룹 -->
-            <div class="filter-group">
-              <div class="search-wrap">
-                <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input
-                  class="search-input" type="text"
-                  placeholder="예약자 이름 검색"
-                  v-model="state.userName"
-                  @keyup.enter="doSearch"
-                />
-              </div>
-              <select class="filter-select" v-model="state.facilityName" @change="doSearch">
-                <option value="">시설 선택</option>
-                <option v-for="f in state.facilityTypes" :key="f.typeId" :value="f.name">{{ f.name }}</option>
-              </select>
-              <select class="filter-select" v-model="state.status" @change="doSearch">
-                <option value="">예약 상태</option>
-                <option value="CONFIRMED">확정</option>
-                <option value="PENDING">대기</option>
-                <option value="CANCELLED">취소</option>
-                <option value="COMPLETED">완료</option>
-              </select>
-              <input class="filter-date" type="date" v-model="state.date" @change="doSearch" />
-            <button class="btn-reset" @click="resetFilters">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-              </svg>
-              초기화
-            </button>
-            </div>
-          <!-- 시설별 현황 버튼 오른쪽 고정 -->
-           <span class="filter-spacer"></span>
-          <button class="btn-facility" @click="openFacilityModal">시설별 현황 →</button>
+        <div class="filter-left">
+          <!-- 예약자 이름 검색 -->
+          <div class="search-wrap">
+            <svg
+              class="search-icon"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+
+            <input
+              v-model="state.userName"
+              class="search-input"
+              type="text"
+              placeholder="예약자 이름 검색"
+              @keyup.enter="doSearch"
+            />
+          </div>
+
+          <!-- 시설 선택 -->
+          <select v-model="state.facilityName" class="filter-select" @change="doSearch">
+            <option value="">시설 선택</option>
+            <option
+              v-for="facility in state.facilityTypes"
+              :key="facility.typeId || facility.id"
+              :value="facility.name"
+            >
+              {{ facility.name }}
+            </option>
+          </select>
+
+          <!-- 예약 상태 -->
+          <select v-model="state.status" class="filter-select" @change="doSearch">
+            <option value="">예약 상태</option>
+            <option value="CONFIRMED">확정</option>
+            <option value="PENDING">대기</option>
+            <option value="CANCELLED">취소</option>
+            <option value="COMPLETED">완료</option>
+          </select>
+
+          <!-- 날짜 선택 -->
+          <input v-model="state.date" class="filter-date" type="date" @change="doSearch" />
+
+          <!-- 초기화 버튼 -->
+          <button class="btn-reset" @click="resetFilters">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            초기화
+          </button>
         </div>
       </div>
- 
-      <!-- 테이블 -->
+
+      <!-- 예약 테이블 -->
       <AdminTable :columns="columns" :rows="state.list" @row-click="openDetailModal">
         <template #cell-reservationId="{ value }">
           <span class="cell-id">{{ value }}</span>
         </template>
+
         <template #cell-time="{ row }">
           {{ row.startTime }} ~ {{ row.endTime }}
         </template>
+
         <template #cell-household="{ row }">
           {{ row.dong }} {{ row.ho }}
         </template>
+
         <template #cell-status="{ value }">
-          <span :class="['status-badge', statusClass(value)]">{{ statusLabel(value) }}</span>
+          <span :class="['status-badge', statusClass(value)]">
+            {{ statusLabel(value) }}
+          </span>
         </template>
+
         <template #cell-createdAt="{ value }">
           {{ value?.slice(0, 10) }}
         </template>
       </AdminTable>
- 
+
       <!-- 페이지네이션 -->
       <Pagination
         :currentPage="state.currentPage"
@@ -232,95 +318,172 @@ onMounted(() => {
         :totalFiltered="state.totalFiltered"
         @change="goToPage"
       />
- 
     </div>
- 
+
     <!-- 예약 상세 모달 -->
     <AdminReservationDetailModal
       v-if="detailModal.show"
       :reservation-id="detailModal.reservationId"
       @close="closeDetailModal"
-      @cancelled="() => { closeDetailModal(); doSearch(); fetchTodayStats() }"
+      @cancelled="
+        async () => {
+          closeDetailModal()
+          await doSearch()
+          await fetchTodayStats()
+        }
+      "
     />
- 
-    <!-- 시설 리스트 모달 -->
-    <AdminFacilityListModal
-      v-if="facilityModal.show"
-      :facilities="state.facilityTypes"
-      @close="closeFacilityModal"
-    />
- 
   </div>
 </template>
- 
+
 <style scoped>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-.reservation-page { display: flex; flex-direction: column; font-family: 'Noto Sans KR', sans-serif; color: #333; }
-.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.page-title  { font-size: 22px; font-weight: 700; color: #1A202C; }
-.gx-pending-badge {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 16px; border-radius: 20px;
-  background: #FFF7E6; border: 1px solid #F6D98A;
-  color: #C08B2D; font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
-  animation: pulse 2s infinite;
+* {
+  box-sizing: border-box;
 }
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.3); }
-  50%       { box-shadow: 0 0 0 6px rgba(255, 152, 0, 0); }
+
+.reservation-page {
+  display: flex;
+  flex-direction: column;
+  color: #1f2937;
 }
-.table-section { background: #fff; border-radius: 10px; border: 1px solid #E2E8F0; overflow: hidden; }
- 
-/* 필터 레이아웃 - 왼쪽 그룹과 오른쪽 버튼 분리 */
-.filter-group {
-  display: flex; align-items: center; gap: 8px; flex: 1;
+
+.table-section {
+  background: #ffffff;
+  border: 1px solid #e9eef5;
+  border-radius: 16px;
+  overflow: hidden;
 }
-.search-wrap  {
-  display: flex; align-items: center;
-  border: 1px solid #E2E8F0; border-radius: 7px;
-  padding: 7px 12px; gap: 6px; background: #F5F6F8;
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #edf2f7;
+  background: #ffffff;
 }
-.search-icon  { color: #A0AEC0; flex-shrink: 0; }
+
+.filter-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.filter-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.search-wrap {
+  position: relative;
+  width: 190px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.search-input,
+.filter-select,
+.filter-date {
+  height: 40px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 14px;
+  outline: none;
+}
+
 .search-input {
-  border: none; background: transparent;
-  font-size: 13px; outline: none; color: #333;
-  width: 150px; font-family: 'Noto Sans KR', sans-serif;
+  width: 100%;
+  padding: 0 12px 0 34px;
 }
-.search-input::placeholder { color: #CBD5E0; }
+
 .filter-select {
-  border: 1px solid #E2E8F0; border-radius: 7px;
-  padding: 7px 28px 7px 12px; font-size: 13px; color: #333;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A0AEC0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
-  appearance: none; cursor: pointer; outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+  min-width: 120px;
+  padding: 0 12px;
 }
-.filter-date  {
-  border: 1px solid #E2E8F0; border-radius: 7px;
-  padding: 7px 12px; font-size: 13px; color: #333;
-  outline: none; font-family: 'Noto Sans KR', sans-serif; cursor: pointer;
+
+.filter-date {
+  min-width: 150px;
+  padding: 0 12px;
 }
+
+.btn-reset,
 .btn-facility {
-  padding: 7px 16px; background: #2B3A55; color: #fff;
-  border: none; border-radius: 7px; font-size: 13px;
-  font-weight: 600; cursor: pointer; white-space: nowrap;
-  font-family: 'Noto Sans KR', sans-serif; flex-shrink: 0;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
-.btn-facility:hover { background: #1E2A3E; }
- 
-.status-badge   { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 
-.badge-confirmed { background: #e6f4ea; color: #2e7d32; }
-.badge-pending   { background: #fff3e0; color: #e65100; }
-.badge-cancelled { background: #fce4ec; color: #c62828; }
-.badge-completed { background: #EDF2F7; color: #718096; }
-.badge-approved  { background: #e3f2fd; color: #1565c0; }
-.badge-rejected  { background: #fce4ec; color: #c62828; }
-.badge-waiting   { background: #f3e5f5; color: #6a1b9a; }
+.btn-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid #dbe3ef;
+  background: #ffffff;
+  color: #334155;
+}
 
-.filter-bar   { display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid #E2E8F0; }
-.filter-left  { display: flex; align-items: center; gap: 8px; flex: 1; }
-.filter-spacer { flex: 1; }
-.btn-reset    { display: flex; align-items: center; gap: 5px; padding: 7px 12px; border: 1px solid #E2E8F0; border-radius: 7px; background: #fff; font-size: 12px; color: #718096; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-reset:hover { background: #F5F6F8; }
+.btn-reset:hover {
+  background: #f8fafc;
+}
+
+.btn-facility {
+  padding: 0 18px;
+  border: none;
+  background: #2B3A55;
+  color: #ffffff;
+}
+
+.btn-facility:hover {
+  background: #1E2A3E;
+}
+
+.cell-id {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-confirmed {
+  background: #e6f4ea;
+  color: #2e7d32;
+}
+
+.badge-pending {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badge-cancelled {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+.badge-completed {
+  background: #e8eaf6;
+  color: #3949ab;
+}
 </style>

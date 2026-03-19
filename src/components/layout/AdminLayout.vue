@@ -10,6 +10,21 @@ const auth = useAuthStore()
 
 const currentTitle = computed(() => route.meta.title || '관리자 대시보드')
 
+const facilityStatusSuffix = computed(() => {
+  if (route.name !== 'AdminFacilityStatus') return ''
+
+  const typeId = Number(route.params.typeId || 1)
+
+  const typeNameMap = {
+    1: '독서실',
+    2: '헬스장',
+    3: '골프연습장',
+    4: 'GX',
+  }
+
+  return typeNameMap[typeId] || ''
+})
+
 const todayStr = computed(() => {
   const days = ['일', '월', '화', '수', '목', '금', '토']
   const d = new Date()
@@ -35,7 +50,11 @@ const fetchGxPendingCount = async () => {
 }
 
 const goToGxPage = () => {
-  router.push({ name: 'AdminFacilityCalendar', params: { facilityId: 'gx' } })
+  router.push({ name: 'AdminFacilityStatus', params: { typeId: 4 } })
+}
+
+const goBackToReservationList = () => {
+  router.push('/admin/reservations')
 }
 
 onMounted(fetchGxPendingCount)
@@ -50,6 +69,12 @@ provide('registerOpenModal', (fn) => {
 
 const handleActionClick = () => {
   if (openModalFn.value) openModalFn.value()
+}
+
+// 시설별 현황 페이지 이동
+// 기본 진입은 typeId=1(독서실)
+const goToFacilityStatus = () => {
+  router.push('/admin/reservations/facility-status/1')
 }
 
 </script>
@@ -218,7 +243,12 @@ const handleActionClick = () => {
           <button v-if="route.name === 'AdminParkingLog'" class="btn-action" @click="handleActionClick">+ 기록 등록</button>
           <button v-if="route.name === 'AdminVehicleListView'" class="btn-action" @click="handleActionClick">+ 차량 등록
           </button>
-          <button v-if="gxPendingCount > 0 && route.name === 'AdminReservationListView'" class="gx-pending-badge" @click="goToGxPage"> GX 승인 대기 {{ gxPendingCount }}건 </button> 
+          <button v-if="route.name === 'AdminFacilityStatus'" class="btn-action btn-secondary" @click="goBackToReservationList"> 목록으로 </button>
+          <button v-if="gxPendingCount > 0 && (route.name === 'AdminReservationListView' || route.name === 'AdminFacilityStatus')" class="gx-pending-badge" @click="goToGxPage">
+            GX 승인 대기 {{ gxPendingCount }}건
+          </button>
+          <button v-if="route.name === 'AdminReservationListView'" class="btn-action" @click="goToFacilityStatus">시설별 현황 →
+          </button>
         </div>
       </header>
 
