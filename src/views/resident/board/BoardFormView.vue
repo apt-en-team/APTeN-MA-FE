@@ -66,7 +66,8 @@ async function handleSubmit() {
       await boardStore.createPost({ category: category.value, title: title.value, content: content.value })
       router.push('/resident/board')
     }
-  } catch {
+  } catch (e) {
+    console.error('게시글 처리 오류:', e)  // 콘솔에서 실제 에러 확인
     alert('처리 중 오류가 발생했습니다.')
   }
 }

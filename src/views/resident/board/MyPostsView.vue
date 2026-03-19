@@ -133,10 +133,10 @@ function stripHtml(html) {
             :key="post.boardId"
             @click="router.push(`/resident/board/${post.boardId}`)"
           >
-            <div v-if="post.thumbnail" class="card-thumb">
-              <img :src="post.thumbnail" :alt="post.title" />
+            <div v-if="post.imageUrl" class="card-thumb">
+              <img :src="post.imageUrl" :alt="post.title" />
             </div>
-            <div class="card-body" :class="{ 'no-thumb': !post.thumbnail }">
+            <div class="card-body" :class="{ 'no-thumb': !post.imageUrl }">
               <div class="card-meta-top">
                 <div class="author-info">
                   <div class="avatar" :style="getAvatarStyle(post.authorName)">
@@ -240,8 +240,8 @@ function stripHtml(html) {
                   </span>
                 </div>
               </div>
-              <div v-if="post.thumbnail" class="popular-thumb">
-                <img :src="post.thumbnail" :alt="post.title" />
+              <div v-if="post.imageUrl" class="popular-thumb">
+                <img :src="post.imageUrl" :alt="post.title" />
               </div>
             </li>
           </ul>

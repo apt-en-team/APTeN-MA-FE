@@ -1,14 +1,14 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/modules/auth'
 import { useBoardStore } from '@/stores/modules/board'
+import { getPostDetail } from '@/api/board'
 import 'quill/dist/quill.snow.css'
 import CommentItem from '@/components/board/CommentItem.vue'
+import BoardCard from '@/components/board/BoardCard.vue'
 
 const route      = useRoute()
 const router     = useRouter()
-const auth       = useAuthStore()
 const boardStore = useBoardStore()
 
 const post    = ref(null)
@@ -17,7 +17,7 @@ const loading = ref(false)
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await import('@/api/board').then(m => m.getPostDetail(route.params.id))
+    const res = await getPostDetail(route.params.id)
     post.value = res.data
   } finally {
     loading.value = false
@@ -40,7 +40,7 @@ function goBack() {
   router.push('/admin/board')
 }
 
-async function editPost() {
+function editPost() {
   router.push(`/admin/boards/modify/${route.params.id}`)
 }
 
@@ -50,22 +50,14 @@ async function deletePost() {
   router.push('/admin/board')
 }
 
-const avatarColors = ['#4973E5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
-function getAvatarColor(name) {
-  const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
-  return avatarColors[idx]
-}
-
-const comments = ref([]) // TODO: API 연동
+const comments  = ref([])
 const newComment = ref('')
 
 function deleteComment(commentId) {
-  // TODO: API 연동
-  console.log('delete', commentId)
+  console.log('delete', commentId) // TODO: API 연동
 }
 function editComment({ commentId, content }) {
-  // TODO: API 연동
-  console.log('edit', commentId, content)
+  console.log('edit', commentId, content) // TODO: API 연동
 }
 </script>
 
@@ -77,59 +69,50 @@ function editComment({ commentId, content }) {
 
       <!-- 메인 본문 -->
       <div class="detail-main">
-        <div class="detail-card">
+        <BoardCard
+          :title="post.title"
+          :content="post.content"
+          :author-name="post.authorName"
+          :author-unit="post.authorUnit"
+          :created-at="post.createdAt"
+          :view-count="post.viewCount"
+          :image-url="post.imageUrl"
+        >
+          <!-- 카테고리 배지: 카테고리에 따라 분기 -->
+          <template #badge>
+            <span v-if="post.category === 'NOTICE'" class="badge-gong">공지</span>
+            <span v-else class="badge-category">{{ getCategoryLabel(post.category) }}</span>
+          </template>
 
-          <!-- 카테고리 + 제목 -->
-          <span class="badge-category">{{ getCategoryLabel(post.category) }}</span>
-          <h1 class="detail-title">{{ post.title }}</h1>
+          <!-- 관리자 배지: NOTICE일 때만 표시 -->
+          <template #author-extra>
+            <span v-if="post.category === 'NOTICE'" class="badge-admin">관리자</span>
+          </template>
+        </BoardCard>
 
-          <!-- 작성자 -->
-          <div class="detail-meta">
-            <div class="author-info">
-              <div class="avatar" :style="{ background: getAvatarColor(post.authorName) }">
-                {{ post.authorName?.[0] }}
-              </div>
-              <div class="author-detail">
-                <span class="author-name">{{ post.authorName }}</span>
-                <span class="author-unit">{{ post.authorUnit }} · {{ formatDate(post.createdAt) }}</span>
-              </div>
+        <!-- 댓글 -->
+        <div class="comment-card">
+          <p class="comment-title">
+            댓글
+            <span class="comment-badge">{{ comments.filter(c => c.isDeleted === 0).length }}</span>
+          </p>
+          <div class="comment-list">
+            <div v-if="comments.length === 0" class="comment-empty">
+              등록된 댓글이 없습니다.
             </div>
-            <span class="view-count">조회 {{ post.viewCount }}</span>
+            <CommentItem
+              v-for="comment in comments"
+              :key="comment.commentId"
+              :comment="comment"
+              mode="admin"
+              @delete="deleteComment"
+              @edit="editComment"
+            />
           </div>
-
-          <div class="divider" />
-
-          <!-- 본문 -->
-          <div class="detail-body ql-editor" v-html="post.content" />
-
-          <!-- 댓글 -->
-          <div class="comment-section">
-            <p class="comment-title">
-              댓글
-              <span class="comment-badge">{{ comments.filter(c => c.isDeleted === 0).length }}</span>
-            </p>
-
-            <div class="comment-list">
-              <div v-if="comments.length === 0" class="comment-empty">
-                등록된 댓글이 없습니다.
-              </div>
-              <CommentItem
-                v-for="comment in comments"
-                :key="comment.commentId"
-                :comment="comment"
-                mode="admin"
-                @delete="deleteComment"
-                @edit="editComment"
-              />
-            </div>
-
-            <!-- 댓글 입력 -->
-            <div class="comment-input-wrap">
-              <input v-model="newComment" class="comment-input" placeholder="관리자 댓글을 입력해주세요..." />
-              <button class="comment-submit">등록</button>
-            </div>
+          <div class="comment-input-wrap">
+            <input v-model="newComment" class="comment-input" placeholder="관리자 댓글을 입력해주세요..." />
+            <button class="comment-submit">등록</button>
           </div>
-
         </div>
       </div>
 
@@ -180,10 +163,8 @@ function editComment({ commentId, content }) {
         <!-- 관리 버튼 -->
         <div class="sidebar-card">
           <p class="sidebar-title">관리</p>
-          <!-- 관리 버튼 -->
           <div class="manage-btns">
             <button class="btn-back" @click="goBack">목록으로 돌아가기</button>
-            <!-- NOTICE일 때만 수정 버튼 표시 -->
             <button v-if="post.category === 'NOTICE'" class="btn-edit" @click="editPost">게시글 수정</button>
             <button class="btn-delete" @click="deletePost">게시글 삭제</button>
           </div>
@@ -204,51 +185,34 @@ function editComment({ commentId, content }) {
   align-items: start;
 }
 
-/* 메인 카드 */
-.detail-card {
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #E2E8F0;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.detail-main { display: flex; flex-direction: column; gap: 16px; }
 
+/* 배지 */
+.badge-gong {
+  display: inline-block;
+  background: #4973E5; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 4px; width: fit-content;
+}
 .badge-category {
   display: inline-block;
   background: #EEF2FF; color: #4338CA;
   font-size: 11px; font-weight: 700;
-  padding: 3px 8px; border-radius: 4px;
-  width: fit-content;
+  padding: 3px 8px; border-radius: 4px; width: fit-content;
+}
+.badge-admin {
+  font-size: 10px; font-weight: 700;
+  background: #4973E5; color: #fff;
+  padding: 2px 6px; border-radius: 4px;
 }
 
-.detail-title { font-size: 22px; font-weight: 700; color: #1A202C; line-height: 1.4; }
-
-.detail-meta { display: flex; justify-content: space-between; align-items: center; }
-.author-info { display: flex; align-items: center; gap: 10px; }
-.avatar {
-  width: 38px; height: 38px; border-radius: 50%;
-  color: #fff; display: flex; align-items: center;
-  justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0;
+/* 댓글 카드 */
+.comment-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  padding: 24px;
 }
-.author-detail { display: flex; flex-direction: column; }
-.author-name { font-size: 14px; font-weight: 600; color: #333; }
-.author-unit { font-size: 12px; color: #999; }
-.view-count { font-size: 12px; color: #999; }
-
-.divider { height: 1px; background: #E2E8F0; }
-
-.detail-body {
-  font-size: 15px; line-height: 1.9;
-  color: #444; min-height: 100px;
-  /* quill 스타일 오버라이드 */
-  border: none !important;
-  padding: 0 !important;
-}
-
-/* 댓글 */
-.comment-section { border-top: 1px solid #E2E8F0; padding-top: 20px; }
 .comment-title {
   font-size: 14px; font-weight: 700; color: #1A202C;
   margin-bottom: 14px;
@@ -260,8 +224,7 @@ function editComment({ commentId, content }) {
   padding: 1px 7px; border-radius: 99px;
 }
 .comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-
-/* 댓글 입력 */
+.comment-empty { font-size: 13px; color: #A0AEC0; text-align: center; padding: 10px 0; }
 .comment-input-wrap { display: flex; gap: 8px; }
 .comment-input {
   flex: 1; padding: 9px 12px;
@@ -280,36 +243,24 @@ function editComment({ commentId, content }) {
 
 /* 사이드바 */
 .sidebar-card {
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #E2E8F0;
-  padding: 18px;
+  background: #fff; border-radius: 10px;
+  border: 1px solid #E2E8F0; padding: 18px;
   margin-bottom: 16px;
 }
-.sidebar-title {
-  font-size: 13px; font-weight: 700;
-  color: #1A202C; margin-bottom: 12px;
-}
+.sidebar-title { font-size: 13px; font-weight: 700; color: #1A202C; margin-bottom: 12px; }
 
-/* 게시글 정보 */
 .info-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 7px 0; border-bottom: 1px solid #F0F2F6;
-  font-size: 12px;
+  padding: 7px 0; border-bottom: 1px solid #F0F2F6; font-size: 12px;
 }
 .info-row:last-child { border-bottom: none; }
 .info-label { color: #718096; }
 .info-value { color: #1A202C; font-weight: 500; text-align: right; }
 
-/* 상태 배지 */
-.status-badge {
-  font-size: 11px; font-weight: 600;
-  padding: 2px 8px; border-radius: 99px;
-}
+.status-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
 .status-normal  { background: #C6F6D5; color: #276749; }
 .status-deleted { background: #FED7D7; color: #9B2C2C; }
 
-/* 관리 버튼 */
 .manage-btns { display: flex; flex-direction: column; gap: 8px; }
 .btn-back {
   width: 100%; padding: 10px;
@@ -338,6 +289,5 @@ function editComment({ commentId, content }) {
 }
 .btn-delete:hover { background: #FFF5F5; }
 
-.comment-empty { font-size: 13px; color: #A0AEC0; text-align: center; padding: 10px 0; }
 .loading { text-align: center; padding: 60px; color: #999; }
 </style>

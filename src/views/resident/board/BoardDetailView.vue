@@ -6,6 +6,7 @@ import { getPostDetail } from '@/api/board'
 import { useBoardStore } from '@/stores/modules/board'
 import 'quill/dist/quill.snow.css'
 import CommentItem from '@/components/board/CommentItem.vue'
+import BoardCard from '@/components/board/BoardCard.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -87,37 +88,19 @@ function editComment({ commentId, content }) {
 
       <!-- 메인 본문 -->
       <div class="detail-main">
-        <div class="detail-card">
-
-          <!-- 카테고리 배지 + 제목 -->
-          <span class="badge-category">{{ getCategoryLabel(post.category) }}</span>
-          <h1 class="detail-title">{{ post.title }}</h1>
-
-          <!-- 작성자 정보 -->
-          <div class="detail-meta">
-            <div class="author-info">
-              <div class="avatar" :style="{ background: getAvatarColor(post.authorName) }">
-                {{ post.authorName?.[0] }}
-              </div>
-              <div class="author-detail">
-                <div class="author-name-wrap">
-                  <span class="author-name">{{ post.authorName }}</span>
-                </div>
-                <div class="author-sub">
-                  <span class="author-unit">{{ post.authorUnit }}</span>
-                  <span class="author-date">{{ formatDate(post.createdAt) }}</span>
-                </div>
-              </div>
-            </div>
-            <span class="view-count">조회 {{ post.viewCount }}</span>
-          </div>
-
-          <div class="divider"/>
-
-          <!-- 본문 -->
-          <div class="detail-body ql-editor" v-html="post.content" />
-
-        </div>
+        <BoardCard
+          :title="post.title"
+          :content="post.content"
+          :author-name="post.authorName"
+          :author-unit="post.authorUnit"
+          :created-at="post.createdAt"
+          :view-count="post.viewCount"
+          :image-url="post.imageUrl"
+        >
+          <template #badge>
+            <span class="badge-category">{{ getCategoryLabel(post.category) }}</span>
+          </template>
+        </BoardCard>
       </div>
 
       <!-- 우측 사이드바 -->

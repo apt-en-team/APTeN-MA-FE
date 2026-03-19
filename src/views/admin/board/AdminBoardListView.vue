@@ -36,7 +36,21 @@ async function fetchData() {
   }
 }
 
-onMounted(fetchData)
+onMounted(async () => {
+  loading.value = true
+  try {
+    // 현재 탭 데이터 + 각 카테고리 카운트 동시 호출
+    await Promise.all([
+      fetchData(),
+      boardStore.fetchAdminPostCount(''),        // 전체
+      boardStore.fetchAdminPostCount('NOTICE'),  // 공지
+      boardStore.fetchAdminPostCount('FREE'),    // 자유
+      boardStore.fetchAdminPostCount('INQUIRY'), // 문의
+    ])
+  } finally {
+    loading.value = false
+  }
+})
 
 // ── 탭 변경 ──────────────────────────────────────────────────
 function setTab(tab) {

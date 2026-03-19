@@ -64,7 +64,7 @@ import ParkingStatsView from '@/views/admin/parking/ParkingStatsView.vue'
 import AdminVisitorVehicleStatusView from '@/views/admin/parking/AdminVisitorVehicleStatusView.vue'
 import FixedVisitorVehicleFormView from "@/views/resident/parking/FixedVisitorVehicleFormView.vue";
 import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue";
-import AdminFixedVisitorVehicleListView from '@/views/admin/parking/Adminfixedvisitorvehiclelistview.vue'
+import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVisitorVehicleListView.vue'
 
 // 관리자 - 시설/예약
 // 시설/예약

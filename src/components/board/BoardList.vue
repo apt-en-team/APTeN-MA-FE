@@ -44,11 +44,11 @@ const emit = defineEmits(['card-click'])
     >
       <!-- 썸네일 영역: 이미지가 있을 때만 렌더 (없으면 영역 자체 사라짐) -->
       <div
-        v-if="!noThumbMode && post.thumbnail"
+        v-if="!noThumbMode && post.imageUrl"
         class="card-thumb"
         :style="{ width: thumbWidth, height: thumbHeight, minWidth: thumbWidth }"
       >
-        <img :src="post.thumbnail" :alt="post.title" />
+        <img :src="`http://localhost:8080${post.imageUrl}`" :alt="post.title" />
         <!-- 뱃지 슬롯 (예약 가능 / 잔여석 등) -->
         <div v-if="$slots.badge" class="thumb-badge">
           <slot name="badge" :post="post" />
@@ -56,7 +56,7 @@ const emit = defineEmits(['card-click'])
       </div>
 
       <!-- 카드 본문 -->
-      <div class="card-body" :class="{ 'no-thumb': noThumbMode || !post.thumbnail }">
+      <div class="card-body" :class="{ 'no-thumb': noThumbMode || !post.imageUrl }">
         <!-- 상단 메타 -->
         <div class="card-meta-top">
           <slot name="meta" :post="post" />
