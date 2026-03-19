@@ -70,11 +70,9 @@ import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVi
 // 시설/예약
 import FacilityManageView from '@/views/admin/facility/FacilityManageView.vue'
 import AdminReservationListView from '@/views/admin/reservation/AdminReservationListView.vue'
-import AdminReservationDetailView from '@/views/admin/reservation/AdminReservationDetailView.vue'
-import AdminGxApprovalView from '@/views/admin/reservation/AdminGxApprovalView.vue'
+import AdminFacilityStatusView from '@/views/admin/reservation/AdminFacilityStatusView.vue'
 import FacilityFormView       from '@/views/admin/facility/FacilityFormView.vue'
 import FacilityTypeManageView from '@/views/admin/facility/FacilityTypeManageView.vue'
-
 
 
 const routes = [
@@ -202,6 +200,7 @@ const routes = [
             },
 
             // 시설/예약
+            { path: 'reservations/facility-status/:typeId?', name: 'AdminFacilityStatus', component: AdminFacilityStatusView, meta: { title: '시설별 예약 현황' } },
             { 
                 path: 'facility',                
                 name: 'AdminFacilityManage',   
@@ -225,18 +224,6 @@ const routes = [
                 name: 'AdminReservationListView',
                 component: AdminReservationListView,
                 meta: {title: '전체 예약 현황'}
-            },
-            {
-                path: 'reservations/:id',
-                name: 'AdminReservationDetail',
-                component: AdminReservationDetailView,
-                meta: {title: '시설별 예약 현황'}
-            },
-            {
-                path: 'reservations/gx-approve',
-                name: 'AdminGxApproval',
-                component: AdminGxApprovalView,
-                meta: {title: 'GX승인'}
             },
         ]
     }

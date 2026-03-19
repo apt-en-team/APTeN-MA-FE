@@ -56,5 +56,10 @@ export default {
   // ── 세대 구성원 조회 ──────
   getResidents(householdId) {
     return axios.get(`/admin/households/${householdId}/residents`)
+  },
+
+  // ── 입주민 승인 대기 건수 조회 ─────────────────────────────────────
+  getPendingResidentCount () {
+    return axios.get('/admin/households/pending-count') 
   }
 }
