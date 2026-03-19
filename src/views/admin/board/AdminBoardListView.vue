@@ -249,7 +249,7 @@ const tabCounts = computed(() => ({
 .tab-btn {
   padding: 14px 16px;
   border: none; background: transparent;
-  font-size: 13px; font-weight: 500; color: #718096;
+  font-size: 13px; font-weight: 500; color: #687282;
   cursor: pointer; border-bottom: 2px solid transparent;
   margin-bottom: -1px; transition: all 0.15s;
 
@@ -259,7 +259,7 @@ const tabCounts = computed(() => ({
 .tab-btn.active { color: #2B3A55; font-weight: 700; border-bottom-color: #2B3A55; }
 .tab-count {
   font-size: 11px; font-weight: 600;
-  background: #F5F6F8; color: #718096;
+  background: #F5F6F8; color: #687282;
   padding: 1px 7px; border-radius: 99px;
 }
 .tab-btn.active .tab-count { background: #2B3A55; color: #fff; }
@@ -268,7 +268,7 @@ const tabCounts = computed(() => ({
 .search-wrap { position: relative; }
 .search-icon {
   position: absolute; left: 9px; top: 50%;
-  transform: translateY(-50%); stroke: #A0AEC0;
+  transform: translateY(-50%); stroke: #687282;
 }
 .search-input {
   padding: 7px 12px 7px 28px;

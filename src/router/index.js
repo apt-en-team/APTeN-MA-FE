@@ -98,12 +98,12 @@ const routes = [
             {path: 'dashboard', name: 'ResidentDashboard', component: ResidentDashboard, meta: {title: '대시보드'}},
 
             // 게시판
-            { path: 'board/notice', name: 'NoticeList',  component: NoticeListView,  meta: { title: '공지사항' } },
-            { path: 'board/notice/:id', name: 'NoticeDetail', component: NoticeDetailView, meta: { title: '공지사항 상세' } },
-            { path: 'board',        name: 'BoardList',   component: BoardListView,   meta: { title: '자유게시판' } },
-            { path: 'board/form',   name: 'BoardForm',   component: BoardFormView,   meta: { title: '게시글 작성' } },
-            { path: 'board/my-posts',     name: 'MyPosts',     component: MyPostsView,     meta: { title: '내가 쓴 글' } },
-            { path: 'board/:id',    name: 'BoardDetail', component: BoardDetailView, meta: { title: '게시글 상세보기' } },
+            {path: 'board/notice', name: 'NoticeList', component: NoticeListView, meta: {title: '공지사항'}},
+            {path: 'board/notice/:id', name: 'NoticeDetail', component: NoticeDetailView, meta: {title: '공지사항 상세'}},
+            {path: 'board', name: 'BoardList', component: BoardListView, meta: {title: '자유게시판'}},
+            {path: 'board/form', name: 'BoardForm', component: BoardFormView, meta: {title: '게시글 작성'}},
+            {path: 'board/my-posts', name: 'MyPosts', component: MyPostsView, meta: {title: '내가 쓴 글'}},
+            {path: 'board/:id', name: 'BoardDetail', component: BoardDetailView, meta: {title: '게시글 상세보기'}},
 
             // 시설/예약
             {path: 'facility', name: 'FacilityList', component: FacilityListView, meta: {title: '시설'}},

@@ -478,7 +478,7 @@ onMounted(() => {
 }
 
 .search-icon {
-  color: #A0AEC0;
+  color: #687282;
   flex-shrink: 0;
 }
 
@@ -530,7 +530,7 @@ onMounted(() => {
 
 .status-gray {
   background: #EDF2F7;
-  color: #718096;
+  color: #687282;
 }
 
 .col-empty {
@@ -567,7 +567,7 @@ onMounted(() => {
   border-radius: 7px;
   background: #fff;
   font-size: 13px;
-  color: #718096;
+  color: #687282;
   cursor: pointer;
 
 }
@@ -632,7 +632,7 @@ onMounted(() => {
 
 .detail-sub {
   font-size: 13px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .detail-divider {
@@ -655,25 +655,25 @@ onMounted(() => {
 
 .detail-cell-label {
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .detail-cell-value {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: #1A202C;
 }
 
 .detail-section-title {
   font-size: 13px;
   font-weight: 600;
-  color: #4A5568;
+  color: #687282;
   margin-bottom: 10px;
 }
 
 .detail-empty {
   font-size: 13px;
-  color: #A0AEC0;
+  color: #687282;
   text-align: center;
   padding: 12px 0;
 }
@@ -719,7 +719,7 @@ onMounted(() => {
 
 .resident-contact {
   font-size: 12px;
-  color: #718096;
+  color: #687282;
 }
 
 .resident-tag {
@@ -747,7 +747,7 @@ onMounted(() => {
 .form-label {
   font-size: 13px;
   font-weight: 600;
-  color: #4A5568;
+  color: #687282;
 }
 
 .required {
@@ -771,7 +771,7 @@ onMounted(() => {
 
 .form-input:disabled {
   background: #F5F6F8;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .form-select {
@@ -785,7 +785,7 @@ onMounted(() => {
 
 .form-hint {
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .form-error {
@@ -828,7 +828,7 @@ onMounted(() => {
 
 .pending-user-phone {
   font-size: 12px;
-  color: #718096;
+  color: #687282;
 }
 
 .pending-user-actions {

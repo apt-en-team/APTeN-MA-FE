@@ -1,50 +1,49 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/modules/auth.js'
-import { useRouter } from 'vue-router'
+import {ref, computed, onMounted} from 'vue'
+import {useAuthStore} from '@/stores/modules/auth.js'
+import {useRouter} from 'vue-router'
 import axios from '@/api/axios.js'
-import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Autoplay, Pagination } from 'swiper/modules'
+import {Swiper, SwiperSlide} from 'swiper/vue'
+import {Autoplay, Pagination} from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
+import {getMyVisitorVehicles} from '@/api/visitorVehicle.js' // 방문차량 API
+import {useParkingStore} from '@/stores/modules/parking.js'  // 주차 현황 store
 
 const auth = useAuthStore()
 const router = useRouter()
+const parkingStore = useParkingStore() // 주차 현황 store 인스턴스
 
-// 더미 데이터 (추후 API 연결)
+// 더미 데이터 (vehicles/reservations는 추후 API 연결 또는 타 담당자 작업)
 const stats = ref({
   vehicles: 0,
   reservations: 0,
-  visitorVehicles: 0,
-  parkingRate: 0
+  visitorVehicles: 0, // 오늘 방문 예정 차량 수 (todayCount)
+  parkingRate: 0      // 주차 사용률 % (parkingStore.parkingPercent)
 })
 
 const notices = ref([])
 
 const reservations = ref([])
 
-// onMounted(async () => {
-//   try {
-//     const { data } = await axios.get('/dashboard')
-//     stats.value = data.stats ?? stats.value
-//     notices.value = data.notices ?? []
-//     reservations.value = data.reservations ?? []
-//   } catch (e) {
-//     console.warn('대시보드 API 오류:', e)
-//   }
-// })
-
 onMounted(async () => {
   try {
     // 공지사항
-    const noticeRes = await axios.get('/boards', { params: { category: 'NOTICE', page: 1, size: 3 } })
+    const noticeRes = await axios.get('/boards', {params: {category: 'NOTICE', page: 1, size: 3}})
     notices.value = noticeRes.data.content ?? []
 
     // 예약 현황
     const reservationRes = await axios.get('/reservations/my')
     reservations.value = reservationRes.data ?? []
 
-    // stats는 차량/방문차량/주차 API 붙으면 그때 채우기
+    // 방문 차량 - 응답의 todayCount만 꺼내 stats에 반영
+    const visitorRes = await getMyVisitorVehicles({page: 1, size: 1})
+    stats.value.visitorVehicles = visitorRes.data?.todayCount ?? 0
+
+    // 주차 현황 - store에서 API 호출 후 parkingPercent 반영
+    await parkingStore.fetchStats()
+    stats.value.parkingRate = parkingStore.parkingPercent ?? 0
+
   } catch (e) {
     console.warn('대시보드 로딩 오류:', e)
   }
@@ -53,7 +52,7 @@ onMounted(async () => {
 const today = computed(() => {
   const d = new Date()
   const days = ['일', '월', '화', '수', '목', '금', '토']
-  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${days[d.getDay()]})`
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]})`
 })
 
 const dong = computed(() => auth.user?.dong || '101동')
@@ -100,18 +99,18 @@ function stripHtml(html) {
   if (!html) return ''
 
   return html
-    .replace(/<[^>]*>/g, '')         // 1. 모든 HTML 태그 제거
-    .replace(/&nbsp;/g, ' ')         // 2. 연속 공백 기호 변환
-    .replace(/&lt;/g, '<')           // 3. 부등호 변환
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .trim()                          // 4. 앞뒤 쓸데없는 공백 제거
-    .slice(0, 100)                   // 5. 요약
+      .replace(/<[^>]*>/g, '')         // 1. 모든 HTML 태그 제거
+      .replace(/&nbsp;/g, ' ')         // 2. 연속 공백 기호 변환
+      .replace(/&lt;/g, '<')           // 3. 부등호 변환
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .trim()                          // 4. 앞뒤 쓸데없는 공백 제거
+      .slice(0, 100)                   // 5. 요약
 }
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
-  return dateStr.split('T')[0] // '2024-03-27' 형태로 출력
+  return dateStr.split('T')[0]
 }
 
 </script>
@@ -129,13 +128,13 @@ function formatDate(dateStr) {
 
     <!-- 배너 -->
     <Swiper
-      :modules="modules"
-      :autoplay="{ delay: 3000, disableOnInteraction: false }"
-      :pagination="{ clickable: true }"
-      :slides-per-view="1"
-      :speed="900"
-      loop
-      class="banner-swiper"
+        :modules="modules"
+        :autoplay="{ delay: 3000, disableOnInteraction: false }"
+        :pagination="{ clickable: true }"
+        :slides-per-view="1"
+        :speed="900"
+        loop
+        class="banner-swiper"
     >
       <SwiperSlide v-for="(banner, i) in banners" :key="i">
         <div class="banner" :style="{ backgroundImage: `url(${banner.bg})` }">
@@ -159,8 +158,10 @@ function formatDate(dateStr) {
         </div>
         <div class="stat-desc">{{ stats.vehicles === 0 ? '등록된 차량이 없습니다' : '최대 2대 등록 가능' }}</div>
         <div class="stat-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path
+                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
             <circle cx="7" cy="17" r="2"/>
             <path d="M9 17h6"/>
             <circle cx="17" cy="17" r="2"/>
@@ -176,8 +177,10 @@ function formatDate(dateStr) {
         </div>
         <div class="stat-desc">{{ stats.reservations === 0 ? '예약 내역이 없습니다' : '이번 주 예약' }}</div>
         <div class="stat-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path
+                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
           </svg>
         </div>
       </div>
@@ -188,10 +191,12 @@ function formatDate(dateStr) {
         <div class="stat-value" :class="{ empty: stats.visitorVehicles === 0 }">
           {{ stats.visitorVehicles }} <span class="stat-unit">대</span>
         </div>
-        <div class="stat-desc">{{ stats.visitorVehicles === 0 ? '방문 차량이 없습니다' : '승인 대기' }}</div>
+        <div class="stat-desc">{{ stats.visitorVehicles === 0 ? '방문 차량이 없습니다' : '오늘 방문 예정' }}</div>
         <div class="stat-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path
+                d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
           </svg>
         </div>
       </div>
@@ -220,16 +225,18 @@ function formatDate(dateStr) {
         </div>
         <div class="card-body">
           <div v-if="notices.length === 0" class="empty-state">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
             </svg>
             <p>등록된 공지사항이 없습니다.</p>
           </div>
           <div
-            v-for="notice in notices"
-            :key="notice.boardId"
-            class="notice-item"
-            @click="router.push(`/resident/board/notice/${notice.boardId}`)"
+              v-for="notice in notices"
+              :key="notice.boardId"
+              class="notice-item"
+              @click="router.push(`/resident/board/notice/${notice.boardId}`)"
           >
             <div class="notice-row">
               <span v-if="notice.category" class="notice-badge">{{ notice.category }}</span>
@@ -247,25 +254,26 @@ function formatDate(dateStr) {
         <div class="card-header">
           <span class="card-title">📅내 예약 현황</span>
           <span class="card-more" @click="router.push('/resident/my-reservation')">전체보기 →</span>
-
         </div>
         <div class="card-body">
           <div v-if="reservations.length === 0" class="empty-state">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
             </svg>
             <p>예약 내역이 없습니다.</p>
           </div>
           <div
-            v-for="res in reservations"
-            :key="res.reservationId"
-            class="reservation-item"
-            @click="router.push(`/resident/reservations/${res.reservationId}`)"
+              v-for="res in reservations"
+              :key="res.reservationId"
+              class="reservation-item"
+              @click="router.push(`/resident/reservations/${res.reservationId}`)"
           >
             <div class="res-left">
               <span
-                class="res-badge"
-                :class="`res-badge--${res.statusColor}`"
+                  class="res-badge"
+                  :class="`res-badge--${res.statusColor}`"
               >{{ res.status }}</span>
               <div>
                 <div class="res-facility">{{ res.facility }}</div>
@@ -290,24 +298,31 @@ function formatDate(dateStr) {
   justify-content: space-between;
   align-items: flex-start;
 }
+
 .greeting {
   font-size: 22px;
   font-weight: 700;
   color: #333333;
   margin: 0;
 }
+
 .sub-info {
   font-size: 13px;
   color: #999;
   margin-top: 4px;
 }
+
 .header-actions {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.dashboard { display: flex; flex-direction: column; gap: 20px; }
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 /* 배너 */
 .banner-swiper {
@@ -316,10 +331,12 @@ function formatDate(dateStr) {
   border-radius: 16px;
   overflow: hidden;
 }
+
 .swiper-slide {
   width: 100%;
   height: 160px;
 }
+
 .banner {
   width: 100%;
   height: 160px;
@@ -327,6 +344,7 @@ function formatDate(dateStr) {
   background-position: center;
   position: relative;
 }
+
 .banner-chip {
   margin-top: 10px;
   color: #111;
@@ -336,35 +354,50 @@ function formatDate(dateStr) {
   border-radius: 20px;
   width: fit-content;
 }
-/* .badge-blue   { background: #4973E5; color: #fff; } */
-.badge-red    { background: #FF6B6B; color: #fff; }
-.badge-green  { background: #52B788; color: #fff; }
-.badge-yellow   { background: #FFD700; color: #333; }
+
+.badge-red {
+  background: #FF6B6B;
+  color: #fff;
+}
+
+.badge-green {
+  background: #52B788;
+  color: #fff;
+}
+
+.badge-yellow {
+  background: #FFD700;
+  color: #333;
+}
+
 .banner-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 100%);
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.1) 100%);
   padding: 28px 32px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
+
 .banner-badge {
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
   letter-spacing: 2px;
   margin-bottom: 8px;
 }
+
 .banner-title {
   font-size: 22px;
   font-weight: 700;
   color: #fff;
   margin: 0 0 6px;
 }
+
 .banner-desc {
   font-size: 13px;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255, 255, 255, 0.75);
   margin: 0;
 }
 
@@ -374,6 +407,7 @@ function formatDate(dateStr) {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+
 .stat-card {
   background: #fff;
   border-radius: 14px;
@@ -383,34 +417,46 @@ function formatDate(dateStr) {
   position: relative;
   transition: box-shadow 0.2s;
 }
-.stat-card:hover { box-shadow: 0 4px 16px rgba(73,115,229,0.1); }
+
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(73, 115, 229, 0.1);
+}
+
 .stat-label {
   font-size: 12px;
   color: #999;
   margin-bottom: 8px;
 }
+
 .stat-value {
   font-size: 28px;
   font-weight: 700;
   color: #333333;
 }
-.stat-value.empty { color: #D1D5DB; }
+
+.stat-value.empty {
+  color: #D1D5DB;
+}
+
 .stat-unit {
   font-size: 14px;
   font-weight: 400;
   color: #999;
 }
+
 .stat-desc {
   font-size: 11px;
   color: #bbb;
   margin-top: 4px;
 }
+
 .stat-icon {
   position: absolute;
   right: 20px;
   bottom: 20px;
   opacity: 0.5;
 }
+
 .parking-bar {
   height: 6px;
   background: #ECEEF3;
@@ -418,6 +464,7 @@ function formatDate(dateStr) {
   margin-top: 10px;
   overflow: hidden;
 }
+
 .parking-fill {
   height: 100%;
   background: #4973E5;
@@ -431,12 +478,14 @@ function formatDate(dateStr) {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+
 .card {
   background: #fff;
   border-radius: 14px;
   border: 1px solid #ECEEF3;
   overflow: hidden;
 }
+
 .card-header {
   padding: 16px 20px;
   border-bottom: 1px solid #F3F4F8;
@@ -444,18 +493,26 @@ function formatDate(dateStr) {
   justify-content: space-between;
   align-items: center;
 }
+
 .card-title {
   font-size: 14px;
   font-weight: 600;
   color: #333333;
 }
+
 .card-more {
   font-size: 12px;
   color: #999;
   cursor: pointer;
 }
-.card-more:hover { color: #4973E5; }
-.card-body { padding: 8px 0; }
+
+.card-more:hover {
+  color: #4973E5;
+}
+
+.card-body {
+  padding: 8px 0;
+}
 
 /* 빈 상태 */
 .empty-state {
@@ -466,6 +523,7 @@ function formatDate(dateStr) {
   padding: 36px 20px;
   gap: 12px;
 }
+
 .empty-state p {
   font-size: 13px;
   color: #C0C4CE;
@@ -479,14 +537,22 @@ function formatDate(dateStr) {
   cursor: pointer;
   transition: background 0.15s;
 }
-.notice-item:hover { background: #F7F8FC; }
-.notice-item:last-child { border-bottom: none; }
+
+.notice-item:hover {
+  background: #F7F8FC;
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+}
+
 .notice-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
+
 .notice-badge {
   font-size: 10px;
   font-weight: 600;
@@ -495,11 +561,13 @@ function formatDate(dateStr) {
   padding: 2px 7px;
   border-radius: 4px;
 }
+
 .notice-dot {
   color: #ccc;
   font-size: 16px;
   line-height: 1;
 }
+
 .notice-title {
   font-size: 13px;
   font-weight: 500;
@@ -509,6 +577,7 @@ function formatDate(dateStr) {
   text-overflow: ellipsis;
   max-width: 280px;
 }
+
 .notice-content {
   font-size: 12px;
   color: #999;
@@ -517,6 +586,7 @@ function formatDate(dateStr) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .notice-meta {
   font-size: 11px;
   color: #bbb;
@@ -533,13 +603,21 @@ function formatDate(dateStr) {
   cursor: pointer;
   transition: background 0.15s;
 }
-.reservation-item:hover { background: #F7F8FC; }
-.reservation-item:last-child { border-bottom: none; }
+
+.reservation-item:hover {
+  background: #F7F8FC;
+}
+
+.reservation-item:last-child {
+  border-bottom: none;
+}
+
 .res-left {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
+
 .res-badge {
   font-size: 10px;
   font-weight: 600;
@@ -548,24 +626,40 @@ function formatDate(dateStr) {
   white-space: nowrap;
   margin-top: 2px;
 }
-.res-badge--blue { background: #EEF0FD; color: #4973E5; }
-.res-badge--orange { background: #FFF4E5; color: #F59E0B; }
-.res-badge--gray { background: #F3F4F6; color: #9CA3AF; }
+
+.res-badge--blue {
+  background: #EEF0FD;
+  color: #4973E5;
+}
+
+.res-badge--orange {
+  background: #FFF4E5;
+  color: #F59E0B;
+}
+
+.res-badge--gray {
+  background: #F3F4F6;
+  color: #9CA3AF;
+}
+
 .res-facility {
   font-size: 13px;
   font-weight: 600;
   color: #333333;
 }
+
 .res-date {
   font-size: 12px;
   color: #888;
   margin-top: 2px;
 }
+
 .res-desc {
   font-size: 11px;
   color: #bbb;
   margin-top: 2px;
 }
+
 .btn-cancel {
   padding: 5px 14px;
   border: 1px solid #E0E3EB;
@@ -576,5 +670,10 @@ function formatDate(dateStr) {
   cursor: pointer;
   white-space: nowrap;
 }
-.btn-cancel:hover { background: #FFF0F0; color: #EF4444; border-color: #EF4444; }
+
+.btn-cancel:hover {
+  background: #FFF0F0;
+  color: #EF4444;
+  border-color: #EF4444;
+}
 </style>

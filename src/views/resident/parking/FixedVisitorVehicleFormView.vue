@@ -23,6 +23,14 @@ const error = reactive({
 // 오늘 날짜 (시작일 min)
 const today = new Date().toISOString().slice(0, 10)
 
+// 고정 방문차량 특성에 맞는 방문 목적 태그
+const purposeTags = ['정기 배송', '시설 관리', '청소 업체', '경비 업체', '친인척 방문', '기타']
+
+// 태그 클릭 시 폼에 반영 (이미 선택된 태그 클릭 시 해제)
+const selectPurposeTag = (tag) => {
+  form.purpose = form.purpose === tag ? '' : tag
+}
+
 // 유효성 검사
 const validate = () => {
   let isValid = true
@@ -110,16 +118,27 @@ const handleCancel = () => {
             <p v-if="error.visitorName" class="error-msg">{{ error.visitorName }}</p>
           </div>
 
-          <!-- 방문 목적 -->
+          <!-- 방문 목적 (태그 선택 or 직접 입력) -->
           <div class="form-group">
             <label class="form-label">방문 목적 <span class="required">*</span></label>
             <input
                 class="form-input"
                 :class="{ error: error.purpose }"
                 type="text"
-                placeholder="방문 목적을 입력하세요"
+                placeholder="방문 목적을 선택하거나 직접 입력하세요"
                 v-model="form.purpose"
             />
+            <!-- 빠른 선택 태그 -->
+            <div class="tag-list">
+              <button
+                  v-for="tag in purposeTags"
+                  :key="tag"
+                  :class="['tag-btn', form.purpose === tag ? 'tag-active' : '']"
+                  @click="selectPurposeTag(tag)"
+              >
+                {{ tag }}
+              </button>
+            </div>
             <p v-if="error.purpose" class="error-msg">{{ error.purpose }}</p>
           </div>
 
@@ -185,7 +204,6 @@ const handleCancel = () => {
   display: flex;
   gap: 24px;
   align-items: flex-start;
-
   color: #333;
 }
 
@@ -226,7 +244,7 @@ const handleCancel = () => {
 
 .form-label { font-size: 13px; font-weight: 600; color: #2D3748; }
 .required { color: #E53E3E; margin-left: 2px; }
-.optional { font-size: 11px; font-weight: 400; color: #A0AEC0; margin-left: 4px; }
+.optional { font-size: 11px; font-weight: 400; color: #687282; margin-left: 4px; }
 
 .form-input {
   border: 1px solid #E2E8F0;
@@ -235,7 +253,6 @@ const handleCancel = () => {
   font-size: 13px;
   color: #2D3748;
   outline: none;
-
   background: #fff;
   transition: border-color 0.15s;
 }
@@ -243,6 +260,38 @@ const handleCancel = () => {
 .form-input.error { border-color: #E53E3E; }
 
 .error-msg { font-size: 11px; color: #E53E3E; }
+
+/* ── 방문 목적 태그 ── */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tag-btn {
+  padding: 5px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  font-size: 12px;
+  background: #fff;
+  color: #687282;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.tag-btn:hover {
+  background: #EEF2FF;
+  border-color: #4973E5;
+  color: #4973E5;
+}
+
+.tag-active {
+  background: #EEF2FF;
+  border-color: #4973E5;
+  color: #4973E5;
+  font-weight: 600;
+}
 
 /* ── 버튼 ── */
 .form-actions {
@@ -252,7 +301,7 @@ const handleCancel = () => {
 }
 
 .btn-cancel {
-  background: #fff; color: #4A5568;
+  background: #fff; color: #687282;
   border: 1px solid #E2E8F0;
   border-radius: 8px; padding: 10px 20px;
   font-size: 13px; font-weight: 600;
@@ -300,7 +349,7 @@ const handleCancel = () => {
 
 .info-list li {
   font-size: 12px;
-  color: #718096;
+  color: #687282;
   line-height: 1.5;
   padding-left: 14px;
   position: relative;

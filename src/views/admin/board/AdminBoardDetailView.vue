@@ -298,7 +298,7 @@ function editComment({ commentId, content }) {
   font-size: 12px;
 }
 .info-row:last-child { border-bottom: none; }
-.info-label { color: #718096; }
+.info-label { color: #687282; }
 .info-value { color: #1A202C; font-weight: 500; text-align: right; }
 
 /* 상태 배지 */
@@ -338,6 +338,6 @@ function editComment({ commentId, content }) {
 }
 .btn-delete:hover { background: #FFF5F5; }
 
-.comment-empty { font-size: 13px; color: #A0AEC0; text-align: center; padding: 10px 0; }
+.comment-empty { font-size: 13px; color: #687282; text-align: center; padding: 10px 0; }
 .loading { text-align: center; padding: 60px; color: #999; }
 </style>

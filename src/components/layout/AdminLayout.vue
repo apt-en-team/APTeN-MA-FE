@@ -278,7 +278,7 @@ const handleActionClick = () => {
 .nav-group {
   font-size: 10px;
   font-weight: 600;
-  color: #4A5568;
+  color: #687282;
   letter-spacing: 0.08em;
   padding: 14px 10px 5px;
 }
@@ -417,7 +417,7 @@ const handleActionClick = () => {
 
 .topbar-sub {
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .topbar-right {

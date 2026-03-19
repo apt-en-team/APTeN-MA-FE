@@ -3,7 +3,9 @@ import {reactive, computed, onMounted} from 'vue'
 import axios from '@/api/axios.js'
 import VueApexCharts from 'vue3-apexcharts'
 import StatsCards from '@/components/admin/StatsCards.vue'
+import Modal from '@/components/Modal.vue'
 
+// 주차 현황 관련 상태 관리 (반응형 객체)
 const state = reactive({
   totalSpaces: 0,
   currentCount: 0,
@@ -12,17 +14,28 @@ const state = reactive({
   visitorCount: 0,
   unregisteredCount: 0,
   loading: true,
+
+  // 주차장 수정 모달 상태
+  showEditModal: false,
+  editForm: {
+    id: null,
+    name: '',
+    totalSpaces: '',
+    currentCount: '',
+    note: '',
+  },
+  submitting: false,
+  submitError: '',
 })
 
-
-// 통계 카드
-
+// 전체 주차면 대비 현재 사용 중인 면의 비율 계산 (0~100 정수)
 const usageRate = computed(() =>
     state.totalSpaces > 0
         ? Math.round((state.currentCount / state.totalSpaces) * 100)
         : 0
 )
 
+// StatsCards 컴포넌트에 전달할 통계 카드 데이터 배열
 const statsData = computed(() => [
   {
     label: '전체 주차면',
@@ -55,10 +68,9 @@ const statsData = computed(() => [
   },
 ])
 
-// ApexCharts 도넛 차트
-
+// 도넛 차트 기본/호버 색상
 const defaultColors = ['#4973E5', '#34D399', '#F59E0B']
-const hoverColors = ['#3560D4', '#20C080', '#E08A00']
+const hoverColors   = ['#3560D4', '#20C080', '#E08A00']
 
 const chartSeries = computed(() => [
   state.registeredCount,
@@ -69,7 +81,6 @@ const chartSeries = computed(() => [
 const chartOptions = computed(() => ({
   chart: {
     type: 'donut',
-    fontFamily: 'Noto Sans KR, sans-serif',
     events: {
       dataPointMouseEnter: (event, chartContext, config) => {
         const colors = [...defaultColors]
@@ -92,28 +103,25 @@ const chartOptions = computed(() => ({
     pie: {
       expandOnClick: true,
       donut: {
-        size: '72%',
+        size: '52%',
         labels: {
           show: true,
           total: {
             show: true,
             label: '사용률',
             fontSize: '13px',
-            fontFamily: 'Noto Sans KR, sans-serif',
-            color: '#718096',
+            color: '#687282',
             formatter: () => `${usageRate.value}%`,
           },
           value: {
             show: true,
             fontSize: '13px',
-            fontFamily: 'Noto Sans KR, sans-serif',
-            color: '#A0AEC0',
+            color: '#687282',
             formatter: () => `${state.currentCount} / ${state.totalSpaces}면`,
           },
           name: {
             fontSize: '13px',
-            fontFamily: 'Noto Sans KR, sans-serif',
-            color: '#718096',
+            color: '#687282',
             offsetY: -10,
           },
         },
@@ -124,46 +132,90 @@ const chartOptions = computed(() => ({
   stroke: {show: false},
   tooltip: {
     y: {formatter: (val) => `${val}대`},
-    custom: ({series, seriesIndex, dataPointIndex, w}) => {
+    custom: ({series, seriesIndex}) => {
       const colors = ['#4973E5', '#34D399', '#F59E0B']
       const labels = ['등록 차량', '방문 차량', '미등록']
-      const color = colors[seriesIndex]
-      const label = labels[seriesIndex]
-      const value = series[seriesIndex]
+      const color  = colors[seriesIndex]
+      const label  = labels[seriesIndex]
+      const value  = series[seriesIndex]
       return `<div style="
-        background: #fff;
-        border: 2px solid ${color};
-        border-radius: 8px;
-        padding: 8px 14px;
-        font-size: 13px;
-        font-family: Noto Sans KR, sans-serif;
-
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        background:#fff;
+        border:2px solid ${color};
+        border-radius:8px;
+        padding:8px 14px;
+        font-size:13px;
+        font-family:Noto Sans KR,sans-serif;
+        box-shadow:0 2px 8px rgba(0,0,0,0.08);
       ">
-        <span style="color: ${color}; font-weight: 700;">${label}</span>
-        <span style="margin-left: 8px; font-weight: 700;">${value}대</span>
+        <span style="color:${color};font-weight:700;">${label}</span>
+        <span style="margin-left:8px;font-weight:700;">${value}대</span>
       </div>`
     },
   },
 }))
 
-
-// 주차 현황 조회
-
+// API에서 주차 현황 데이터를 가져와 state에 저장
 const fetchStatus = async () => {
   try {
     const res = await axios.get('/parking/status')
     const data = res.data?.resultData ?? res.data
-    state.totalSpaces = data.totalSpaces ?? 0
-    state.currentCount = data.currentCount ?? 0
-    state.availableCount = data.availableCount ?? 0
-    state.registeredCount = data.registeredCount ?? 0
-    state.visitorCount = data.visitorCount ?? 0
+    state.totalSpaces      = data.totalSpaces      ?? 0
+    state.currentCount     = data.currentCount     ?? 0
+    state.availableCount   = data.availableCount   ?? 0
+    state.registeredCount  = data.registeredCount  ?? 0
+    state.visitorCount     = data.visitorCount     ?? 0
     state.unregisteredCount = data.unregisteredCount ?? 0
   } catch (e) {
     console.error('주차 현황 조회 실패', e)
   } finally {
     state.loading = false
+  }
+}
+
+// 주차장 수정 모달 열기 (현재 데이터로 폼 초기화)
+const openEditModal = () => {
+  state.editForm.name         = 'APTEN 아파트 통합 주차장' // 추후 API에서 받아오면 교체
+  state.editForm.totalSpaces  = state.totalSpaces
+  state.editForm.currentCount = state.currentCount
+  state.editForm.note         = ''
+  state.submitError           = ''
+  state.showEditModal         = true
+}
+
+// 주차장 수정 모달 닫기
+const closeEditModal = () => {
+  state.showEditModal = false
+  state.submitError   = ''
+}
+
+// 주차장 수정 제출 (PUT /api/admin/parking/lots/{id})
+const submitEdit = async () => {
+  if (!state.editForm.name.trim()) {
+    state.submitError = '주차장 이름을 입력해주세요.'
+    return
+  }
+  if (!state.editForm.totalSpaces) {
+    state.submitError = '전체 주차면 수를 입력해주세요.'
+    return
+  }
+
+  state.submitting  = true
+  state.submitError = ''
+
+  try {
+    await axios.put(`/admin/parking/lots/${state.editForm.id ?? 1}`, {
+      name:         state.editForm.name.trim(),
+      totalSpaces:  Number(state.editForm.totalSpaces),
+      currentCount: Number(state.editForm.currentCount),
+      note:         state.editForm.note.trim() || null,
+    })
+    await fetchStatus() // 수정 후 현황 새로고침
+    closeEditModal()
+  } catch (e) {
+    state.submitError = '수정에 실패했습니다.'
+    console.error(e)
+  } finally {
+    state.submitting = false
   }
 }
 
@@ -173,15 +225,19 @@ onMounted(fetchStatus)
 <template>
   <div class="parking-dashboard">
 
-    <!-- 통계 카드 4개 -->
+    <!-- 상단 통계 카드 4개 -->
     <StatsCards :stats="statsData"/>
 
-    <!-- 하단 2분할 -->
+    <!-- 하단 좌우 2분할 레이아웃 -->
     <div class="dashboard-grid">
 
       <!-- 왼쪽: 주차장 상세 -->
       <div class="card">
-        <div class="section-title">주차장 상세</div>
+        <div class="section-header">
+          <div class="section-title">주차장 상세</div>
+          <!-- 수정 버튼 클릭 시 모달 오픈 -->
+          <button class="btn-edit" @click="openEditModal">수정</button>
+        </div>
 
         <!-- 주차 사용률 프로그레스 바 -->
         <div class="usage-section">
@@ -252,7 +308,7 @@ onMounted(fetchStatus)
         </div>
       </div>
 
-      <!-- 오른쪽: 실시간 주차 현황 차트 -->
+      <!-- 오른쪽: 실시간 주차 현황 도넛 차트 -->
       <div class="card">
         <div class="section-title">실시간 주차 현황</div>
         <div class="section-sub">현재 기준</div>
@@ -269,7 +325,6 @@ onMounted(fetchStatus)
           <div v-else class="chart-empty">현재 주차 중인 차량이 없습니다</div>
         </div>
 
-        <!-- 범례 -->
         <div class="legend">
           <div class="legend-item">
             <span class="legend-dot dot-registered"/>
@@ -290,6 +345,78 @@ onMounted(fetchStatus)
       </div>
 
     </div>
+
+    <!-- 주차장 수정 모달 -->
+    <Modal
+        v-if="state.showEditModal"
+        title="주차장 수정"
+        subtitle="ID #1 · 지하 1층"
+        @close="closeEditModal"
+    >
+      <div class="modal-form">
+
+        <!-- 주차장 이름 -->
+        <div class="form-group">
+          <label class="form-label">주차장 이름<span class="required">*</span></label>
+          <input
+              class="form-input"
+              type="text"
+              placeholder="예: 지하 1층"
+              v-model="state.editForm.name"
+          />
+        </div>
+
+        <!-- 전체 주차면 / 현재 사용 중 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">전체 주차면<span class="required">*</span></label>
+            <input
+                class="form-input"
+                type="number"
+                min="0"
+                placeholder="예: 120"
+                v-model="state.editForm.totalSpaces"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">현재 사용 중 (수동 입력)</label>
+            <input
+                class="form-input"
+                type="number"
+                min="0"
+                placeholder="예: 45"
+                v-model="state.editForm.currentCount"
+            />
+          </div>
+        </div>
+
+        <!-- 비고 -->
+        <div class="form-group">
+          <label class="form-label">비고 (선택)</label>
+          <textarea
+              class="form-textarea"
+              placeholder="관리자 메모 입력 (선택사항)"
+              v-model="state.editForm.note"
+              rows="3"
+          />
+        </div>
+
+        <p v-if="state.submitError" class="error-msg">{{ state.submitError }}</p>
+        <p class="form-note">* 표시는 필수 입력 항목입니다.</p>
+      </div>
+
+      <template #footer>
+        <button class="btn-cancel" @click="closeEditModal">취소</button>
+        <button
+            class="btn-primary"
+            @click="submitEdit"
+            :disabled="state.submitting"
+        >
+          {{ state.submitting ? '수정 중...' : '수정 완료' }}
+        </button>
+      </template>
+    </Modal>
+
   </div>
 </template>
 
@@ -318,23 +445,43 @@ onMounted(fetchStatus)
   padding: 24px;
 }
 
+/* 섹션 헤더 (제목 + 수정 버튼) */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
 .section-title {
   font-size: 16px;
   font-weight: 700;
-
-  margin-bottom: 10px;
 }
 
 .section-sub {
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
   margin-bottom: 24px;
 }
 
-/* 사용률 */
-.usage-section {
-  margin-bottom: 28px;
+/* 수정 버튼 */
+.btn-edit {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #687282;
+  background: #F5F6F8;
+  border: 1px solid #E2E8F0;
+  border-radius: 7px;
+  cursor: pointer;
 }
+
+.btn-edit:hover {
+  background: #EDF2F7;
+}
+
+/* 사용률 */
+.usage-section { margin-bottom: 28px; }
 
 .usage-header {
   display: flex;
@@ -343,17 +490,8 @@ onMounted(fetchStatus)
   margin-bottom: 10px;
 }
 
-.usage-label {
-  font-size: 13px;
-  color: #4A5568;
-  font-weight: 500;
-}
-
-.usage-rate {
-  font-size: 13px;
-  font-weight: 700;
-
-}
+.usage-label { font-size: 13px; color: #687282; font-weight: 500; }
+.usage-rate  { font-size: 13px; font-weight: 700; }
 
 .usage-bar {
   width: 100%;
@@ -370,30 +508,22 @@ onMounted(fetchStatus)
   transition: width 0.6s ease;
 }
 
-.fill-safe {
-  background: #4973E5;
-}
-
-.fill-warning {
-  background: #F59E0B;
-}
-
-.fill-danger {
-  background: #E53E3E;
-}
+.fill-safe    { background: #4973E5; }
+.fill-warning { background: #F59E0B; }
+.fill-danger  { background: #E53E3E; }
 
 .usage-footer {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 /* 차량 유형 */
 .type-title {
   font-size: 13px;
   font-weight: 600;
-  color: #4A5568;
+  color: #687282;
   margin-bottom: 12px;
 }
 
@@ -412,17 +542,9 @@ onMounted(fetchStatus)
   min-height: 80px;
 }
 
-.type-registered {
-  background: #F0F4FF;
-}
-
-.type-visitor {
-  background: #F0FFF4;
-}
-
-.type-unregistered {
-  background: #FFF7ED;
-}
+.type-registered  { background: #F0F4FF; }
+.type-visitor     { background: #F0FFF4; }
+.type-unregistered { background: #FFF7ED; }
 
 .type-icon {
   width: 36px;
@@ -437,17 +559,9 @@ onMounted(fetchStatus)
   flex-shrink: 0;
 }
 
-.icon-registered {
-  background: #4973E5;
-}
-
-.icon-visitor {
-  background: #34D399;
-}
-
-.icon-unregistered {
-  background: #F59E0B;
-}
+.icon-registered   { background: #4973E5; }
+.icon-visitor      { background: #34D399; }
+.icon-unregistered { background: #F59E0B; }
 
 .type-info {
   display: flex;
@@ -455,11 +569,7 @@ onMounted(fetchStatus)
   gap: 2px;
 }
 
-.type-name {
-  font-size: 12px;
-  color: #718096;
-}
-
+.type-name  { font-size: 12px; color: #687282; }
 .type-count {
   font-size: 16px;
   font-weight: 700;
@@ -473,13 +583,9 @@ onMounted(fetchStatus)
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 300px;
 }
 
-.chart-empty {
-  font-size: 13px;
-  color: #A0AEC0;
-}
+.chart-empty { font-size: 13px; color: #687282; }
 
 /* 범례 */
 .legend {
@@ -505,19 +611,10 @@ onMounted(fetchStatus)
   flex-shrink: 0;
 }
 
-.dot-registered {
-  background: #4973E5;
-}
+.dot-registered   { background: #4973E5; }
+.dot-visitor      { background: #34D399; }
+.dot-unregistered { background: #F59E0B; }
 
-.dot-visitor {
-  background: #34D399;
-}
-
-.dot-unregistered {
-  background: #F59E0B;
-}
-
-/* 차트 도넛 조각 hover 시 튀어나오는 효과 */
 :deep(.apexcharts-pie-series path) {
   transition: transform 0.2s ease;
   transform-origin: center;
@@ -528,4 +625,93 @@ onMounted(fetchStatus)
   transform: scale(1.02);
   cursor: pointer;
 }
+
+/* 모달 폼 */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  color: #687282;
+}
+
+.required { color: #E53E3E; }
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  color: #2D3748;
+}
+
+.form-input:focus { border-color: #2B3A55; }
+.form-input::placeholder { color: #CBD5E0; }
+
+.form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  color: #2D3748;
+}
+
+.form-textarea:focus { border-color: #2B3A55; }
+.form-textarea::placeholder { color: #CBD5E0; }
+
+.form-note {
+  font-size: 11px;
+  color: #687282;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: #E53E3E;
+}
+
+.btn-primary {
+  padding: 9px 18px;
+  background: #2B3A55;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover    { background: #1E2A3E; }
+.btn-primary:disabled { background: #687282; cursor: default; }
+
+.btn-cancel {
+  padding: 9px 18px;
+  background: #fff;
+  color: #687282;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover { background: #F5F6F8; }
 </style>

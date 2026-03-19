@@ -37,10 +37,10 @@ const emit = defineEmits(['row-click'])
 
 <style scoped>
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table th { padding: 11px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #718096; background: #F5F6F8; border-bottom: 1px solid #E2E8F0; text-align: center; }
+.data-table th { padding: 11px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #687282; background: #F5F6F8; border-bottom: 1px solid #E2E8F0; text-align: center; }
 .data-table td { padding: 13px 16px; font-size: 13px; color: #333; border-bottom: 1px solid #E2E8F0; text-align: center; }
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tbody tr:hover td { background: #F5F6F8; }
 .data-table tbody tr { cursor: pointer; }
-.empty-row { text-align: center; color: #A0AEC0; font-size: 13px; padding: 48px 0; }
+.empty-row { text-align: center; color: #687282; font-size: 13px; padding: 48px 0; }
 </style>

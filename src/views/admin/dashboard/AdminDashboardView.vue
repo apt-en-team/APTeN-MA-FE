@@ -814,7 +814,7 @@ onMounted(() => {
 
 .tag-free {
   background: #EDF2F7;
-  color: #4A5568;
+  color: #687282;
 }
 
 .board-content {

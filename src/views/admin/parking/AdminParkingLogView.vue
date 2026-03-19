@@ -9,19 +9,19 @@ import Pagination from '@/components/layout/Pagination.vue'
 import Model from '@/components/Modal.vue'
 
 
-// 상태
+// 페이지 전체 상태 관리
 const state = reactive({
-  list: [],
+  list: [], // 입출차 기록 목록
 
-  // 통계
+  // 상단 통계 카드 데이터
   stats: {
-    todayIn: 0,
-    todayOut: 0,
-    unregistered: 0,
-    monthTotal: 0,
+    todayIn: 0,      // 오늘 입차 건수
+    todayOut: 0,     // 오늘 출차 건수
+    unregistered: 0, // 미등록 차량 건수
+    monthTotal: 0,   // 이번 달 전체 건수
   },
 
-  // 필터
+  // 검색 필터
   licensePlate: '',
   entryType: '',
   vehicleType: '',
@@ -42,18 +42,21 @@ const state = reactive({
     loggedAt: '',
     note: '',
   },
-  result: null,
-  submitting: false,
-  submitError: '',
+  result: null,       // 등록 후 API 응답 결과
+  submitting: false,  // 등록 요청 중 여부
+  submitError: '',    // 등록 실패 에러 메시지
+
+  // 성공 모달
+  showSuccessModal: false,
+  successResult: null, // 등록 성공 결과 데이터
 
   // 상세 모달
   showDetailModal: false,
-  selectedRow: null,
+  selectedRow: null, // 클릭한 행 데이터
 })
 
 
-// 현재 시각 기본값 (YYYY-MM-DD HH:mm)
-
+// 등록 모달 기록 시각 기본값 (YYYY-MM-DD HH:mm)
 const getNow = () => {
   const d = new Date()
   const pad = n => String(n).padStart(2, '0')
@@ -61,8 +64,7 @@ const getNow = () => {
 }
 
 
-// 테이블 컬럼
-
+// AdminTable 컬럼 정의
 const columns = [
   {label: 'ID', key: 'logId'},
   {label: '차량번호', key: 'licensePlate'},
@@ -73,8 +75,7 @@ const columns = [
 ]
 
 
-// StatsCards
-
+// StatsCards에 넘길 통계 데이터 (미등록 차량 있으면 warning 표시)
 const statsData = computed(() => [
   {label: '오늘 입차', value: state.stats.todayIn, unit: '건', desc: '오늘 기준'},
   {label: '오늘 출차', value: state.stats.todayOut, unit: '건', desc: '오늘 기준'},
@@ -89,8 +90,7 @@ const statsData = computed(() => [
 ])
 
 
-// 통계 조회 (API-036) — 항상 오늘/이번달 고정
-
+// 입출차 통계 조회 (GET /parking/logs/stats)
 const fetchStats = async () => {
   try {
     const res = await axios.get('/parking/logs/stats')
@@ -105,8 +105,7 @@ const fetchStats = async () => {
 }
 
 
-// 목록 조회 (API-035)
-
+// 입출차 기록 목록 조회 (GET /parking/logs)
 const fetchList = async () => {
   try {
     const params = {page: state.currentPage, size: state.size}
@@ -128,14 +127,15 @@ const fetchList = async () => {
 
 
 // 필터 처리
-
 const filteredRows = computed(() => state.list)
 
+// 검색 버튼 클릭 또는 엔터 시 1페이지부터 재조회
 const doSearch = () => {
   state.currentPage = 1
   fetchList()
 }
 
+// 필터 초기화 후 재조회
 const resetFilters = () => {
   state.licensePlate = ''
   state.entryType = ''
@@ -145,22 +145,21 @@ const resetFilters = () => {
   doSearch()
 }
 
+// 페이지 변경 시 해당 페이지 조회
 const goToPage = (page) => {
   state.currentPage = page
   fetchList()
 }
 
 
-// 날짜 포맷
-
+// 날짜 포맷 (ISO → 'YYYY-MM-DD HH:mm')
 const formatDate = (val) => {
   if (!val) return '-'
   return val.replace('T', ' ').slice(0, 16)
 }
 
 
-// 등록 모달
-
+// 등록 모달 열기 (폼 초기화 후 오픈)
 const openRegisterModal = () => {
   state.form.licensePlate = ''
   state.form.entryType = 'IN'
@@ -171,10 +170,13 @@ const openRegisterModal = () => {
   state.showRegisterModal = true
 }
 
+// 등록 모달 닫기
 const closeRegisterModal = () => {
   state.showRegisterModal = false
 }
 
+// 입출차 기록 수동 등록 (POST /parking/logs)
+// 등록 성공 시 등록 모달 닫고 성공 모달 오픈
 const submitLog = async () => {
   if (!state.form.licensePlate.trim()) {
     state.submitError = '차량번호를 입력해주세요.'
@@ -192,6 +194,11 @@ const submitLog = async () => {
     state.result = res.data?.resultData ?? res.data
     fetchList()
     fetchStats()
+
+    // 등록 모달 닫고 성공 모달 열기
+    state.successResult = state.result
+    closeRegisterModal()
+    state.showSuccessModal = true
   } catch (e) {
     state.submitError = '기록 생성에 실패했습니다.'
     console.error(e)
@@ -201,34 +208,30 @@ const submitLog = async () => {
 }
 
 
-// 상세 모달
-
+// 상세 모달 열기 (행 클릭 시 호출)
 const openDetailModal = (row) => {
   state.selectedRow = row
   state.showDetailModal = true
 }
 
+// 상세 모달 닫기
 const closeDetailModal = () => {
   state.showDetailModal = false
   state.selectedRow = null
 }
 
 
-// 차량 유형별 뱃지 클래스
-
+// 차량 유형별 뱃지 CSS 클래스 반환
 const typeClass = (type) => {
   switch (type) {
-    case '등록차량':
-      return 'type-registered'
-    case '방문차량':
-      return 'type-visitor'
-    case '고정방문차량':
-      return 'type-fixed'
-    default:
-      return 'type-unknown'
+    case '등록차량':  return 'type-registered'
+    case '방문차량': return 'type-visitor'
+    case '고정방문차량': return 'type-fixed'
+    default: return 'type-unknown'
   }
 }
 
+// 상위 레이아웃에서 등록 모달 오픈 함수를 inject받아 등록 버튼과 연결
 const registerOpenModal = inject('registerOpenModal', null)
 
 onMounted(() => {
@@ -241,10 +244,10 @@ onMounted(() => {
 <template>
   <div class="parking-log-page">
 
-    <!-- 통계 카드 -->
+    <!-- 상단 통계 카드 4개 -->
     <StatsCards :stats="statsData"/>
 
-    <!-- 테이블 섹션 -->
+    <!-- 필터 + 테이블 + 페이지네이션 섹션 -->
     <div class="table-section">
       <FilterBar @reset="resetFilters">
         <div class="search-wrap">
@@ -256,24 +259,24 @@ onMounted(() => {
           <input class="search-input" type="text" placeholder="차량번호 검색"
                  v-model="state.licensePlate" @keyup.enter="doSearch"/>
         </div>
-        <select class="filter-select" v-model="state.entryType">
+        <select class="filter-select" v-model="state.entryType" @change="doSearch">
           <option value="">입/출차</option>
           <option value="IN">입차</option>
           <option value="OUT">출차</option>
         </select>
-        <select class="filter-select" v-model="state.vehicleType">
+        <select class="filter-select" v-model="state.vehicleType" @change="doSearch">
           <option value="">차량 유형</option>
           <option value="등록차량">등록차량</option>
           <option value="방문차량">방문차량</option>
           <option value="고정방문차량">고정방문차량</option>
           <option value="미등록차량">미등록차량</option>
         </select>
-        <input class="filter-date" type="date" v-model="state.startDate"/>
+        <input class="filter-date" type="date" v-model="state.startDate" @change="doSearch"/>
         <span class="date-sep">~</span>
-        <input class="filter-date" type="date" v-model="state.endDate"/>
-        <button class="btn-search" @click="doSearch">검색</button>
+        <input class="filter-date" type="date" v-model="state.endDate" @change="doSearch"/>
       </FilterBar>
 
+      <!-- 테이블 (행 클릭 시 상세 모달 오픈) -->
       <AdminTable :columns="columns" :rows="filteredRows" @row-click="openDetailModal">
         <template #cell-logId="{ row }">
           <span class="log-id">#{{ row.logId }}</span>
@@ -307,7 +310,7 @@ onMounted(() => {
       />
     </div>
 
-    <!--  등록 모달  -->
+    <!-- 등록 모달: 차량번호 입력 후 수동 입출차 기록 등록 -->
     <Model
         v-if="state.showRegisterModal"
         title="입출차 기록 등록"
@@ -323,7 +326,7 @@ onMounted(() => {
                  v-model="state.form.licensePlate" @keyup.enter="submitLog"/>
         </div>
 
-        <!-- 입/출차 + 등록 차량 여부 -->
+        <!-- 입/출차 선택 -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">입/출차 <span class="required">*</span></label>
@@ -334,15 +337,6 @@ onMounted(() => {
               <button :class="['type-btn type-out', state.form.entryType === 'OUT' ? 'active' : '']"
                       @click="state.form.entryType = 'OUT'">OUT
               </button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">등록 차량 여부</label>
-            <div class="result-preview">
-              <span v-if="state.result" :class="['badge-type', typeClass(state.result.vehicleType)]">
-                {{ state.result.vehicleType }}
-              </span>
-              <span v-else class="placeholder-text">등록 후 자동 판별</span>
             </div>
           </div>
         </div>
@@ -370,35 +364,58 @@ onMounted(() => {
         </div>
 
         <p v-if="state.submitError" class="error-msg">{{ state.submitError }}</p>
-
-        <!-- 등록 완료 결과 -->
-        <div v-if="state.result" class="result-box">
-          <div class="result-row">
-            <span class="result-label">차량 유형</span>
-            <span :class="['badge-type', typeClass(state.result.vehicleType)]">
-              {{ state.result.vehicleType }}
-            </span>
-          </div>
-          <div class="result-row" v-if="state.result.vehicleInfo">
-            <span class="result-label">차량 정보</span>
-            <span class="result-value">{{ state.result.vehicleInfo }}</span>
-          </div>
-          <p class="result-success">✓ 기록이 성공적으로 등록되었습니다.</p>
-        </div>
-
         <p class="form-note">* 표시는 필수 입력 정보입니다.</p>
       </div>
 
       <template #footer>
         <button class="btn-cancel" @click="closeRegisterModal">취소</button>
-        <button class="btn-primary" @click="submitLog"
-                :disabled="state.submitting || !!state.result">
+        <button class="btn-primary" @click="submitLog" :disabled="state.submitting">
           {{ state.submitting ? '등록 중...' : '등록하기' }}
         </button>
       </template>
     </Model>
 
-    <!--  상세 모달  -->
+    <!-- 성공 모달: 등록 완료 후 결과 표시 -->
+    <Model
+        v-if="state.showSuccessModal"
+        title="등록 완료"
+        subtitle="입출차 기록이 성공적으로 등록되었습니다"
+        @close="state.showSuccessModal = false"
+    >
+      <div class="success-body">
+        <!-- 성공 아이콘 -->
+        <div class="success-icon">✓</div>
+
+        <!-- 등록된 차량번호 -->
+        <div class="success-plate">{{ state.form.licensePlate }}</div>
+
+        <!-- 결과 정보 -->
+        <div class="success-grid">
+          <div class="success-cell">
+            <span class="success-label">입/출차</span>
+            <span :class="['badge-entry', state.form.entryType === 'IN' ? 'badge-in' : 'badge-out']">
+              {{ state.form.entryType }}
+            </span>
+          </div>
+          <div class="success-cell">
+            <span class="success-label">차량 유형</span>
+            <span :class="['badge-type', typeClass(state.successResult?.vehicleType)]">
+              {{ state.successResult?.vehicleType ?? '미등록차량' }}
+            </span>
+          </div>
+          <div class="success-cell" v-if="state.successResult?.vehicleInfo">
+            <span class="success-label">차량 정보</span>
+            <span class="success-value">{{ state.successResult.vehicleInfo }}</span>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <button class="btn-primary" @click="state.showSuccessModal = false">확인</button>
+      </template>
+    </Model>
+
+    <!-- 상세 모달: 선택한 입출차 기록 상세 정보 표시 -->
     <Model
         v-if="state.showDetailModal && state.selectedRow"
         title="입출차 기록 상세"
@@ -406,7 +423,6 @@ onMounted(() => {
         @close="closeDetailModal"
     >
       <div class="detail-body">
-        <!-- 헤더: 입출차 배지 + 차량번호 + 유형 -->
         <div class="detail-header">
           <span :class="['badge-entry', state.selectedRow.entryType === 'IN' ? 'badge-in' : 'badge-out']">
             {{ state.selectedRow.entryType }}
@@ -417,7 +433,6 @@ onMounted(() => {
 
         <div class="detail-divider"/>
 
-        <!-- 정보 그리드 -->
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">기록 ID</span>
@@ -442,8 +457,7 @@ onMounted(() => {
             <span :class="['badge-type', typeClass(state.selectedRow.vehicleType)]">
               {{ state.selectedRow.vehicleType ?? '미등록' }}
               <template v-if="state.selectedRow.vehicleId"> ({{ state.selectedRow.vehicleId }})</template>
-              <template
-                  v-else-if="!state.selectedRow.vehicleId && !state.selectedRow.visitorVehicleId && !state.selectedRow.fixedVisitorVehicleId"> (0)</template>
+              <template v-else-if="!state.selectedRow.vehicleId && !state.selectedRow.visitorVehicleId && !state.selectedRow.fixedVisitorVehicleId"> (0)</template>
             </span>
           </div>
           <div class="detail-item">
@@ -481,7 +495,6 @@ onMounted(() => {
   gap: 0;
 }
 
-/* 테이블 */
 .table-section {
   background: #fff;
   border-radius: 10px;
@@ -499,7 +512,6 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-
 }
 
 .btn-primary:hover {
@@ -507,19 +519,18 @@ onMounted(() => {
 }
 
 .btn-primary:disabled {
-  background: #A0AEC0;
+  background: #687282;
   cursor: default;
 }
 
 .btn-cancel {
   padding: 9px 18px;
   background: #fff;
-  color: #718096;
+  color: #687282;
   border: 1px solid #E2E8F0;
   border-radius: 8px;
   font-size: 13px;
   cursor: pointer;
-
 }
 
 .btn-cancel:hover {
@@ -538,7 +549,7 @@ onMounted(() => {
 }
 
 .search-icon {
-  color: #A0AEC0;
+  color: #687282;
   flex-shrink: 0;
 }
 
@@ -560,10 +571,9 @@ onMounted(() => {
   border-radius: 7px;
   background: #fff;
   font-size: 13px;
-  color: #4A5568;
+  color: #687282;
   outline: none;
   cursor: pointer;
-
 }
 
 .filter-date {
@@ -572,34 +582,18 @@ onMounted(() => {
   border-radius: 7px;
   background: #fff;
   font-size: 13px;
-  color: #4A5568;
+  color: #687282;
   outline: none;
-
 }
 
 .date-sep {
   font-size: 13px;
-  color: #A0AEC0;
-}
-
-.btn-search {
-  padding: 7px 14px;
-  background: #2B3A55;
-  color: #fff;
-  border: none;
-  border-radius: 7px;
-  font-size: 13px;
-  cursor: pointer;
-
-}
-
-.btn-search:hover {
-  background: #1E2A3E;
+  color: #687282;
 }
 
 /* 테이블 셀 */
 .log-id {
-  color: #A0AEC0;
+  color: #687282;
   font-size: 12px;
 }
 
@@ -610,7 +604,7 @@ onMounted(() => {
 }
 
 .vehicle-info {
-  color: #718096;
+  color: #687282;
   font-size: 12px;
 }
 
@@ -661,7 +655,7 @@ onMounted(() => {
   color: #687282;
 }
 
-/* ── 등록 모달 폼 ── */
+/* 등록 모달 폼 */
 .modal-form {
   display: flex;
   flex-direction: column;
@@ -683,7 +677,7 @@ onMounted(() => {
 .form-label {
   font-size: 13px;
   font-weight: 600;
-  color: #4A5568;
+  color: #687282;
 }
 
 .required {
@@ -697,7 +691,6 @@ onMounted(() => {
   border-radius: 8px;
   font-size: 13px;
   outline: none;
-
 }
 
 .form-input:focus {
@@ -717,7 +710,7 @@ onMounted(() => {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #A0AEC0;
+  color: #687282;
   pointer-events: none;
 }
 
@@ -729,8 +722,7 @@ onMounted(() => {
   font-size: 13px;
   outline: none;
   resize: none;
-
-  color: #4A5568;
+  color: #687282;
 }
 
 .form-textarea:focus {
@@ -757,7 +749,7 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   background: #F5F6F8;
-  color: #718096;
+  color: #687282;
   transition: all 0.15s;
 }
 
@@ -771,24 +763,9 @@ onMounted(() => {
   color: #fff;
 }
 
-.result-preview {
-  padding: 10px 14px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  background: #F5F6F8;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-}
-
-.placeholder-text {
-  font-size: 12px;
-  color: #CBD5E0;
-}
-
 .form-note {
   font-size: 11px;
-  color: #A0AEC0;
+  color: #687282;
   margin-top: 4px;
 }
 
@@ -797,42 +774,65 @@ onMounted(() => {
   color: #E53E3E;
 }
 
-.result-box {
-  background: #F5F6F8;
-  border-radius: 10px;
-  padding: 14px 16px;
+/* 성공 모달 */
+.success-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
 }
 
-.result-row {
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #C6F6D5;
+  color: #276749;
+  font-size: 24px;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
 }
 
-.result-label {
-  font-size: 12px;
-  color: #A0AEC0;
+.success-plate {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #1A202C;
+}
+
+.success-grid {
+  display: flex;
+  gap: 24px;
+  background: #F5F6F8;
+  border-radius: 10px;
+  padding: 14px 20px;
+  width: 100%;
+  justify-content: center;
+}
+
+.success-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.success-label {
+  font-size: 11px;
+  color: #687282;
   font-weight: 500;
-  width: 70px;
-  flex-shrink: 0;
 }
 
-.result-value {
+.success-value {
   font-size: 13px;
-  color: #333;
+  font-weight: 500;
+  color: #1A202C;
 }
 
-.result-success {
-  font-size: 12px;
-  color: #276749;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
-/* ── 상세 모달 ── */
+/* 상세 모달 */
 .detail-body {
   display: flex;
   flex-direction: column;
@@ -849,14 +849,13 @@ onMounted(() => {
 .detail-plate {
   font-size: 22px;
   font-weight: 800;
-
   letter-spacing: 1px;
   margin-top: 6px;
 }
 
 .detail-type {
   font-size: 13px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .detail-divider {
@@ -879,13 +878,12 @@ onMounted(() => {
 
 .detail-label {
   font-size: 11px;
-  color: #A0AEC0;
+  color: #687282;
   font-weight: 500;
 }
 
 .detail-value {
   font-size: 13px;
-
   font-weight: 500;
 }
 
