@@ -297,7 +297,7 @@ const formatDateTime = (dt) => dt ? dt.replace('T', ' ').substring(0, 16) : '-'
   font-size: 14px;
   color: #1A1A2E;
   box-sizing: border-box;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .field input:focus {
@@ -352,7 +352,7 @@ const formatDateTime = (dt) => dt ? dt.replace('T', ' ').substring(0, 16) : '-'
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-modal-confirm {
@@ -365,7 +365,7 @@ const formatDateTime = (dt) => dt ? dt.replace('T', ' ').substring(0, 16) : '-'
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-modal-confirm:disabled {
@@ -383,7 +383,7 @@ const formatDateTime = (dt) => dt ? dt.replace('T', ' ').substring(0, 16) : '-'
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-modal-warn {
@@ -396,7 +396,7 @@ const formatDateTime = (dt) => dt ? dt.replace('T', ' ').substring(0, 16) : '-'
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-modal-danger {
@@ -409,6 +409,6 @@ const formatDateTime = (dt) => dt ? dt.replace('T', ' ').substring(0, 16) : '-'
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 </style>

@@ -11,19 +11,19 @@ import Modal from '@/components/Modal.vue'
 const router = useRouter()
 const boardStore = useBoardStore()
 
-// ── 탭 ───────────────────────────────────────────────────────
+// ── 탭 ───
 const activeTab = ref('ALL') // 'ALL' | 'NOTICE' | 'FREE'
 
-// ── 필터 ─────────────────────────────────────────────────────
+// ── 필터 ─
 const searchKeyword = ref('')
 const filterCategory = ref('')
 const filterDeleted  = ref('')
 
-// ── 페이지 ───────────────────────────────────────────────────
+// ── 페이지 ────────────
 const currentPage = ref(1)
 const PAGE_SIZE   = 9
 
-// ── 데이터 불러오기 ───────────────────────────────────────────
+// ── 데이터 불러오기 ────
 const loading = ref(false)
 
 async function fetchData() {
@@ -38,7 +38,7 @@ async function fetchData() {
 
 onMounted(fetchData)
 
-// ── 탭 변경 ──────────────────────────────────────────────────
+// ── 탭 변경 ───────────
 function setTab(tab) {
   activeTab.value  = tab
   currentPage.value = 1
@@ -46,14 +46,14 @@ function setTab(tab) {
   fetchData()
 }
 
-// ── 필터 초기화 ───────────────────────────────────────────────
+// ── 필터 초기화 ────────
 function resetFilters() {
   searchKeyword.value  = ''
   filterCategory.value = ''
   filterDeleted.value  = ''
 }
 
-// ── 목록 (프론트 필터링) ──────────────────────────────────────
+// ── 목록 (프론트 필터링) ────────────
 const posts = computed(() => boardStore.adminPosts ?? [])
 
 const filteredPosts = computed(() => {
@@ -66,7 +66,7 @@ const filteredPosts = computed(() => {
   })
 })
 
-// ── 통계 카드 (API 없으므로 totalCount 활용) ──────────────────
+// ── 통계 카드 (API 없으므로 totalCount 활용) ─────
 const stats = computed(() => [
   {
     label: '전체 게시글',
@@ -94,7 +94,7 @@ const stats = computed(() => [
   },
 ])
 
-// ── 테이블 컬럼 ───────────────────────────────────────────────
+// ── 테이블 컬럼 ────────
 const columns = [
   { label: 'ID',     key: 'boardId' },
   { label: '카테고리', key: 'category' },
@@ -106,19 +106,19 @@ const columns = [
   { label: '삭제여부', key: 'isDeleted' },
 ]
 
-// ── 날짜 포맷 ─────────────────────────────────────────────────
+// ── 날짜 포맷 ──────────
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   return dateStr.replace('T', ' ').slice(0, 10)
 }
 
-// ── 페이지 변경 ───────────────────────────────────────────────
+// ── 페이지 변경 ────────
 function onPageChange(page) {
   currentPage.value = page
   fetchData()
 }
 
-// ── 탭별 카운트 ───────────────────────────────────────────────
+// ── 탭별 카운트 ────────
 const tabCounts = computed(() => ({
   ALL:    boardStore.adminTotalCount ?? 0,
   NOTICE: boardStore.adminNoticeTotalCount ?? 0,
@@ -249,17 +249,17 @@ const tabCounts = computed(() => ({
 .tab-btn {
   padding: 14px 16px;
   border: none; background: transparent;
-  font-size: 13px; font-weight: 500; color: #718096;
+  font-size: 13px; font-weight: 500; color: #687282;
   cursor: pointer; border-bottom: 2px solid transparent;
   margin-bottom: -1px; transition: all 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
   display: flex; align-items: center; gap: 6px;
 }
 .tab-btn:hover { color: #2B3A55; }
 .tab-btn.active { color: #2B3A55; font-weight: 700; border-bottom-color: #2B3A55; }
 .tab-count {
   font-size: 11px; font-weight: 600;
-  background: #F5F6F8; color: #718096;
+  background: #F5F6F8; color: #687282;
   padding: 1px 7px; border-radius: 99px;
 }
 .tab-btn.active .tab-count { background: #2B3A55; color: #fff; }
@@ -268,13 +268,13 @@ const tabCounts = computed(() => ({
 .search-wrap { position: relative; }
 .search-icon {
   position: absolute; left: 9px; top: 50%;
-  transform: translateY(-50%); stroke: #A0AEC0;
+  transform: translateY(-50%); stroke: #687282;
 }
 .search-input {
   padding: 7px 12px 7px 28px;
   border: 1px solid #E2E8F0; border-radius: 7px;
   font-size: 13px; outline: none; width: 200px;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .search-input:focus { border-color: #2B3A55; }
 
@@ -284,7 +284,7 @@ const tabCounts = computed(() => ({
   border: 1px solid #E2E8F0; border-radius: 7px;
   font-size: 13px; color: #374151; outline: none;
   background: #fff; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A0AEC0'/%3E%3C/svg%3E");
   background-repeat: no-repeat;

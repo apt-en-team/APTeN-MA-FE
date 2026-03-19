@@ -146,7 +146,7 @@ function handleCancel() {
 </template>
 
 <style scoped>
-.admin-board-modify { width: 100%; font-family: 'Noto Sans KR', sans-serif; }
+.admin-board-modify { width: 100%;  }
 
 .write-layout {
   display: grid;
@@ -183,19 +183,19 @@ function handleCancel() {
   border: 1px solid #E2E8F0; border-radius: 8px;
   font-size: 14px; color: #1A202C; outline: none;
   transition: border-color 0.15s; box-sizing: border-box;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .form-input:focus { border-color: #2B3A55; }
 
-.char-count { text-align: right; font-size: 11px; color: #A0AEC0; margin-top: 4px; }
+.char-count { text-align: right; font-size: 11px; color: #687282; margin-top: 4px; }
 
 /* 수정 이력 */
 .edit-history { padding-top: 8px; border-top: 1px solid #F0F2F6; }
-.edit-history-title { font-size: 12px; font-weight: 600; color: #A0AEC0; margin-bottom: 8px; }
+.edit-history-title { font-size: 12px; font-weight: 600; color: #687282; margin-bottom: 8px; }
 .edit-history-item { display: flex; align-items: center; gap: 8px; }
 .edit-dot { width: 6px; height: 6px; border-radius: 50%; background: #2B3A55; flex-shrink: 0; }
 .edit-date { font-size: 12px; color: #6b7280; }
-.edit-label { font-size: 12px; color: #A0AEC0; }
+.edit-label { font-size: 12px; color: #687282; }
 
 .form-actions {
   display: flex; justify-content: flex-end;
@@ -207,7 +207,7 @@ function handleCancel() {
   border: 1px solid #E2E8F0; background: #fff;
   font-size: 13px; color: #555;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-cancel:hover { background: #F5F6F8; }
 .btn-submit {
@@ -215,7 +215,7 @@ function handleCancel() {
   border: none; background: #2B3A55;
   color: #fff; font-size: 13px; font-weight: 700;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-submit:hover { background: #1E2A3E; }
 
@@ -225,9 +225,9 @@ function handleCancel() {
   margin-bottom: 16px;
 }
 .sidebar-title { font-size: 13px; font-weight: 700; color: #1A202C; margin-bottom: 14px; }
-.sidebar-label { font-size: 11px; font-weight: 600; color: #A0AEC0; margin-bottom: 6px; }
+.sidebar-label { font-size: 11px; font-weight: 600; color: #687282; margin-bottom: 6px; }
 .sidebar-value { font-size: 13px; color: #374151; }
-.sidebar-value.muted { color: #A0AEC0; }
+.sidebar-value.muted { color: #687282; }
 
 .author-box {
   display: flex; align-items: center; gap: 10px;
@@ -240,7 +240,7 @@ function handleCancel() {
   font-size: 12px; font-weight: 700; flex-shrink: 0;
 }
 .author-name { font-size: 13px; font-weight: 600; color: #1A202C; }
-.author-role { font-size: 11px; color: #A0AEC0; margin-top: 2px; }
+.author-role { font-size: 11px; color: #687282; margin-top: 2px; }
 
 .notice-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .notice-list li {

@@ -40,9 +40,9 @@ const emit = defineEmits(['search', 'reset'])
   border-radius: 7px;
   background: #fff;
   font-size: 12px;
-  color: #718096;
+  color: #687282;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-reset:hover {

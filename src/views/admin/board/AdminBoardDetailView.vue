@@ -267,14 +267,14 @@ function editComment({ commentId, content }) {
   flex: 1; padding: 9px 12px;
   border: 1px solid #E2E8F0; border-radius: 8px;
   font-size: 13px; outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .comment-input:focus { border-color: #2B3A55; }
 .comment-submit {
   padding: 9px 18px; background: #2B3A55;
   color: #fff; border: none; border-radius: 8px;
   font-size: 13px; font-weight: 600; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .comment-submit:hover { background: #1E2A3E; }
 
@@ -298,7 +298,7 @@ function editComment({ commentId, content }) {
   font-size: 12px;
 }
 .info-row:last-child { border-bottom: none; }
-.info-label { color: #718096; }
+.info-label { color: #687282; }
 .info-value { color: #1A202C; font-weight: 500; text-align: right; }
 
 /* 상태 배지 */
@@ -316,7 +316,7 @@ function editComment({ commentId, content }) {
   border: 1px solid #E2E8F0; border-radius: 8px;
   background: #fff; font-size: 13px; color: #555;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-back:hover { background: #F5F6F8; }
 .btn-edit {
@@ -325,7 +325,7 @@ function editComment({ commentId, content }) {
   background: #2B3A55; color: #fff;
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-edit:hover { background: #1E2A3E; }
 .btn-delete {
@@ -334,10 +334,10 @@ function editComment({ commentId, content }) {
   background: #fff; color: #E53E3E;
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-delete:hover { background: #FFF5F5; }
 
-.comment-empty { font-size: 13px; color: #A0AEC0; text-align: center; padding: 10px 0; }
+.comment-empty { font-size: 13px; color: #687282; text-align: center; padding: 10px 0; }
 .loading { text-align: center; padding: 60px; color: #999; }
 </style>

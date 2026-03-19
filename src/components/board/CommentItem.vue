@@ -115,7 +115,7 @@ function saveEdit() {
 .btn-edit-comment {
   font-size: 11px; padding: 2px 8px;
   border: 1px solid #E2E8F0; border-radius: 4px;
-  background: #fff; color: #718096;
+  background: #fff; color: #687282;
   cursor: pointer; transition: background 0.12s;
 }
 .btn-edit-comment:hover { background: #F5F6F8; }
@@ -134,20 +134,20 @@ function saveEdit() {
   width: 100%; padding: 7px 10px;
   border: 1px solid #4973E5; border-radius: 6px;
   font-size: 13px; outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
   box-sizing: border-box;
 }
 .comment-edit-btns { display: flex; gap: 6px; justify-content: flex-end; }
 .btn-edit-save {
   padding: 5px 12px; background: #4973E5; color: #fff;
   border: none; border-radius: 6px; font-size: 12px;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
 }
 .btn-edit-save:hover { background: #3860CC; }
 .btn-edit-cancel {
-  padding: 5px 12px; background: #fff; color: #718096;
+  padding: 5px 12px; background: #fff; color: #687282;
   border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12px;
-  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
 }
 .btn-edit-cancel:hover { background: #F5F6F8; }
 </style>

@@ -26,7 +26,7 @@ export const useBoardStore = defineStore('boards', {
   }),
 
   actions: {
-    // ── 게시글 목록 ──────────────────────────────────────────
+    // ── 게시글 목록 ───
     async fetchPosts({ category = 'FREE', page = 1, size = 10 } = {}) {
       const res = await getPostList({ category, page, size })
       this.posts      = res.data.content
@@ -35,40 +35,40 @@ export const useBoardStore = defineStore('boards', {
       return res.data
     },
 
-    // ── 공지사항 ──────────────────────────────────────────
+    // ── 공지사항 ───
     async fetchNotices({ size = 100 } = {}) {
       const res = await getPostList({ category: 'NOTICE', page: 1, size })
       this.notices = res.data.content
       return res.data
     },
 
-    // ── 인기글 ───────────────────────────────────────────────
+    // ── 인기글 ────────
     async fetchPopularPosts() {
       const res = await getPopularPosts()
       this.popularPosts = res.data
       return res.data
     },
 
-    // ── 내가 쓴 글 ──────────────────────────────────────────
+    // ── 내가 쓴 글 ───
     async fetchMyPosts({ size = 3 } = {}) {
       const res = await getMyPosts({ size })
       this.myPosts = res.data.content
       return res.data
     },
 
-    // ── 게시글 등록 ──────────────────────────────────────────
+    // ── 게시글 등록 ───
     async createPost(payload) {
       const res = await createPost(payload)
       return res.data
     },
 
-    // ── 게시글 수정 ──────────────────────────────────────────
+    // ── 게시글 수정 ───
     async updatePost(id, payload) {
       const res = await updatePost(id, payload)
       return res.data
     },
 
-    // ── 게시글 삭제 ──────────────────────────────────────────
+    // ── 게시글 삭제 ───
     async deletePost(id) {
       await removePost(id)
       this.posts   = this.posts.filter((p) => p.boardId !== id)
@@ -76,7 +76,7 @@ export const useBoardStore = defineStore('boards', {
       this.totalCount = Math.max(0, this.totalCount - 1)
     },
 
-    // ── 관리자 게시글 목록 ──────────────────────────────────────────
+    // ── 관리자 게시글 목록 ───
     async fetchAdminPosts({ category = '', page = 1, size = 9 } = {}) {
       const params = { page, size }
       if (category) params.category = category

@@ -10,14 +10,14 @@ const router = useRouter()
 const boardStore = useBoardStore()
 const loading = ref(false)
 
-// ── 상태 ──────────────────────────────────────────────────────
+// ── 상태 ──
 const searchKeyword  = ref('')
 const selectedAuthor = ref('')
 const currentPage    = ref(1)
 const perPage        = 9
 const hoveredId      = ref(-1)
 
-// ── 테이블 컬럼 정의 ──────────────────────────────────────────
+// ── 테이블 컬럼 정의 ───
 const columns = [
   { label: 'ID',    key: 'boardId' },
   { label: '제목',  key: 'title' },
@@ -27,7 +27,7 @@ const columns = [
   { label: '작성일', key: 'createdAt' },
 ]
 
-// ── 데이터 불러오기 ──────────────────────────────────────────
+// ── 데이터 불러오기 ───
 onMounted(async () => {
   loading.value = true
   try {
@@ -38,13 +38,13 @@ onMounted(async () => {
   document.addEventListener('click', onOutsideClick)
 })
 
-// ── 날짜 포맷 ─────────────────────────────────────────────────
+// ── 날짜 포맷 ──────────
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return dateStr.replace('T', ' ').slice(0, 10)
 }
 
-// ── 필터링 & 페이징 ───────────────────────────────────────────
+// ── 필터링 & 페이징 ────
 const filtered = computed(() => {
   return (boardStore.notices || []).filter(n => {
     const kw = searchKeyword.value.trim().toLowerCase()
@@ -66,7 +66,7 @@ function goPage(p) {
   currentPage.value = p
 }
 
-// ── 드롭다운 ─────────────────────────────────────────────────
+// ── 드롭다운 ──────────
 const openDropdown = ref(null)
 
 function toggleDropdown(name) {
@@ -91,7 +91,7 @@ function resetFilters() {
 
 function onFilterChange() { currentPage.value = 1 }
 
-// ── 열람 처리 ─────────────────────────────────────────────────
+// ── 열람 처리 ──────────
 const readIds = ref(new Set(JSON.parse(localStorage.getItem('readNoticeIds') || '[]')))
 
 function openNotice(notice) {
@@ -192,7 +192,7 @@ function openNotice(notice) {
   width: 100%;
 }
 
-/* ── 검색 ───────────────────────────────────────────────────── */
+/* ── 검색 ─ */
 .search-wrap {
   position: relative;
   flex: 0 0 220px;
@@ -216,7 +216,7 @@ function openNotice(notice) {
 .search-input:focus { border-color: #4973E5; }
 .search-input::placeholder { color: #B0B5C3; }
 
-/* ── 커스텀 드롭다운 ─────────────────────────────────────────── */
+/* ── 커스텀 드롭다운 ──── */
 .custom-select { position: relative; }
 .cs-trigger {
   display: flex;
@@ -269,7 +269,7 @@ function openNotice(notice) {
 .cs-option:hover { background: #EEF3FB; color: #4973E5; }
 .cs-option.selected { color: #4973E5; font-weight: 600; background: #EEF3FB; }
 
-/* ── 제목 셀 ─────────────────────────────────────────────────── */
+/* ── 제목 셀 ──────────── */
 .badge-gong {
   display: inline-block;
   background: #4973E5;
@@ -293,7 +293,7 @@ function openNotice(notice) {
   vertical-align: middle;
 }
 
-/* ── 테이블 래퍼 border-radius ───────────────────────────────── */
+/* ── 테이블 래퍼 border-radius ─────── */
 :deep(.data-table) {
   background: #fff;
   border-radius: 12px;
@@ -316,7 +316,7 @@ function openNotice(notice) {
   border-color: #4973E5;
 }
 
-/* ── 열람 버튼 ───────────────────────────────────────────────── */
+/* ── 열람 버튼 ────────── */
 .btn-detail {
   padding: 5px 14px;
   border: 1px solid #D1D8F0;
