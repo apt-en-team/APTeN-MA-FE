@@ -237,8 +237,7 @@ const goToFacilityStatus = () => {
           <button v-if="route.name === 'AdminFixedVisitorVehicleList'" class="btn-action" @click="handleActionClick">+
             고정 방문차량 등록
           </button>
-          <button v-if="route.name === 'AdminFacilityManage'" class="btn-action" @click="handleActionClick">+ 시설 추가
-          </button>
+          <button v-if="route.name === 'AdminFacilityManage'" class="btn-action" @click="router.push({ name: 'AdminFacilityRegister' })">+ 시설 추가</button>        
           <button v-if="route.name === 'AdminBoardList'" class="btn-action" @click="handleActionClick">+ 공지 작성</button>
           <button v-if="route.name === 'AdminParkingLog'" class="btn-action" @click="handleActionClick">+ 기록 등록</button>
           <button v-if="route.name === 'AdminVehicleListView'" class="btn-action" @click="handleActionClick">+ 차량 등록
