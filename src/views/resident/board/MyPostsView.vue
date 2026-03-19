@@ -6,7 +6,7 @@ import { onMounted } from 'vue'
 
 const router = useRouter()
 
-// ─── 데이터 상태 ──────────────────────────────────────────────
+// ─── 데이터 상태 ───────
 const myPosts = ref([])
 const loading = ref(false)
 
@@ -24,7 +24,7 @@ async function fetchMyPosts() {
 }
 onMounted(fetchMyPosts)
 
-// ─── 탭 ───────────────────────────────────────────────────────
+// ─── 탭 ───
 const activeTab = ref('FREE') // 'FREE' | 'INQUIRY'
 
 const filteredPosts = computed(() =>
@@ -36,7 +36,7 @@ function setTab(tab) {
   currentPage.value = 1
 }
 
-// ─── 페이지네이션 ─────────────────────────────────────────────
+// ─── 페이지네이션 ──────
 const currentPage = ref(1)
 const PAGE_SIZE = 10
 
@@ -46,7 +46,7 @@ const currentPosts = computed(() => {
   return filteredPosts.value.slice(start, start + PAGE_SIZE)
 })
 
-// ─── 액션 ─────────────────────────────────────────────────────
+// ─── 액션 ─
 function editPost(id) {
   router.push(`/resident/board/form?id=${id}`)
 }
@@ -56,7 +56,7 @@ function deletePost(id) {
   myPosts.value = myPosts.value.filter(p => p.boardId !== id)
 }
 
-// ─── 인기글 (사이드바) ────────────────────────────────────────
+// ─── 인기글 (사이드바) ─
 const popularPosts = ref([])
 
 // TODO: Spring Boot API 연동 시 아래 주석 해제
@@ -66,7 +66,7 @@ async function fetchPopularPosts() {
 }
 onMounted(fetchPopularPosts)
 
-// ─── 아바타 색상 ──────────────────────────────────────────────
+// ─── 아바타 색상 ───────
 const avatarColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 function getAvatarStyle(name) {
   const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
@@ -255,7 +255,7 @@ function stripHtml(html) {
 <style scoped>
 .my-posts-view {
   max-width: 1200px;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 /* 2컬럼 레이아웃 */

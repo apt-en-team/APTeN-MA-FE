@@ -12,13 +12,22 @@ const successMsg = ref('')   // 성공 메시지 표시용
 // 오늘 날짜 (input date의 min 속성에 넣어서 과거 날짜 선택 차단)
 const today = new Date().toISOString().split('T')[0]
 
+// 방문 목적 빠른 선택 태그
+const purposeTags = ['택배 수령', '친척 방문', '지인 방문', '이사 도우미', '인테리어 공사', '기타']
+
 // 폼 데이터 (백엔드 VisitorVehicleReq와 동일한 구조)
 const form = ref({
   licensePlate: '', // 차량번호
-  visitorName: '', // 방문자 이름
+  visitorName: '',  // 방문자 이름
   visitPurpose: '', // 방문 목적
-  visitDate: ''// 방문 예정일a
+  visitDate: ''     // 방문 예정일
 })
+
+// 방문 목적 태그 클릭 시 폼에 반영
+// 이미 선택된 태그 클릭 시 해제
+const selectPurposeTag = (tag) => {
+  form.value.visitPurpose = form.value.visitPurpose === tag ? '' : tag
+}
 
 // 등록 버튼 클릭 시 실행
 const handleSubmit = async () => {
@@ -69,10 +78,21 @@ const handleSubmit = async () => {
           <input v-model="form.visitorName" type="text" placeholder="방문자 이름을 입력하세요"/>
         </div>
 
-        <!-- 방문 목적 (선택) -->
+        <!-- 방문 목적 (선택) — 태그 선택 or 직접 입력 -->
         <div class="field">
           <label>방문 목적</label>
-          <input v-model="form.visitPurpose" type="text" placeholder="방문 목적을 입력하세요"/>
+          <input v-model="form.visitPurpose" type="text" placeholder="방문 목적을 선택하거나 직접 입력하세요"/>
+          <!-- 빠른 선택 태그 -->
+          <div class="tag-list">
+            <button
+                v-for="tag in purposeTags"
+                :key="tag"
+                :class="['tag-btn', form.visitPurpose === tag ? 'tag-active' : '']"
+                @click="selectPurposeTag(tag)"
+            >
+              {{ tag }}
+            </button>
+          </div>
         </div>
 
         <!-- 방문 예정일 (필수, 오늘 이후만 선택 가능) -->
@@ -243,6 +263,38 @@ const handleSubmit = async () => {
 .btn-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 방문 목적 태그 */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tag-btn {
+  padding: 5px 14px;
+  border: 1px solid #E0E3EB;
+  border-radius: 20px;
+  font-size: 12px;
+  background: #fff;
+  color: #687282;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.tag-btn:hover {
+  background: #EEF2FF;
+  border-color: #4973E5;
+  color: #4973E5;
+}
+
+.tag-active {
+  background: #EEF2FF;
+  border-color: #4973E5;
+  color: #4973E5;
+  font-weight: 600;
 }
 
 /* 오른쪽 사이드 */

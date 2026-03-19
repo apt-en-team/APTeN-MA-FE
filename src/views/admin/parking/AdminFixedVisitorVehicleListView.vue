@@ -20,22 +20,22 @@ import Pagination from '@/components/layout/Pagination.vue'
 const registerOpenModal = inject('registerOpenModal')
 
 // ── 목록 데이터
-const list = ref([])           // API에서 받아온 원본 목록 데이터
-const currentPage = ref(1)     // 현재 페이지 번호 (1부터 시작)
-const totalPages = ref(0)      // 전체 페이지 수 (페이지네이션에 사용)
-const totalCount = ref(0)      // 전체 데이터 건수
-const size = ref(10)           // 한 페이지에 표시할 데이터 수
+const list = ref([])        // API에서 받아온 원본 목록 데이터
+const currentPage = ref(1)  // 현재 페이지 번호 (1부터 시작)
+const totalPages = ref(0)   // 전체 페이지 수 (페이지네이션에 사용)
+const totalCount = ref(0)   // 전체 데이터 건수
+const size = ref(10)        // 한 페이지에 표시할 데이터 수
 
 // ── 통계 카드 데이터
-const statTotal = ref(0)       // 전체 등록 건수
-const statUnlimited = ref(0)   // 무기한 차량 수 (endDate가 null인 것)
-const statMonth = ref(0)       // 이번 달 등록 건수
-const statActive = ref(0)      // 활성 차량 수 (오늘 기준 start~end 사이)
+const statTotal = ref(0)      // 전체 등록 건수
+const statUnlimited = ref(0)  // 무기한 차량 수 (endDate가 null인 것)
+const statMonth = ref(0)      // 이번 달 등록 건수
+const statActive = ref(0)     // 활성 차량 수 (오늘 기준 start~end 사이)
 
 // ── 필터
-const vehicleNumber = ref('')  // 차량번호 검색 필터
-const dong = ref('')           // 동 필터 (셀렉트박스)
-const dongOptions = ref([])    // 셀렉트박스 옵션 목록 (householdAPI.getDongs()로 채워짐)
+const vehicleNumber = ref('') // 차량번호 검색 필터
+const dong = ref('')          // 동 필터 (셀렉트박스)
+const dongOptions = ref([])   // 셀렉트박스 옵션 목록 (householdAPI.getDongs()로 채워짐)
 
 // ── 모달 상태
 // 등록 모달: show(표시여부), loading(등록 중 버튼 비활성화), error(에러 메시지)
@@ -51,7 +51,16 @@ const detailModal = ref({show: false, item: null, loading: false})
 const confirmModal = ref({show: false, loading: false})
 
 // 날짜 input의 min 속성에 사용 (오늘 이전 날짜 선택 불가)
-const today = new Date().toISOString().slice(0, 10)
+const now = new Date()
+const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0]
+
+// 고정 방문차량 특성에 맞는 방문 목적 빠른 선택 태그
+const purposeTags = ['정기 배송', '시설 관리', '청소 업체', '경비 업체', '친인척 방문', '기타']
+
+// 태그 클릭 시 폼에 반영 (이미 선택된 태그 클릭 시 해제)
+const selectPurposeTag = (tag) => {
+  form.value.purpose = form.value.purpose === tag ? '' : tag
+}
 
 // ── 테이블 컬럼 정의
 // key는 tableRows의 필드명과 일치해야 AdminTable이 올바르게 렌더링함
@@ -63,7 +72,7 @@ const columns = [
   {label: '종료일', key: 'endDate'},
   {label: '등록자', key: 'userName'},
   {label: '세대', key: 'unit'},
-  {label: '상태', key: 'status'},  // isDeleted 값을 배지로 표시
+  {label: '상태', key: 'status'},
 ]
 
 // ── 통계 카드 배열 (computed)
@@ -91,7 +100,7 @@ const tableRows = computed(() =>
     }))
 )
 
-// API 호출
+// ── API 호출
 
 // 통계 조회
 const fetchStats = async () => {
@@ -127,7 +136,6 @@ const fetchList = async () => {
 }
 
 // 동 목록 조회 — 셀렉트박스 옵션을 동적으로 채워줌
-// householdAPI를 공용으로 사용해서 코드 중복 없이 동 목록을 가져옴
 const fetchDongs = async () => {
   try {
     const res = await householdAPI.getDongs()
@@ -168,11 +176,12 @@ const openRegisterModal = () => {
   registerModal.value.show = true
 }
 
+// 모달 닫기
 const closeRegisterModal = () => {
   registerModal.value.show = false
 }
 
-// 등록 제출 (입주민/관리자 공용 API)
+// 등록 제출
 // endDate가 빈 문자열이면 null로 변환 → 백엔드에서 무기한으로 처리
 const submitRegister = async () => {
   if (!form.value.vehicleNumber || !form.value.startDate) {
@@ -216,15 +225,12 @@ const closeDetailModal = () => {
 
 // 삭제 확인 모달에서 '삭제' 버튼 클릭 시 실행
 // 소프트 삭제: DB에서 실제로 지우지 않고 is_deleted = 1 로 표시
-// 관리자 삭제는 소유권 체크 없음 (입주민 삭제는 userId 일치 여부 확인)
 const handleDelete = async () => {
-  console.log('삭제할 fixedId:', detailModal.value.item.fixedId)  // ← 추가
-  console.log('item 전체:', detailModal.value.item)
   confirmModal.value.loading = true
   try {
     await deleteAdminFixedVisitorVehicle(detailModal.value.item.fixedId)
     confirmModal.value.show = false
-    closeDetailModal()  // 삭제 후 상세 모달도 함께 닫기 (삭제된 데이터가 화면에 남지 않도록)
+    closeDetailModal()  // 삭제 후 상세 모달도 함께 닫기
     fetchList()         // 목록 갱신
     fetchStats()        // 통계 갱신
   } catch (e) {
@@ -235,7 +241,6 @@ const handleDelete = async () => {
 }
 
 // ── 초기화
-// onMounted: 컴포넌트가 DOM에 마운트된 후 실행
 onMounted(() => {
   // 탑바 버튼과 등록 모달 연결 (AdminLayout provide/inject 패턴)
   registerOpenModal(openRegisterModal)
@@ -289,40 +294,57 @@ onMounted(() => {
           unit="건"
           @change="goToPage"
       />
-
     </div>
 
     <!-- 등록 모달 -->
     <Modal v-if="registerModal.show" title="고정 방문차량 등록"
            subtitle="종료일 미입력 시 무기한으로 등록됩니다." @close="closeRegisterModal">
+
+      <!-- 차량번호 -->
       <div class="form-group">
         <label class="form-label">차량번호 <span class="required">*</span></label>
         <input class="form-input" v-model="form.vehicleNumber" type="text" placeholder="예: 12가3456"/>
       </div>
+
+      <!-- 방문자 이름 -->
       <div class="form-group">
         <label class="form-label">방문자 이름 <span class="required">*</span></label>
         <input class="form-input" v-model="form.visitorName" type="text" placeholder="홍길동"/>
       </div>
+
+      <!-- 방문 목적 (태그 선택 or 직접 입력) -->
       <div class="form-group">
         <label class="form-label">방문 목적</label>
-        <input class="form-input" v-model="form.purpose" type="text" placeholder="방문 목적"/>
+        <input class="form-input" v-model="form.purpose" type="text" placeholder="방문 목적 선택 또는 직접 입력"/>
+        <!-- 빠른 선택 태그 -->
+        <div class="tag-list">
+          <button
+              v-for="tag in purposeTags"
+              :key="tag"
+              :class="['tag-btn', form.purpose === tag ? 'tag-active' : '']"
+              @click="selectPurposeTag(tag)"
+          >
+            {{ tag }}
+          </button>
+        </div>
       </div>
+
+      <!-- 시작일 / 종료일 -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">시작일 <span class="required">*</span></label>
-          <!-- :min="today" — 오늘 이전 날짜 선택 불가 (프론트 1차 검증) -->
           <input class="form-input" v-model="form.startDate" type="date" :min="today"/>
         </div>
         <div class="form-group">
           <label class="form-label">종료일 <span class="optional">(미입력 시 무기한)</span></label>
-          <!-- :min="form.startDate" — 시작일 이전 날짜 선택 불가 -->
           <input class="form-input" v-model="form.endDate" type="date" :min="form.startDate || today"/>
         </div>
       </div>
+
       <p v-if="registerModal.error" class="form-error">{{ registerModal.error }}</p>
+
       <template #footer>
         <button class="btn-cancel" @click="closeRegisterModal">취소</button>
-        <!-- :disabled로 등록 중 중복 클릭 방지 -->
         <button class="btn-submit" @click="submitRegister" :disabled="registerModal.loading">
           {{ registerModal.loading ? '등록 중...' : '등록하기' }}
         </button>
@@ -355,7 +377,6 @@ onMounted(() => {
         </div>
         <div class="detail-cell">
           <span class="detail-cell-label">세대</span>
-          <!-- tableRows computed에서 dong+ho를 합쳐 unit으로 만들었음 -->
           <span class="detail-cell-value">{{ detailModal.item?.unit || '-' }}</span>
         </div>
         <div class="detail-cell">
@@ -364,7 +385,6 @@ onMounted(() => {
         </div>
         <div class="detail-cell">
           <span class="detail-cell-label">종료일</span>
-          <!-- tableRows computed에서 null → '무기한'으로 변환했음 -->
           <span class="detail-cell-value">{{ detailModal.item?.endDate || '무기한' }}</span>
         </div>
         <div class="detail-cell">
@@ -391,7 +411,7 @@ onMounted(() => {
     <Modal v-if="confirmModal.show" title="고정 방문차량 삭제"
            subtitle="삭제된 데이터는 복구할 수 없습니다." @close="confirmModal.show = false">
 
-      <!-- 삭제 대상 정보 카드: detailModal.item에서 데이터 참조 -->
+      <!-- 삭제 대상 정보 카드 -->
       <div class="confirm-target-card">
         <div class="confirm-target-info">
           <span class="confirm-target-name">{{ detailModal.item?.vehicleNumber }}</span>
@@ -408,7 +428,6 @@ onMounted(() => {
 
       <template #footer>
         <button class="btn-cancel" @click="confirmModal.show = false">취소</button>
-        <!-- :disabled로 삭제 중 중복 클릭 방지 -->
         <button class="btn-danger" @click="handleDelete" :disabled="confirmModal.loading">
           {{ confirmModal.loading ? '삭제 중...' : '삭제' }}
         </button>
@@ -449,7 +468,7 @@ onMounted(() => {
 }
 
 .search-icon {
-  color: #A0AEC0;
+  color: #687282;
   flex-shrink: 0;
 }
 
@@ -466,7 +485,6 @@ onMounted(() => {
   color: #CBD5E0;
 }
 
-/* appearance: none으로 기본 셀렉트 화살표 제거 후 SVG 화살표로 교체 */
 .filter-select {
   border: 1px solid #E2E8F0;
   border-radius: 7px;
@@ -479,7 +497,7 @@ onMounted(() => {
   outline: none;
 }
 
-/* 상태 배지 공통 스타일 */
+/* 상태 배지 */
 .status-badge {
   display: inline-block;
   padding: 3px 10px;
@@ -488,13 +506,11 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* 활성 상태 — 초록 */
 .status-active {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
-/* 삭제됨 상태 — 빨강 */
 .status-deleted {
   background: #FEE2E2;
   color: #E53E3E;
@@ -517,8 +533,7 @@ onMounted(() => {
 
 .form-label {
   font-size: 13px;
-  font-weight: 600;
-  color: #4A5568;
+  color: #687282;
 }
 
 .form-input {
@@ -542,7 +557,7 @@ onMounted(() => {
 .optional {
   font-size: 11px;
   font-weight: 400;
-  color: #A0AEC0;
+  color: #687282;
   margin-left: 4px;
 }
 
@@ -550,6 +565,38 @@ onMounted(() => {
   font-size: 12px;
   color: #E53E3E;
   margin-top: 6px;
+}
+
+/* 방문 목적 태그 */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tag-btn {
+  padding: 5px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  font-size: 12px;
+  background: #fff;
+  color: #687282;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.tag-btn:hover {
+  background: #EEF0FD;
+  border-color: #2B3A55;
+  color: #2B3A55;
+}
+
+.tag-active {
+  background: #EEF0FD;
+  border-color: #2B3A55;
+  color: #2B3A55;
+  font-weight: 600;
 }
 
 /* 상세 모달 */
@@ -566,7 +613,7 @@ onMounted(() => {
 
 .detail-sub {
   font-size: 13px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .detail-divider {
@@ -575,7 +622,6 @@ onMounted(() => {
   margin: 14px 0;
 }
 
-/* 2열 그리드로 상세 정보 표시 */
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -590,12 +636,12 @@ onMounted(() => {
 
 .detail-cell-label {
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .detail-cell-value {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: #1A202C;
 }
 
@@ -606,7 +652,7 @@ onMounted(() => {
   border-radius: 7px;
   background: #fff;
   font-size: 13px;
-  color: #718096;
+  color: #333;
   cursor: pointer;
 }
 
@@ -657,7 +703,7 @@ onMounted(() => {
 
 .confirm-target-sub {
   font-size: 12px;
-  color: #718096;
+  color: #687282;
 }
 
 .confirm-warn {

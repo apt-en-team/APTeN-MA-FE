@@ -71,6 +71,8 @@ import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVi
 import FacilityManageView from '@/views/admin/facility/FacilityManageView.vue'
 import AdminReservationListView from '@/views/admin/reservation/AdminReservationListView.vue'
 import AdminFacilityStatusView from '@/views/admin/reservation/AdminFacilityStatusView.vue'
+import FacilityFormView       from '@/views/admin/facility/FacilityFormView.vue'
+import FacilityTypeManageView from '@/views/admin/facility/FacilityTypeManageView.vue'
 
 
 const routes = [
@@ -94,12 +96,12 @@ const routes = [
             {path: 'dashboard', name: 'ResidentDashboard', component: ResidentDashboard, meta: {title: '대시보드'}},
 
             // 게시판
-            { path: 'board/notice', name: 'NoticeList',  component: NoticeListView,  meta: { title: '공지사항' } },
-            { path: 'board/notice/:id', name: 'NoticeDetail', component: NoticeDetailView, meta: { title: '공지사항 상세' } },
-            { path: 'board',        name: 'BoardList',   component: BoardListView,   meta: { title: '자유게시판' } },
-            { path: 'board/form',   name: 'BoardForm',   component: BoardFormView,   meta: { title: '게시글 작성' } },
-            { path: 'board/my-posts',     name: 'MyPosts',     component: MyPostsView,     meta: { title: '내가 쓴 글' } },
-            { path: 'board/:id',    name: 'BoardDetail', component: BoardDetailView, meta: { title: '게시글 상세보기' } },
+            {path: 'board/notice', name: 'NoticeList', component: NoticeListView, meta: {title: '공지사항'}},
+            {path: 'board/notice/:id', name: 'NoticeDetail', component: NoticeDetailView, meta: {title: '공지사항 상세'}},
+            {path: 'board', name: 'BoardList', component: BoardListView, meta: {title: '자유게시판'}},
+            {path: 'board/form', name: 'BoardForm', component: BoardFormView, meta: {title: '게시글 작성'}},
+            {path: 'board/my-posts', name: 'MyPosts', component: MyPostsView, meta: {title: '내가 쓴 글'}},
+            {path: 'board/:id', name: 'BoardDetail', component: BoardDetailView, meta: {title: '게시글 상세보기'}},
 
             // 시설/예약
             {path: 'facility', name: 'FacilityList', component: FacilityListView, meta: {title: '시설'}},
@@ -175,7 +177,6 @@ const routes = [
                 component: AdminVehicleListView,
                 meta: {title: '입주민 차량 목록'}
             },
-
             // 주차/방문차량
             {path: 'parking-logs', name: 'AdminParkingLog', component: AdminParkingLogView, meta: {title: '입출차 기록'}},
             {
@@ -199,9 +200,31 @@ const routes = [
             },
 
             // 시설/예약
-            { path: 'facility',                name: 'AdminFacilityManage',    component: FacilityManageView,         meta: { title: '시설 관리' } },
-            { path: 'reservations',            name: 'AdminReservationListView', component: AdminReservationListView,  meta: { title: '전체 예약 현황' } },
             { path: 'reservations/facility-status/:typeId?', name: 'AdminFacilityStatus', component: AdminFacilityStatusView, meta: { title: '시설별 예약 현황' } },
+            { 
+                path: 'facility',                
+                name: 'AdminFacilityManage',   
+                component: FacilityManageView,         
+                meta: { title: '시설 관리' } 
+            },
+            { 
+                path: 'facilities/register',      
+                name: 'AdminFacilityRegister', 
+                component: FacilityFormView,          
+                meta: { title: '시설 등록' } 
+            },
+            {
+                path: 'facilities/:id/edit',      
+                name: 'AdminFacilityEdit',     
+                component: FacilityFormView,          
+                meta: { title: '시설 수정' } 
+            },
+            {
+                path: 'reservations',
+                name: 'AdminReservationListView',
+                component: AdminReservationListView,
+                meta: {title: '전체 예약 현황'}
+            },
         ]
     }
 ]

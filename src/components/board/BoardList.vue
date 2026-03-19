@@ -97,7 +97,7 @@ const emit = defineEmits(['card-click'])
 <style scoped>
 .board-list { display: flex; flex-direction: column; gap: 10px; }
 
-/* ── 카드 ──────────────────────────────────────────────────── */
+/* ── 카드  */
 .board-card {
   display: flex;
   background: #fff;
@@ -113,7 +113,7 @@ const emit = defineEmits(['card-click'])
   transform: scale(1.005);
 }
 
-/* ── 썸네일 ────────────────────────────────────────────────── */
+/* ── 썸네일 ─────────── */
 .card-thumb {
   position: relative;
   flex-shrink: 0;
@@ -139,7 +139,7 @@ const emit = defineEmits(['card-click'])
   top: 10px; right: 10px;
 }
 
-/* ── 본문 ──────────────────────────────────────────────────── */
+/* ── 본문  */
 .card-body {
   flex: 1;
   min-width: 0;
@@ -162,7 +162,7 @@ const emit = defineEmits(['card-click'])
 
 .card-footer { margin-top: auto; }
 
-/* ── 빈 상태 ───────────────────────────────────────────────── */
+/* ── 빈 상태 ────────── */
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
   gap: 10px; padding: 64px 24px;

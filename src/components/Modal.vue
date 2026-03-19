@@ -73,7 +73,7 @@ const emit = defineEmits(['close'])
 .modal-title {
   font-size: 18px;
   font-weight: 700;
-  color: #1E2533;
+
   margin: 0 0 6px;
 }
 .modal-subtitle {

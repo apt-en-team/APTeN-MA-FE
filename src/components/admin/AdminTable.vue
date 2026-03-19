@@ -73,4 +73,4 @@ const emit = defineEmits(['row-click'])
 .badge-rejected  { background: #fce4ec; color: #c62828; }
 .badge-waiting   { background: #f3e5f5; color: #6a1b9a; }
 </style>
- 
+

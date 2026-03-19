@@ -1,34 +1,71 @@
 <script setup>
-import {reactive, computed, onMounted} from 'vue'
+import {reactive, computed, onMounted, inject} from 'vue'
 import {getAdminVisitorVehicles, getAdminVisitorVehicleStats} from '@/api/visitorVehicle.js'
+import axios from '@/api/axios.js'
 
 import StatsCards from '@/components/admin/StatsCards.vue'
 import FilterBar from '@/components/layout/FilterBar.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/layout/Pagination.vue'
+import Modal from '@/components/Modal.vue'
 
-// 전체 상태를 reactive 하나로 관리
-// ref를 여러 개 쓰는 대신 reactive로 묶어서 관련 상태를 한 곳에서 관리
+// ────────────────────────────────────────────
+// 헤더 탑바 버튼 연동
+// AdminLayout에서 provide('registerOpenModal')로 주입된 함수로
+// openRegisterModal을 등록 → 탑바 "+ 방문차량 등록" 버튼 클릭 시 모달 열림
+// ────────────────────────────────────────────
+const registerOpenModal = inject('registerOpenModal')
+
+// ────────────────────────────────────────────
+// 상태 관리
+// ────────────────────────────────────────────
 const state = reactive({
-  list: [],            // API에서 받아온 원본 목록 데이터
-  // 통계 카드 데이터 (API-070)
+  // 목록 및 통계
+  list: [],
   stats: {
-    todayCount: 0,     // 오늘 방문 예정 건수
-    tomorrowCount: 0,  // 내일 방문 예정 건수
-    totalCount: 0,     // 전체 등록 건수
-    monthCount: 0,     // 이번 달 방문 건수
+    todayCount: 0,
+    tomorrowCount: 0,
+    totalCount: 0,
+    monthCount: 0,
   },
-  activeTab: 'all',    // 활성 탭 상태 (all / today / tomorrow)
-  licensePlate: '',    // 차량번호 검색 필터
-  size: 10,            // 한 페이지에 표시할 데이터 수
-  currentPage: 1,      // 현재 페이지 번호
-  totalPages: 0,       // 전체 페이지 수 (페이지네이션에 사용)
-  totalCount: 0,       // 전체 데이터 건수
+
+  // 탭 / 필터
+  activeTab: 'all',
+  licensePlate: '',
+  size: 10,
+  currentPage: 1,
+  totalPages: 0,
+  totalCount: 0,
+
+  // 방문차량 등록 모달
+  showRegisterModal: false,
+  searchDong: '',      // 동 검색어 (예: 103동)
+  searchHo: '',        // 호수 검색어 (예: 101호)
+  searchKeyword: '',   // 선택된 입주민 표시용
+  searchResults: [],   // 입주민 검색 결과 리스트
+  selectedUser: null,  // 선택된 입주민
+  showDropdown: false, // 검색 결과 드롭다운 표시 여부
+  form: {
+    licensePlate: '',
+    visitorName: '',
+    visitPurpose: '',
+    visitDate: '',
+  },
+  submitting: false,
+  submitError: '',
 })
 
+// ────────────────────────────────────────────
+// 상수
+// ────────────────────────────────────────────
+
+// 방문 목적 빠른 선택 태그
+const purposeTags = ['택배 수령', '친척 방문', '지인 방문', '이사 도우미', '인테리어 공사', '기타']
+
+// 오늘 날짜 (과거 날짜 선택 방지용 min 값)
+const today = new Date().toISOString().split('T')[0]
+
 // 테이블 컬럼 정의
-// key는 tableRows의 필드명과 일치해야 AdminTable이 올바르게 렌더링함
-// TODO: parking_log 연동 후 { label: '입차 여부', key: 'isEntered' } 추가
 const columns = [
   {label: '차량번호', key: 'licensePlate'},
   {label: '방문자', key: 'visitorName'},
@@ -36,19 +73,22 @@ const columns = [
   {label: '방문일', key: 'visitDate'},
   {label: '등록자', key: 'userName'},
   {label: '세대', key: 'unit'},
-  {label: '상태', key: 'statusLabel'},  // isDeleted + status 조합으로 배지 표시
+  {label: '입차 여부', key: 'isEntered'},
+  {label: '상태', key: 'statusLabel'},
 ]
 
-// 탭 목록 정의
+// 탭 정의
 const tabs = [
   {key: 'all', label: '전체'},
   {key: 'today', label: '오늘 방문'},
   {key: 'tomorrow', label: '내일 방문'},
 ]
 
-// 날짜 문자열 반환 (YYYY-MM-DD, 로컬 시간 기준)
-// toISOString() 대신 직접 계산하는 이유:
-// toISOString()은 UTC 기준이라 KST와 최대 9시간 차이가 날 수 있음
+// ────────────────────────────────────────────
+// 유틸
+// ────────────────────────────────────────────
+
+// 오늘 기준 offset일 후 날짜 문자열 반환 (예: offset=1 → 내일)
 const getDateString = (offset = 0) => {
   const d = new Date()
   d.setDate(d.getDate() + offset)
@@ -58,8 +98,11 @@ const getDateString = (offset = 0) => {
   return `${year}-${month}-${day}`
 }
 
-// 통계 카드 배열
-// StatsCards 컴포넌트에 :stats로 전달, stats 값이 바뀌면 자동 재계산
+// ────────────────────────────────────────────
+// computed
+// ────────────────────────────────────────────
+
+// 통계 카드 데이터
 const statsData = computed(() => [
   {label: '오늘 방문 예정', value: state.stats.todayCount, unit: '대', desc: `${getDateString(0)} 기준`},
   {label: '내일 방문 예정', value: state.stats.tomorrowCount, unit: '대', desc: `${getDateString(1)} 기준`},
@@ -67,26 +110,25 @@ const statsData = computed(() => [
   {label: '전체 등록 건수', value: state.stats.totalCount, unit: '건', desc: '전체 누적'},
 ])
 
-// 테이블 표시용 데이터 가공
-// list(원본)를 직접 수정하지 않고 화면 표시용으로 따로 가공
-// list가 바뀌면 자동으로 재계산됨
+// 테이블 행 데이터 (세대 합치기 + 상태 라벨 가공)
 const tableRows = computed(() =>
     state.list.map(item => ({
       ...item,
-      // dong + ho를 합쳐서 세대 컬럼으로 표시 (백엔드는 각각 내려줌)
       unit: item.dong && item.ho ? `${item.dong} ${item.ho}` : '-',
-      // isDeleted=1이면 삭제됨, status=CANCELLED이면 취소됨, 나머지는 승인
       statusLabel: item.isDeleted === 1 ? '삭제됨'
           : item.status === 'CANCELLED' ? '취소됨'
               : '승인',
-      // 배지 CSS 클래스 결정용
       statusType: item.isDeleted === 1 ? 'deleted'
           : item.status === 'CANCELLED' ? 'cancelled'
               : 'approved',
     }))
 )
 
-// 통계 조회 (API-070)
+// ────────────────────────────────────────────
+// 목록 / 통계 조회
+// ────────────────────────────────────────────
+
+// 방문차량 통계 조회
 const fetchStats = async () => {
   try {
     const res = await getAdminVisitorVehicleStats()
@@ -100,15 +142,12 @@ const fetchStats = async () => {
   }
 }
 
-// 목록 조회 (API-069)
-// 탭 상태에 따라 visitDate 파라미터를 추가해서 오늘/내일 필터링
+// 방문차량 목록 조회 (탭/필터/페이지 반영)
 const fetchList = async () => {
   try {
     const params = {page: state.currentPage, size: state.size}
-    // 탭이 today/tomorrow면 해당 날짜를 파라미터로 전달
     if (state.activeTab === 'today') params.visitDate = getDateString(0)
     if (state.activeTab === 'tomorrow') params.visitDate = getDateString(1)
-    // 값이 있을 때만 파라미터에 추가 (빈 문자열은 전송 안 함)
     if (state.licensePlate) params.licensePlate = state.licensePlate
 
     const res = await getAdminVisitorVehicles(params)
@@ -121,7 +160,11 @@ const fetchList = async () => {
   }
 }
 
-// 탭 전환: 탭 변경 시 필터와 페이지를 초기화하고 목록 재조회
+// ────────────────────────────────────────────
+// 탭 / 필터 / 페이지
+// ────────────────────────────────────────────
+
+// 탭 전환 (필터 초기화 후 목록 재조회)
 const switchTab = (tabKey) => {
   state.activeTab = tabKey
   state.currentPage = 1
@@ -129,7 +172,7 @@ const switchTab = (tabKey) => {
   fetchList()
 }
 
-// 검색 실행: 페이지를 1로 초기화 후 목록 재조회
+// 차량번호 검색
 const doSearch = () => {
   state.currentPage = 1
   fetchList()
@@ -147,8 +190,124 @@ const goToPage = (page) => {
   fetchList()
 }
 
-// 컴포넌트가 DOM에 마운트된 후 통계와 목록을 최초 조회
+// ────────────────────────────────────────────
+// 방문차량 등록 모달
+// ────────────────────────────────────────────
+
+// 모달 열기 (폼 전체 초기화)
+// AdminLayout 탑바 "+ 방문차량 등록" 버튼에서 호출됨
+const openRegisterModal = () => {
+  state.searchDong = ''
+  state.searchHo = ''
+  state.searchKeyword = ''
+  state.searchResults = []
+  state.selectedUser = null
+  state.showDropdown = false
+  state.form.licensePlate = ''
+  state.form.visitorName = ''
+  state.form.visitPurpose = ''
+  state.form.visitDate = ''
+  state.submitError = ''
+  state.showRegisterModal = true
+}
+
+// 모달 닫기
+const closeRegisterModal = () => {
+  state.showRegisterModal = false
+  state.submitError = ''
+}
+
+// 입주민 검색 (GET /api/admin/users/search?dong=&ho=)
+// dong만 입력: 해당 동 전체 입주민 조회
+// ho만 입력: 전체 동에서 해당 호수 입주민 조회
+// dong + ho 입력: 해당 동/호수 입주민 조회
+// 둘 다 비어있으면 검색 안 함
+const searchUser = async () => {
+  if (!state.searchDong.trim() && !state.searchHo.trim()) return
+  try {
+    const res = await axios.get('/admin/users/search', {
+      params: {
+        dong: state.searchDong.trim() || undefined,
+        ho: state.searchHo.trim() || undefined,
+      }
+    })
+    state.searchResults = res.data?.resultData ?? res.data ?? []
+    state.showDropdown = true
+  } catch (e) {
+    console.error('입주민 검색 실패', e)
+    state.searchResults = []
+  }
+}
+
+// 검색 결과에서 입주민 선택
+const selectUser = (user) => {
+  state.selectedUser = user
+  state.showDropdown = false
+}
+
+// 선택된 입주민 초기화 (다시 검색)
+const clearSelectedUser = () => {
+  state.selectedUser = null
+  state.searchDong = ''
+  state.searchHo = ''
+  state.searchResults = []
+  state.showDropdown = false
+}
+
+// 방문 목적 태그 클릭 시 폼에 반영
+const selectPurposeTag = (tag) => {
+  state.form.visitPurpose = tag
+}
+
+// 방문차량 등록 제출 (POST /api/admin/visitor-vehicles)
+const submitRegister = async () => {
+  // 필수값 검증
+  if (!state.selectedUser) {
+    state.submitError = '등록 입주민을 선택해주세요.'
+    return
+  }
+  if (!state.form.licensePlate.trim()) {
+    state.submitError = '방문 차량번호를 입력해주세요.'
+    return
+  }
+  if (!state.form.visitPurpose.trim()) {
+    state.submitError = '방문 목적을 입력해주세요.'
+    return
+  }
+  if (!state.form.visitDate) {
+    state.submitError = '방문 예정일을 선택해주세요.'
+    return
+  }
+
+  state.submitting = true
+  state.submitError = ''
+
+  try {
+    await axios.post('/admin/visitor-vehicles', {
+      userId: state.selectedUser.userId,
+      licensePlate: state.form.licensePlate.trim(),
+      visitorName: state.form.visitorName.trim() || null,
+      visitPurpose: state.form.visitPurpose.trim(),
+      visitDate: state.form.visitDate,
+    })
+    // 등록 후 목록/통계 새로고침
+    await fetchList()
+    await fetchStats()
+    closeRegisterModal()
+  } catch (e) {
+    state.submitError = '등록에 실패했습니다.'
+    console.error(e)
+  } finally {
+    state.submitting = false
+  }
+}
+
+// ────────────────────────────────────────────
+// 초기화
+// ────────────────────────────────────────────
 onMounted(() => {
+  // 탑바 버튼과 openRegisterModal 연동
+  registerOpenModal(openRegisterModal)
   fetchStats()
   fetchList()
 })
@@ -157,13 +316,12 @@ onMounted(() => {
 <template>
   <div class="visitor-vehicle-page">
 
-    <!-- 통계 카드 4개: 오늘/내일/이번달/전체 -->
+    <!-- 통계 카드 -->
     <StatsCards :stats="statsData"/>
 
     <div class="table-section">
 
-      <!-- 탭: 전체 / 오늘 방문 / 내일 방문
-           탭 전환 시 visitDate 파라미터가 자동으로 변경되어 목록 재조회 -->
+      <!-- 탭 바 (등록 버튼 없음 → 탑바 버튼 사용) -->
       <div class="tab-bar">
         <button
             v-for="tab in tabs"
@@ -172,13 +330,12 @@ onMounted(() => {
             @click="switchTab(tab.key)"
         >
           {{ tab.label }}
-          <!-- 오늘/내일 탭에만 건수 배지 표시 -->
           <span v-if="tab.key === 'today'" class="tab-badge">{{ state.stats.todayCount }}</span>
           <span v-if="tab.key === 'tomorrow'" class="tab-badge">{{ state.stats.tomorrowCount }}</span>
         </button>
       </div>
 
-      <!-- 차량번호 검색 필터 -->
+      <!-- 차량번호 필터 -->
       <FilterBar @reset="resetFilters">
         <div class="search-wrap">
           <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -196,24 +353,21 @@ onMounted(() => {
         </div>
       </FilterBar>
 
-      <!-- 방문차량 목록 테이블
-           상태 배지 슬롯: statusType에 따라 승인/취소됨/삭제됨 배지 표시 -->
+      <!-- 방문차량 목록 테이블 -->
       <AdminTable :columns="columns" :rows="tableRows">
+        <template #cell-isEntered="{ row }">
+          <span :class="['status-badge', row.entered ? 'status-approved' : 'status-grey']">
+            {{ row.entered ? '입차완료' : '미입차' }}
+          </span>
+        </template>
         <template #cell-statusLabel="{ row }">
           <span :class="['status-badge', `status-${row.statusType}`]">
             {{ row.statusLabel }}
           </span>
         </template>
-        <!--
-          TODO: parking_log 연동 후 주석 해제
-          <template #cell-isEntered="{ row }">
-            <span :class="['status-badge', row.isEntered ? 'status-approved' : 'status-grey']">
-              {{ row.isEntered ? '입차완료' : '미입차' }}
-            </span>
-          </template>
-        -->
       </AdminTable>
 
+      <!-- 페이지네이션 -->
       <Pagination
           :currentPage="state.currentPage"
           :maxPage="state.totalPages"
@@ -222,8 +376,110 @@ onMounted(() => {
           unit="건"
           @change="goToPage"
       />
-
     </div>
+
+    <!-- 방문차량 등록 모달 -->
+    <Modal
+        v-if="state.showRegisterModal"
+        title="방문차량 등록"
+        subtitle="입주민이 방문차량을 사전 등록합니다"
+        @close="closeRegisterModal"
+    >
+      <div class="modal-form">
+
+        <!-- 등록 입주민 검색 (동/호수 분리 입력) -->
+        <div class="form-group">
+          <label class="form-label">등록 입주민 <span class="required">*</span></label>
+
+          <!-- 선택된 입주민 표시 (선택 후) -->
+          <div v-if="state.selectedUser" class="selected-user-badge">
+            ✓ {{ state.selectedUser.dong }} {{ state.selectedUser.ho }} · {{ state.selectedUser.name }}
+            <button class="clear-btn" @click="clearSelectedUser">✕</button>
+          </div>
+
+          <!-- 동/호수 분리 입력 + 검색 버튼 (선택 전) -->
+          <div v-else class="search-row">
+            <input
+                class="form-input"
+                type="text"
+                placeholder="동 (예: 103동)"
+                v-model="state.searchDong"
+                @keyup.enter="searchUser"
+            />
+            <input
+                class="form-input"
+                type="text"
+                placeholder="호수 (예: 101호)"
+                v-model="state.searchHo"
+                @keyup.enter="searchUser"
+            />
+            <button class="search-btn-inline" @click="searchUser">검색</button>
+          </div>
+
+          <!-- 검색 결과 드롭다운 -->
+          <div v-if="state.showDropdown && state.searchResults.length > 0" class="search-dropdown">
+            <div
+                v-for="user in state.searchResults"
+                :key="user.userId"
+                class="search-item"
+                @click="selectUser(user)"
+            >
+              <span class="search-item-name">{{ user.name }}</span>
+              <span class="search-item-unit">{{ user.dong }} {{ user.ho }}</span>
+            </div>
+          </div>
+          <div v-else-if="state.showDropdown && state.searchResults.length === 0" class="search-empty">
+            검색 결과가 없습니다.
+          </div>
+        </div>
+
+        <!-- 방문 차량번호 + 방문자 이름 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">방문 차량번호 <span class="required">*</span></label>
+            <input class="form-input" type="text" placeholder="예: 12가 3456" v-model="state.form.licensePlate"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">방문자 이름</label>
+            <input class="form-input" type="text" placeholder="예: 홍길동" v-model="state.form.visitorName"/>
+          </div>
+        </div>
+
+        <!-- 방문 목적 (직접 입력 or 태그 선택) -->
+        <div class="form-group">
+          <label class="form-label">방문 목적 <span class="required">*</span></label>
+          <input class="form-input" type="text" placeholder="방문 목적 선택 또는 직접 입력"
+                 v-model="state.form.visitPurpose"/>
+          <div class="tag-list">
+            <button
+                v-for="tag in purposeTags"
+                :key="tag"
+                :class="['tag-btn', state.form.visitPurpose === tag ? 'tag-active' : '']"
+                @click="selectPurposeTag(tag)"
+            >
+              {{ tag }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 방문 예정일 (오늘 이후만 선택 가능) -->
+        <div class="form-group">
+          <label class="form-label">방문 예정일 <span class="required">*</span></label>
+          <input class="form-input" type="date" :min="today" v-model="state.form.visitDate"/>
+        </div>
+
+        <p v-if="state.submitError" class="error-msg">{{ state.submitError }}</p>
+        <p class="form-note">* 표시는 필수 입력 항목입니다.</p>
+      </div>
+
+      <template #footer>
+        <button class="btn-cancel" @click="closeRegisterModal">취소</button>
+        <button class="btn-primary" @click="submitRegister" :disabled="state.submitting">
+          {{ state.submitting ? '등록 중...' : '등록하기' }}
+        </button>
+      </template>
+    </Modal>
+
   </div>
 </template>
 
@@ -246,8 +502,10 @@ onMounted(() => {
   overflow: hidden;
 }
 
+/* 탭 바 */
 .tab-bar {
   display: flex;
+  align-items: center;
   gap: 0;
   border-bottom: 1px solid #E2E8F0;
   padding: 0 16px;
@@ -260,7 +518,7 @@ onMounted(() => {
   padding: 14px 16px;
   font-size: 13px;
   font-weight: 500;
-  color: #A0AEC0;
+  color: #687282;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -269,7 +527,9 @@ onMounted(() => {
   transition: color 0.15s, border-color 0.15s;
 }
 
-.tab-btn:hover { color: #4A5568; }
+.tab-btn:hover {
+  color: #687282;
+}
 
 .tab-btn.active {
   color: #2D3748;
@@ -279,7 +539,7 @@ onMounted(() => {
 
 .tab-badge {
   background: #EDF2F7;
-  color: #718096;
+  color: #687282;
   font-size: 11px;
   font-weight: 600;
   padding: 1px 7px;
@@ -287,10 +547,11 @@ onMounted(() => {
 }
 
 .tab-btn.active .tab-badge {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
+/* 차량번호 필터 */
 .search-wrap {
   display: flex;
   align-items: center;
@@ -301,7 +562,10 @@ onMounted(() => {
   background: #F5F6F8;
 }
 
-.search-icon { color: #A0AEC0; flex-shrink: 0; }
+.search-icon {
+  color: #687282;
+  flex-shrink: 0;
+}
 
 .search-input {
   border: none;
@@ -311,9 +575,11 @@ onMounted(() => {
   width: 160px;
 }
 
-.search-input::placeholder { color: #CBD5E0; }
+.search-input::placeholder {
+  color: #CBD5E0;
+}
 
-/* 상태 배지 공통 스타일 */
+/* 상태 배지 */
 .status-badge {
   display: inline-block;
   padding: 3px 10px;
@@ -322,21 +588,249 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* 승인 — 초록 */
 .status-approved {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
-/* 취소됨 — 회색 */
+.status-grey {
+  background: #EDF2F7;
+  color: #687282;
+}
+
 .status-cancelled {
   background: #EDF2F7;
-  color: #718096;
+  color: #687282;
 }
 
-/* 삭제됨 — 빨강 */
 .status-deleted {
   background: #FEE2E2;
   color: #E53E3E;
+}
+
+/* 모달 폼 */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.form-label {
+  font-size: 13px;
+  color: #687282;
+}
+
+.required {
+  color: #E53E3E;
+}
+
+/* 동/호수 분리 검색 행 */
+.search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-row .form-input {
+  flex: 1;
+}
+
+.search-btn-inline {
+  padding: 0 16px;
+  height: 42px;
+  background: #2B3A55;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.search-btn-inline:hover {
+  background: #1E2A3E;
+}
+
+/* 선택된 입주민 배지 */
+.selected-user-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #EEF0FD;
+  border: 1px solid #2B3A55;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2B3A55;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  color: #687282;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+.clear-btn:hover {
+  color: #E53E3E;
+}
+
+/* 검색 결과 드롭다운 */
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.search-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.12s;
+}
+
+.search-item:hover {
+  background: #F7F8FC;
+}
+
+.search-item-name {
+  font-weight: 600;
+  color: #2D3748;
+}
+
+.search-item-unit {
+  font-size: 12px;
+  color: #687282;
+}
+
+.search-empty {
+  font-size: 12px;
+  color: #687282;
+  padding: 8px 14px;
+}
+
+/* 폼 인풋 */
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  color: #2D3748;
+}
+
+.form-input:focus {
+  border-color: #2B3A55;
+}
+
+.form-input::placeholder {
+  color: #CBD5E0;
+}
+
+/* 방문 목적 태그 */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tag-btn {
+  padding: 4px 12px;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  font-size: 12px;
+  background: #fff;
+  color: #687282;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.tag-btn:hover {
+  background: #F0F4FF;
+  border-color: #2B3A55;
+  color: #2B3A55;
+}
+
+.tag-active {
+  background: #EEF0FD;
+  border-color: #2B3A55;
+  color: #2B3A55;
+  font-weight: 600;
+}
+
+.form-note {
+  font-size: 11px;
+  color: #687282;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: #E53E3E;
+}
+
+/* 모달 버튼 */
+.btn-primary {
+  padding: 9px 18px;
+  background: #2B3A55;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #1E2A3E;
+}
+
+.btn-primary:disabled {
+  background: #687282;
+  cursor: default;
+}
+
+.btn-cancel {
+  padding: 9px 18px;
+  background: #fff;
+  color: #687282;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: #F5F6F8;
 }
 </style>

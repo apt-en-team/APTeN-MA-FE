@@ -591,7 +591,7 @@ onMounted(() => {
 .household-page {
   display: flex;
   flex-direction: column;
-  font-family: 'Noto Sans KR', sans-serif;
+
   color: #333;
 }
 
@@ -613,7 +613,7 @@ onMounted(() => {
 }
 
 .search-icon {
-  color: #A0AEC0;
+  color: #687282;
   flex-shrink: 0;
 }
 
@@ -624,7 +624,7 @@ onMounted(() => {
   outline: none;
   color: #333;
   width: 150px;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .search-input::placeholder {
@@ -641,7 +641,7 @@ onMounted(() => {
   appearance: none;
   cursor: pointer;
   outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .status-badge {
@@ -653,8 +653,8 @@ onMounted(() => {
 }
 
 .status-success {
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
 }
 
 .status-danger {
@@ -664,7 +664,7 @@ onMounted(() => {
 
 .status-gray {
   background: #EDF2F7;
-  color: #718096;
+  color: #687282;
 }
 
 .col-empty {
@@ -673,14 +673,14 @@ onMounted(() => {
 
 .btn-register {
   padding: 4px 14px;
-  background: #EBF5EE;
-  color: #4D8B5A;
+  background: #C6F6D5;
+  color: #276749;
   border: 1px solid #C6E6CC;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-warning {
@@ -692,7 +692,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   cursor: default;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-cancel {
@@ -701,9 +701,9 @@ onMounted(() => {
   border-radius: 7px;
   background: #fff;
   font-size: 13px;
-  color: #718096;
+  color: #687282;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-cancel:hover {
@@ -719,7 +719,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-submit {
@@ -731,7 +731,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-submit:hover:not(:disabled) {
@@ -765,7 +765,7 @@ onMounted(() => {
 
 .detail-sub {
   font-size: 13px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .detail-divider {
@@ -788,25 +788,25 @@ onMounted(() => {
 
 .detail-cell-label {
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .detail-cell-value {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: #1A202C;
 }
 
 .detail-section-title {
   font-size: 13px;
   font-weight: 600;
-  color: #4A5568;
+  color: #687282;
   margin-bottom: 10px;
 }
 
 .detail-empty {
   font-size: 13px;
-  color: #A0AEC0;
+  color: #687282;
   text-align: center;
   padding: 12px 0;
 }
@@ -852,14 +852,14 @@ onMounted(() => {
 
 .resident-contact {
   font-size: 12px;
-  color: #718096;
+  color: #687282;
 }
 
 .resident-tag {
   font-size: 11px;
   font-weight: 600;
-  color: #4D8B5A;
-  background: #EBF5EE;
+  color: #276749;
+  background: #C6F6D5;
   padding: 3px 8px;
   border-radius: 10px;
 }
@@ -880,7 +880,7 @@ onMounted(() => {
 .form-label {
   font-size: 13px;
   font-weight: 600;
-  color: #4A5568;
+  color: #687282;
 }
 
 .required {
@@ -894,7 +894,7 @@ onMounted(() => {
   font-size: 13px;
   color: #333;
   outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
   width: 100%;
 }
 
@@ -904,7 +904,7 @@ onMounted(() => {
 
 .form-input:disabled {
   background: #F5F6F8;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .form-select {
@@ -918,7 +918,7 @@ onMounted(() => {
 
 .form-hint {
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .form-error {
@@ -961,7 +961,7 @@ onMounted(() => {
 
 .pending-user-phone {
   font-size: 12px;
-  color: #718096;
+  color: #687282;
 }
 
 .pending-user-actions {

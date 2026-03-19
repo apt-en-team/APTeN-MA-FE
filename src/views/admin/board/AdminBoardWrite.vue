@@ -108,7 +108,7 @@ function handleCancel() {
         <div class="sidebar-card">
           <p class="sidebar-title">첨부 파일</p>
           <div class="upload-box">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A0AEC0" stroke-width="1.5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#687282" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
             </svg>
             <p class="upload-text">클릭하여 파일 업로드</p>
@@ -121,7 +121,7 @@ function handleCancel() {
 </template>
 
 <style scoped>
-.admin-board-write { width: 100%; font-family: 'Noto Sans KR', sans-serif; }
+.admin-board-write { width: 100%;  }
 
 .write-layout {
   display: grid;
@@ -153,14 +153,14 @@ function handleCancel() {
   border: 1px solid #E2E8F0; border-radius: 8px;
   font-size: 14px; color: #1A202C; outline: none;
   transition: border-color 0.15s; box-sizing: border-box;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .form-input:focus { border-color: #2B3A55; }
-.form-input::placeholder { color: #A0AEC0; }
+.form-input::placeholder { color: #687282; }
 
 /* 글자수 */
 .char-count {
-  text-align: right; font-size: 11px; color: #A0AEC0;
+  text-align: right; font-size: 11px; color: #687282;
   margin-top: 4px;
 }
 
@@ -173,9 +173,9 @@ function handleCancel() {
 .btn-draft {
   padding: 10px 20px; border-radius: 8px;
   border: 1px solid #E2E8F0; background: #fff;
-  font-size: 13px; color: #718096;
+  font-size: 13px; color: #687282;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-draft:hover { background: #F5F6F8; }
 .btn-cancel {
@@ -183,7 +183,7 @@ function handleCancel() {
   border: 1px solid #E2E8F0; background: #fff;
   font-size: 13px; color: #555;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-cancel:hover { background: #F5F6F8; }
 .btn-submit {
@@ -191,7 +191,7 @@ function handleCancel() {
   border: none; background: #2B3A55;
   color: #fff; font-size: 13px; font-weight: 700;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-submit:hover { background: #1E2A3E; }
 
@@ -202,7 +202,7 @@ function handleCancel() {
   margin-bottom: 16px;
 }
 .sidebar-title { font-size: 13px; font-weight: 700; color: #1A202C; margin-bottom: 14px; }
-.sidebar-label { font-size: 11px; font-weight: 600; color: #A0AEC0; margin-bottom: 8px; }
+.sidebar-label { font-size: 11px; font-weight: 600; color: #687282; margin-bottom: 8px; }
 .sidebar-value { font-size: 13px; color: #374151; }
 
 /* 작성자 */
@@ -217,7 +217,7 @@ function handleCancel() {
   font-size: 12px; font-weight: 700; flex-shrink: 0;
 }
 .author-name { font-size: 13px; font-weight: 600; color: #1A202C; }
-.author-role { font-size: 11px; color: #A0AEC0; margin-top: 2px; }
+.author-role { font-size: 11px; color: #687282; margin-top: 2px; }
 
 /* 게시 상태 */
 .status-box {
@@ -240,5 +240,5 @@ function handleCancel() {
   transition: border-color 0.15s;
 }
 .upload-box:hover { border-color: #2B3A55; }
-.upload-text { font-size: 12px; color: #A0AEC0; }
+.upload-text { font-size: 12px; color: #687282; }
 </style>
