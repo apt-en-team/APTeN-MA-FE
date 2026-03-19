@@ -64,7 +64,7 @@ import ParkingStatsView from '@/views/admin/parking/ParkingStatsView.vue'
 import AdminVisitorVehicleStatusView from '@/views/admin/parking/AdminVisitorVehicleStatusView.vue'
 import FixedVisitorVehicleFormView from "@/views/resident/parking/FixedVisitorVehicleFormView.vue";
 import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue";
-import AdminFixedVisitorVehicleListView from '@/views/admin/parking/Adminfixedvisitorvehiclelistview.vue'
+import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVisitorVehicleListView.vue'
 
 // 관리자 - 시설/예약
 // 시설/예약
@@ -72,6 +72,9 @@ import FacilityManageView from '@/views/admin/facility/FacilityManageView.vue'
 import AdminReservationListView from '@/views/admin/reservation/AdminReservationListView.vue'
 import AdminReservationDetailView from '@/views/admin/reservation/AdminReservationDetailView.vue'
 import AdminGxApprovalView from '@/views/admin/reservation/AdminGxApprovalView.vue'
+import FacilityFormView       from '@/views/admin/facility/FacilityFormView.vue'
+import FacilityTypeManageView from '@/views/admin/facility/FacilityTypeManageView.vue'
+
 
 
 const routes = [
@@ -176,7 +179,6 @@ const routes = [
                 component: AdminVehicleListView,
                 meta: {title: '입주민 차량 목록'}
             },
-
             // 주차/방문차량
             {path: 'parking-logs', name: 'AdminParkingLog', component: AdminParkingLogView, meta: {title: '입출차 기록'}},
             {
@@ -200,7 +202,24 @@ const routes = [
             },
 
             // 시설/예약
-            {path: 'facility', name: 'AdminFacilityManage', component: FacilityManageView, meta: {title: '시설 관리'}},
+            { 
+                path: 'facility',                
+                name: 'AdminFacilityManage',   
+                component: FacilityManageView,         
+                meta: { title: '시설 관리' } 
+            },
+            { 
+                path: 'facilities/register',      
+                name: 'AdminFacilityRegister', 
+                component: FacilityFormView,          
+                meta: { title: '시설 등록' } 
+            },
+            {
+                path: 'facilities/:id/edit',      
+                name: 'AdminFacilityEdit',     
+                component: FacilityFormView,          
+                meta: { title: '시설 수정' } 
+            },
             {
                 path: 'reservations',
                 name: 'AdminReservationListView',
