@@ -1,17 +1,24 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import facilityAPI from '@/api/facility.js'
 
+const router = useRouter()
+
 const state = reactive({
-  types:      [],   // 시설 타입 목록 (탭)
-  facilities: [],   // 시설 목록
+  types:      [],
+  facilities: [],
 })
 
-/** 선택된 타입 ID (null = 전체) */
-const selectedTypeId = ref(null)
+/** GX 타입 ID */
+const GX_TYPE_IDS = [4]
+const FACILITY_TYPE_IDS = [1, 2, 3]
 
-/** 시설 상세 모달 */
-const detailModal = reactive({ show: false, facility: null })
+/** 상위 탭 */
+const topTab = ref('facility')
+
+/** GX 하위 탭 (전체/오전/오후) */
+const gxSubTab = ref('전체')
 
 /** 운영 시간 포맷 */
 const formatTime = (time) => time ? String(time).slice(0, 5) : '-'
@@ -25,41 +32,57 @@ const notices = [
 
 /** 더미 내 예약 데이터 */
 const myReservations = [
-  { id: 1, day: '07', facilityName: '헬스장',  time: '오전9시 ~ 10시', dayLabel: '3월 7일' },
-  { id: 2, day: '08', facilityName: '독서실',  time: '3월22일 4시 ~ 5시', dayLabel: '3월 8일' },
-  { id: 3, day: '12', facilityName: '그룹PT(오후)', time: '3월12일(오후) 3시 ~ 4시', dayLabel: '3월 12일' },
+  { id: 1, day: '07', facilityName: '헬스장',      time: '오전9시 ~ 10시' },
+  { id: 2, day: '08', facilityName: '독서실',      time: '3월22일 4시 ~ 5시' },
+  { id: 3, day: '12', facilityName: '그룹PT(오후)', time: '3월12일(오후) 3시 ~ 4시' },
 ]
 
-/** API-044 | 시설 타입 목록 조회 */
-const fetchTypes = async () => {
-  try {
-    const { data } = await facilityAPI.getTypes()
-    state.types = data.resultData ?? []
-    // 첫 번째 타입 자동 선택
-    if (state.types.length > 0) {
-      selectedTypeId.value = state.types[0].typeId
-      await fetchFacilities(selectedTypeId.value)
-    }
-  } catch (e) { console.error('시설 타입 조회 실패', e) }
-}
+/** GX 하위 탭 필터링된 시설 목록 */
+const displayFacilities = computed(() => {
+  if (topTab.value !== 'gx') return state.facilities
+  if (gxSubTab.value === '전체') return state.facilities
+  return state.facilities.filter(f => f.name.includes(gxSubTab.value === '오전' ? '오전' : '오후'))
+})
 
-/** API-048 | 시설 목록 조회 (타입 필터) */
-const fetchFacilities = async (typeId = null) => {
+/** API-048 | 시설 목록 조회 */
+const fetchFacilities = async (tab) => {
   try {
-    const { data } = await facilityAPI.getFacilities(typeId)
-    state.facilities = data.resultData ?? []
+    if (tab === 'facility') {
+      // 편의시설: 1,2,3 타입 전체 한번에 조회
+      const results = await Promise.all(
+        FACILITY_TYPE_IDS.map(id => facilityAPI.getFacilities(id))
+      )
+      state.facilities = results.flatMap(r => r.data.resultData ?? [])
+    } else {
+      // GX: type_id 4 조회
+      const { data } = await facilityAPI.getFacilities(4)
+      state.facilities = data.resultData ?? []
+    }
   } catch (e) { console.error('시설 목록 조회 실패', e) }
 }
 
-/** 탭 클릭 */
-const selectType = async (typeId) => {
-  selectedTypeId.value = typeId
-  await fetchFacilities(typeId)
+/** 초기 로드 */
+const fetchTypes = async () => {
+  state.types = [
+    { typeId: 1, name: '독서실' },
+    { typeId: 2, name: '헬스장' },
+    { typeId: 3, name: '골프연습장' },
+    { typeId: 4, name: 'GX' },
+  ]
+  await fetchFacilities('facility')
 }
 
-/** 상세 모달 열기/닫기 */
-const openDetail  = (f) => { detailModal.facility = f; detailModal.show = true }
-const closeDetail = () => { detailModal.show = false; detailModal.facility = null }
+/** 상위 탭 전환 */
+const switchTopTab = async (tab) => {
+  topTab.value   = tab
+  gxSubTab.value = '전체'
+  await fetchFacilities(tab)
+}
+
+/** 시설 상세 페이지 이동 */
+const goToDetail = (f) => {
+  router.push({ name: 'FacilityDetail', params: { id: f.facilityId } })
+}
 
 onMounted(() => fetchTypes())
 </script>
@@ -71,25 +94,29 @@ onMounted(() => fetchTypes())
       <!-- 왼쪽: 시설 목록 -->
       <div class="facility-section">
 
-        <!-- 탭 -->
-        <div class="tab-bar">
+        <!-- 상위 탭: 편의 시설 / GX강습 -->
+        <div class="top-tab-bar">
+          <button :class="['top-tab-btn', { active: topTab === 'facility' }]" @click="switchTopTab('facility')">편의 시설</button>
+          <button :class="['top-tab-btn', { active: topTab === 'gx' }]" @click="switchTopTab('gx')">GX강습</button>
+        </div>
+
+        <!-- GX 하위 탭: 전체/오전/오후 -->
+        <div class="tab-bar" v-if="topTab === 'gx'">
           <button
-            v-for="t in state.types"
-            :key="t.typeId"
-            :class="['tab-btn', { active: selectedTypeId === t.typeId }]"
-            @click="selectType(t.typeId)"
-          >
-            {{ t.name }}
-          </button>
+            v-for="sub in ['전체', '오전', '오후']"
+            :key="sub"
+            :class="['tab-btn', { active: gxSubTab === sub }]"
+            @click="gxSubTab = sub"
+          >{{ sub }}</button>
         </div>
 
         <!-- 시설 카드 목록 -->
         <div class="facility-list">
           <div
-            v-for="f in state.facilities"
+            v-for="f in displayFacilities"
             :key="f.facilityId"
             class="facility-card"
-            @click="openDetail(f)"
+            @click="goToDetail(f)"
           >
             <!-- 시설 이미지 -->
             <div class="facility-img">
@@ -103,8 +130,8 @@ onMounted(() => fetchTypes())
             <div class="facility-info">
               <div class="facility-header">
                 <span class="facility-name">{{ f.name }}</span>
-                <span :class="['status-badge', f.active ? 'available' : 'closed']">
-                  {{ f.active ? '예약 가능' : '운영 중단' }}
+                <span :class="['status-badge', f.isActive ? 'available' : 'closed']">
+                  {{ f.isActive ? '예약 가능' : '점검중' }}
                 </span>
               </div>
               <p class="facility-desc">{{ f.description || '운영 시작 시 예약이 가능합니다.' }}</p>
@@ -115,24 +142,30 @@ onMounted(() => fetchTypes())
                   </svg>
                   운영 시간: {{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}
                 </span>
-                <span class="meta-item">
+                <span class="meta-item" v-if="topTab === 'facility'">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
                   </svg>
-                  최대 {{ f.maxCapacity }}명
+                  자리 예약 필수 ({{ f.maxCapacity }}석)
                 </span>
-                <span class="meta-item">
+                <span class="meta-item" v-if="topTab === 'gx'">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  </svg>
+                  정원 {{ f.maxCapacity }}명
+                </span>
+                <span class="meta-item" v-if="topTab === 'gx'">
                   예약 단위 {{ f.slotDuration }}분
                 </span>
               </div>
             </div>
 
-            <!-- 더보기 -->
-            <div class="facility-more">더 보기 →</div>
+            <!-- 화살표 -->
+            <div class="facility-arrow">→</div>
           </div>
 
           <!-- 시설 없음 -->
-          <div v-if="state.facilities.length === 0" class="empty-msg">
+          <div v-if="displayFacilities.length === 0" class="empty-msg">
             등록된 시설이 없습니다.
           </div>
         </div>
@@ -177,41 +210,6 @@ onMounted(() => fetchTypes())
 
       </div>
     </div>
-
-    <!-- 시설 상세 모달 -->
-    <div v-if="detailModal.show" class="modal-overlay" @click.self="closeDetail">
-      <div class="modal-box">
-        <div class="modal-header">
-          <h3 class="modal-title">{{ detailModal.facility?.name }}</h3>
-          <button class="modal-close" @click="closeDetail">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-img">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1">
-              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-            </svg>
-          </div>
-          <div class="modal-info">
-            <div class="modal-row"><span>시설 타입</span><span>{{ detailModal.facility?.typeName }}</span></div>
-            <div class="modal-row"><span>운영 시간</span><span>{{ formatTime(detailModal.facility?.openTime) }} ~ {{ formatTime(detailModal.facility?.closeTime) }}</span></div>
-            <div class="modal-row"><span>최대 인원</span><span>{{ detailModal.facility?.maxCapacity }}명</span></div>
-            <div class="modal-row"><span>예약 단위</span><span>{{ detailModal.facility?.slotDuration }}분</span></div>
-            <div class="modal-row"><span>운영 여부</span>
-              <span :class="['status-badge', detailModal.facility?.active ? 'available' : 'closed']">
-                {{ detailModal.facility?.active ? '운영 중' : '운영 중단' }}
-              </span>
-            </div>
-            <p class="modal-desc">{{ detailModal.facility?.description || '-' }}</p>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" @click="closeDetail">닫기</button>
-          <button class="btn-reserve" @click="closeDetail">예약하기</button>
-        </div>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -222,29 +220,35 @@ onMounted(() => fetchTypes())
 /* 레이아웃 */
 .main-layout { display: grid; grid-template-columns: 1fr 280px; gap: 24px; }
 
-/* 탭 */
-.tab-bar  { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #E2E8F0; padding-bottom: 0; }
-.tab-btn  { padding: 8px 20px; border: none; background: none; font-size: 14px; color: #718096; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+/* 상위 탭 */
+.top-tab-bar  { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #E2E8F0; }
+.top-tab-btn  { padding: 10px 24px; border: none; background: none; font-size: 15px; font-weight: 600; color: #A0AEC0; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.top-tab-btn.active { color: #2B3A55; border-bottom-color: #2B3A55; }
+.top-tab-btn:hover:not(.active) { color: #4A5568; }
+
+/* GX 하위 탭 */
+.tab-bar  { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid #E2E8F0; }
+.tab-btn  { padding: 6px 16px; border: none; background: none; font-size: 13px; color: #718096; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .tab-btn.active { color: #2B3A55; font-weight: 700; border-bottom-color: #2B3A55; }
 .tab-btn:hover:not(.active) { color: #4A5568; }
 
 /* 시설 카드 */
 .facility-list { display: flex; flex-direction: column; gap: 16px; }
-.facility-card { background: #fff; border-radius: 10px; border: 1px solid #E2E8F0; padding: 20px; display: flex; gap: 20px; cursor: pointer; transition: box-shadow 0.15s; }
-.facility-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.facility-img  { width: 180px; height: 120px; background: #F5F6F8; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.facility-card { background: #fff; border-radius: 12px; border: 1px solid #E2E8F0; padding: 20px; display: flex; gap: 20px; cursor: pointer; transition: box-shadow 0.15s; align-items: center; }
+.facility-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #2B3A55; }
+.facility-img  { width: 200px; height: 130px; background: #F5F6F8; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
 .facility-info { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .facility-header { display: flex; align-items: center; gap: 10px; }
-.facility-name   { font-size: 16px; font-weight: 700; color: #1A202C; }
+.facility-name   { font-size: 17px; font-weight: 700; color: #1A202C; }
 .facility-desc   { font-size: 13px; color: #718096; line-height: 1.5; }
 .facility-meta   { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
 .meta-item       { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #718096; }
-.facility-more   { font-size: 12px; color: #A0AEC0; align-self: flex-end; white-space: nowrap; }
+.facility-arrow  { font-size: 20px; color: #CBD5E0; flex-shrink: 0; }
 
 /* 상태 뱃지 */
-.status-badge           { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.status-badge           { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .status-badge.available { background: #EBF5EE; color: #4D8B5A; }
-.status-badge.closed    { background: #F5F5F5; color: #718096; }
+.status-badge.closed    { background: #FEF9C3; color: #ca8a04; }
 
 /* 빈 상태 */
 .empty-msg { text-align: center; padding: 40px; color: #A0AEC0; font-size: 14px; }
@@ -273,24 +277,4 @@ onMounted(() => fetchTypes())
 .reservation-info { flex: 1; }
 .reservation-name { font-size: 13px; font-weight: 600; color: #1A202C; }
 .reservation-time { font-size: 11px; color: #A0AEC0; margin-top: 2px; }
-
-/* 모달 */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.modal-box     { background: #fff; border-radius: 12px; width: 480px; max-width: 90vw; }
-.modal-header  { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; }
-.modal-title   { font-size: 16px; font-weight: 700; color: #1A202C; }
-.modal-close   { background: none; border: none; font-size: 18px; color: #A0AEC0; cursor: pointer; }
-.modal-close:hover { color: #333; }
-.modal-body    { padding: 20px 24px; }
-.modal-img     { width: 100%; height: 160px; background: #F5F6F8; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
-.modal-info    { display: flex; flex-direction: column; gap: 10px; }
-.modal-row     { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #F5F6F8; }
-.modal-row span:first-child { color: #718096; }
-.modal-row span:last-child  { font-weight: 600; color: #1A202C; }
-.modal-desc    { font-size: 13px; color: #718096; margin-top: 8px; line-height: 1.6; }
-.modal-footer  { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #E2E8F0; }
-.btn-cancel    { padding: 9px 20px; border: 1px solid #E2E8F0; border-radius: 7px; background: #fff; font-size: 13px; color: #718096; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-cancel:hover { background: #F5F6F8; }
-.btn-reserve   { padding: 9px 24px; background: #2B3A55; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-reserve:hover { background: #1E2A3E; }
 </style>
