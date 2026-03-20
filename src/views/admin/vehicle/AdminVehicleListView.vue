@@ -302,7 +302,7 @@ onMounted(() => {
 
     <!-- 통계 카드 -->
     <div class="stats-cards">
-      <div v-for="(stat, index) in statsCards" :key="index" class="stat-card" @click="handleStatsCardClick(stat)">
+      <div v-for="(stat, index) in statsCards" :key="index" class="stat-card">
         <div class="stat-label">{{ stat.label }}</div>
         <div class="stat-value-wrap">
           <span class="stat-value">{{ stat.value }}</span>
@@ -610,8 +610,7 @@ onMounted(() => {
 
 /* 통계 카드 */
 .stats-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-.stat-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; cursor: pointer; transition: all 0.2s; }
-.stat-card:hover { border-color: #2B3A55; box-shadow: 0 4px 12px rgba(43, 58, 85, 0.1); transform: translateY(-2px); }
+.stat-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; cursor: pointer;  }
 .stat-label { font-size: 13px; color: #718096; margin-bottom: 8px; }
 .stat-value-wrap { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
 .stat-value { font-size: 28px; font-weight: 700; color: #1A202C; }
@@ -628,7 +627,7 @@ onMounted(() => {
 .filter-select { border: 1px solid #E2E8F0; border-radius: 7px; padding: 7px 28px 7px 12px; font-size: 13px; color: #333; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A0AEC0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center; appearance: none; cursor: pointer; outline: none; font-family: 'Noto Sans KR', sans-serif; }
 
 /* 상태 뱃지 */
-.status-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; width: fit-content; }
+.status-badge { display: inline-block; padding: 2px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; width: fit-content; }
 .status-badge.approved { background: #EBF5EE; color: #4D8B5A; }
 .status-badge.pending  { background: #FEF9C3; color: #ca8a04; }
 .status-badge.rejected { background: #FEE2E2; color: #E53E3E; }
