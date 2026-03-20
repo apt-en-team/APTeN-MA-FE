@@ -1,18 +1,17 @@
 <script setup>
 import { onMounted, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useFacilityStore } from '@/stores/modules/facility';
+import { useFacilityStore } from '@/stores/modules/facility'
 import facilityAPI from '@/api/facility.js'
 
 import StatsCards from '@/components/admin/StatsCards.vue'
-import FilterBar from '@/components/layout/FilterBar.vue';
+import FilterBar  from '@/components/layout/FilterBar.vue'
 import BaseModal  from '@/components/common/BeseModel.vue'
-import Pagination from '@/components/layout/Pagination.vue'; 
+import Pagination from '@/components/layout/Pagination.vue'
 
 const router = useRouter()
 const facilityStore = useFacilityStore()
 
-// 목록 조회 및 필터/페이지 상태
 const state = reactive({
   list:         [],
   filterStatus: '',
@@ -22,7 +21,7 @@ const state = reactive({
   pageSize:     9,
 })
 
-// 상단 통계 카드 데이터 (store 값 참조)
+// 상단 통계 카드
 const statsCards = computed(() => [
   { label: '전체 시설',    value: facilityStore.total,    unit: '개', desc: `운영 중 ${facilityStore.total - facilityStore.inactive}개` },
   { label: '오늘 예약',    value: facilityStore.today,    unit: '건', desc: '전일 대비' },
@@ -30,22 +29,43 @@ const statsCards = computed(() => [
   { label: '운영 중단',    value: facilityStore.inactive, unit: '개', desc: '점검 중', descClass: 'warning' },
 ])
 
-// 상세 모달 상태
+// 모달 상태
 const detailModal = reactive({ show: false, facility: null })
 
-// 운영 상태 텍스트 / 클래스
-const statusLabel = (f) => f?.active ? '운영 중' : '중단'
-const statusClass = (f) => f?.active ? 'active' : 'inactive'
+// 운영 상태
+const statusLabel = (f) => f?.isActive ? '운영 중' : '중단'
+const statusClass = (f) => f?.isActive ? 'active' : 'inactive'
 
-// HH:MM:SS → HH:MM 포맷
+// HH:MM:SS → HH:MM
 const formatTime = (t) => t ? t.slice(0, 5) : '-'
 
-// 검색·필터 조건에 맞는 목록
+// 예약 비율 (0~100)
+const getReservedRatio = (f) => {
+  if (!f.isActive || !f.maxCapacity) return 0
+  return Math.round((f.todayReserved ?? 0) / f.maxCapacity * 100)
+}
+
+// 예약 비율에 따른 색상
+const getBarColor = (f) => {
+  const ratio = getReservedRatio(f)
+  if (ratio >= 80) return '#E53E3E'
+  if (ratio >= 50) return '#C08B2D'
+  return '#4D8B5A'
+}
+
+const getRemainingColor = (f) => {
+  const ratio = getReservedRatio(f)
+  if (ratio >= 80) return '#FED7D7'
+  if (ratio >= 50) return '#FEEBC8'
+  return '#C6F6D5'
+}
+
+// 필터링
 const filteredList = computed(() => {
   return state.list.filter(f => {
     const matchStatus = !state.filterStatus ||
-      (state.filterStatus === 'active' && f.active) ||
-      (state.filterStatus === 'inactive' && !f.active)
+      (state.filterStatus === 'active' && f.isActive) ||
+      (state.filterStatus === 'inactive' && !f.isActive)
     const matchSlot   = !state.filterSlot || String(f.slotDuration) === state.filterSlot
     const matchSearch = !state.searchQuery ||
       f.name.includes(state.searchQuery) ||
@@ -54,43 +74,30 @@ const filteredList = computed(() => {
   })
 })
 
-// 현재 페이지에 해당하는 9개 슬라이스
+// 페이지네이션
 const pagedList = computed(() => {
   const start = (state.currentPage - 1) * state.pageSize
   return filteredList.value.slice(start, start + state.pageSize)
 })
 
-// 전체 페이지 수
 const maxPage = computed(() => Math.ceil(filteredList.value.length / state.pageSize) || 1)
 
-// 예약 비율에 따른 프로그레스바 색상
-const progressColor = (ratio) => {
-  if (ratio >= 0.9) return '#E53E3E'
-  if (ratio >= 0.6) return '#C08B2D'
-  return '#4D8B5A'
-}
-
-// 시설 목록 조회 + 통계 갱신
+// 시설 목록 조회
 const fetchFacilities = async () => {
   try {
     const { data } = await facilityAPI.getFacilities()
     state.list             = data.resultData ?? []
     facilityStore.total    = state.list.length
-    facilityStore.inactive = state.list.filter(f => !f.active).length
+    facilityStore.inactive = state.list.filter(f => !f.isActive).length
   } catch (e) {
     console.error('시설 목록 조회 실패', e)
   }
 }
 
-// 모달 열기 / 닫기
+// 모달
 const openDetail  = (f) => { detailModal.facility = f; detailModal.show = true }
 const closeDetail = () => { detailModal.show = false; detailModal.facility = null }
-
-// 수정 페이지로 이동
-const goEdit = (id) => {
-  closeDetail()
-  router.push(`/admin/facilities/${id}/edit`)
-}
+const goEdit = (id) => { closeDetail(); router.push(`/admin/facilities/${id}/edit`) }
 
 // 필터 초기화
 const resetFilters = () => {
@@ -100,10 +107,8 @@ const resetFilters = () => {
   state.currentPage  = 1
 }
 
-// 페이지 이동
 const goToPage = (page) => { state.currentPage = page }
 
-// 검색어 입력 디바운스 (300ms)
 let searchTimer = null
 const onSearch = () => {
   clearTimeout(searchTimer)
@@ -146,7 +151,7 @@ onMounted(() => fetchFacilities())
           v-for="f in pagedList"
           :key="f.facilityId"
           class="facility-card"
-          :class="{ inactive: !f.active }"
+          :class="{ inactive: !f.isActive }"
           @click="openDetail(f)"
         >
           <div class="card-header">
@@ -183,11 +188,40 @@ onMounted(() => fetchFacilities())
               </div>
               <div class="card-info">
                 <span class="info-label">오늘 예약</span>
-                <span class="info-value">{{ f.active ? '- / -' : '운영 중단' }}</span>
+                <span class="info-value">
+                  {{ f.isActive ? (f.todayReserved ?? 0) + ' / ' + f.maxCapacity + '명' : '운영 중단' }}
+                </span>
               </div>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: f.active ? '50%' : '0%', background: progressColor(0.5) }"></div>
+
+            <!-- Stacked Bar (% 별 색상) -->
+            <div class="stacked-bar-wrap">
+              <div class="stacked-bar">
+                <div
+                  class="bar-segment bar-reserved"
+                  :style="{
+                    width: f.isActive ? getReservedRatio(f) + '%' : '0%',
+                    background: getBarColor(f)
+                  }"
+                ></div>
+                <div
+                  class="bar-segment bar-remaining"
+                  :style="{
+                    width: f.isActive ? (100 - getReservedRatio(f)) + '%' : '100%',
+                    background: f.isActive ? getRemainingColor(f) : '#E2E8F0'
+                  }"
+                ></div>
+              </div>
+              <div class="stacked-bar-legend">
+                <span class="legend-item">
+                  <span class="legend-dot" :style="{ background: f.isActive ? getBarColor(f) : '#A0AEC0' }"></span>
+                  예약 완료 {{ f.isActive ? getReservedRatio(f) : 0 }}%
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot" :style="{ background: f.isActive ? getRemainingColor(f) : '#E2E8F0' }"></span>
+                  잔여 {{ f.isActive ? (100 - getReservedRatio(f)) : 0 }}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -223,40 +257,19 @@ onMounted(() => fetchFacilities())
       </div>
       <div class="detail-divider"></div>
       <div class="detail-grid">
-        <div class="detail-cell">
-          <span class="detail-label">시설 ID</span>
-          <span class="detail-value">#{{ detailModal.facility?.facilityId }}</span>
-        </div>
-        <div class="detail-cell">
-          <span class="detail-label">시설명</span>
-          <span class="detail-value">{{ detailModal.facility?.name }}</span>
-        </div>
-        <div class="detail-cell">
-          <span class="detail-label">최대 인원</span>
-          <span class="detail-value">{{ detailModal.facility?.maxCapacity }}명</span>
-        </div>
-        <div class="detail-cell">
-          <span class="detail-label">예약 단위</span>
-          <span class="detail-value">{{ detailModal.facility?.slotDuration }}분</span>
-        </div>
-        <div class="detail-cell">
-          <span class="detail-label">운영 시작</span>
-          <span class="detail-value">{{ formatTime(detailModal.facility?.openTime) }}</span>
-        </div>
-        <div class="detail-cell">
-          <span class="detail-label">운영 종료</span>
-          <span class="detail-value">{{ formatTime(detailModal.facility?.closeTime) }}</span>
-        </div>
+        <div class="detail-cell"><span class="detail-label">시설 ID</span><span class="detail-value">#{{ detailModal.facility?.facilityId }}</span></div>
+        <div class="detail-cell"><span class="detail-label">시설명</span><span class="detail-value">{{ detailModal.facility?.name }}</span></div>
+        <div class="detail-cell"><span class="detail-label">최대 인원</span><span class="detail-value">{{ detailModal.facility?.maxCapacity }}명</span></div>
+        <div class="detail-cell"><span class="detail-label">예약 단위</span><span class="detail-value">{{ detailModal.facility?.slotDuration }}분</span></div>
+        <div class="detail-cell"><span class="detail-label">운영 시작</span><span class="detail-value">{{ formatTime(detailModal.facility?.openTime) }}</span></div>
+        <div class="detail-cell"><span class="detail-label">운영 종료</span><span class="detail-value">{{ formatTime(detailModal.facility?.closeTime) }}</span></div>
         <div class="detail-cell">
           <span class="detail-label">운영 여부</span>
           <span :class="['detail-status-badge', statusClass(detailModal.facility)]">
             {{ statusLabel(detailModal.facility) }}
           </span>
         </div>
-        <div class="detail-cell">
-          <span class="detail-label">등록일</span>
-          <span class="detail-value">{{ detailModal.facility?.createdAt?.slice(0,10) ?? '-' }}</span>
-        </div>
+        <div class="detail-cell"><span class="detail-label">등록일</span><span class="detail-value">{{ detailModal.facility?.createdAt?.slice(0,10) ?? '-' }}</span></div>
       </div>
       <template #footer>
         <button class="btn-cancel" @click="closeDetail">닫기</button>
@@ -269,33 +282,53 @@ onMounted(() => fetchFacilities())
 
 <style scoped>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-.facility-manage-view { display: flex; flex-direction: column; font-family: 'Noto Sans KR', sans-serif; color: #333; }
+.facility-manage-view { display: flex; flex-direction: column; gap: 20px; font-family: 'Noto Sans KR', sans-serif; color: #333; }
 .table-section { background: #fff; border-radius: 10px; border: 1px solid #E2E8F0; overflow: hidden; }
+
+/* 검색/필터 */
 .search-wrap { display: flex; align-items: center; border: 1px solid #E2E8F0; border-radius: 7px; padding: 7px 12px; gap: 6px; background: #F5F6F8; }
 .search-icon { color: #A0AEC0; flex-shrink: 0; }
 .search-input { border: none; background: transparent; font-size: 13px; outline: none; color: #333; width: 150px; font-family: 'Noto Sans KR', sans-serif; }
 .search-input::placeholder { color: #CBD5E0; }
 .filter-select { border: 1px solid #E2E8F0; border-radius: 7px; padding: 7px 28px 7px 12px; font-size: 13px; color: #333; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A0AEC0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center; appearance: none; cursor: pointer; outline: none; font-family: 'Noto Sans KR', sans-serif; }
+
+/* 시설 그리드 */
 .facility-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px; }
-.facility-card { border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; background: #fff; cursor: pointer; transition: box-shadow 0.15s; }
+.facility-card { border: 1px solid #E0E0E0; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; background: #fff; cursor: pointer; transition: box-shadow 0.15s; }
 .facility-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-color: #2B3A55; }
-.facility-card.inactive { background: #FAFAFA; opacity: 0.85; }
+.facility-card.inactive { background: #EBF0F6;; opacity: 0.85; }
 .empty { grid-column: 1 / -1; text-align: center; padding: 48px; color: #A0AEC0; font-size: 13px; }
+
+/* 카드 헤더 */
 .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
 .card-title-wrap { display: flex; align-items: center; gap: 10px; }
 .card-icon { width: 36px; height: 36px; background: #F0F4FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2B3A55; flex-shrink: 0; }
-.card-name { font-size: 15px; font-weight: 700; color: #1A202C; }
-.card-id   { font-size: 11px; color: #A0AEC0; margin-top: 2px; }
+.card-name { font-size: 15px; font-weight: 700; color: #333333; }
+.card-id   { font-size: 11px; color: #687282; margin-top: 2px; }
 .status-badge          { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .status-badge.active   { background: #EBF5EE; color: #4D8B5A; }
-.status-badge.inactive { background: #F5F5F5; color: #718096; }
+.status-badge.inactive { background: #E0E0E0; color: #4A5568; }
+
+/* 카드 바디 */
 .card-body { display: flex; flex-direction: column; gap: 10px; }
 .card-info-row { display: flex; gap: 24px; }
 .card-info { display: flex; flex-direction: column; gap: 2px; }
-.info-label { font-size: 11px; color: #A0AEC0; }
+.info-label { font-size: 11px; color: #687282; }
 .info-value { font-size: 14px; font-weight: 600; color: #1A202C; }
-.progress-bar { height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+/* Stacked Bar */
+.stacked-bar-wrap { display: flex; flex-direction: column; gap: 6px; }
+.stacked-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #E2E8F0; }
+.bar-segment { transition: width 0.4s ease, background 0.4s ease; }
+.bar-reserved  { border-radius: 4px 0 0 4px; }
+.bar-remaining { border-radius: 0 4px 4px 0; }
+.bar-reserved:only-child  { border-radius: 4px; }
+.bar-remaining:first-child { border-radius: 4px; }
+.stacked-bar-legend { display: flex; gap: 12px; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #718096; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; transition: background 0.4s ease; }
+
+/* 모달 */
 .detail-hero { margin-bottom: 14px; }
 .detail-status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
 .detail-status-badge.active   { background: #EBF5EE; color: #4D8B5A; }

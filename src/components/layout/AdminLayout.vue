@@ -134,7 +134,7 @@ const goToFacilityStatus = () => {
             <circle cx="5.5" cy="18.5" r="2.5"/>
             <circle cx="18.5" cy="18.5" r="2.5"/>
           </svg>
-          전체 차량 목록
+          입주민 차량 목록
         </router-link>
         <router-link to="/admin/visitor-vehicles" class="nav-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -237,8 +237,8 @@ const goToFacilityStatus = () => {
           <button v-if="route.name === 'AdminFixedVisitorVehicleList'" class="btn-action" @click="handleActionClick">+
             고정 방문차량 등록
           </button>
-          <button v-if="route.name === 'AdminFacilityManage'" class="btn-action" @click="handleActionClick">+ 시설 추가
-          </button>
+          <button v-if="route.name === 'AdminFacilityManage'" class="btn-action" @click="router.push({ name: 'AdminFacilityRegister' })">+ 
+           추가</button>        
           <button v-if="route.name === 'AdminBoardList'" class="btn-action" @click="handleActionClick">+ 공지 작성</button>
           <button v-if="route.name === 'AdminParkingLog'" class="btn-action" @click="handleActionClick">+ 기록 등록</button>
           <button v-if="route.name === 'AdminVehicleListView'" class="btn-action" @click="handleActionClick">+ 차량 등록
