@@ -205,7 +205,7 @@ const isCancellable = (s) => s === 'CONFIRMED' || s === 'PENDING'
           <span class="label">좌석 번호</span>
           <span class="value">{{ state.reservation.seatNo }}번</span>
         </div>
-        <div v-if="state.reservation.currentCount != null" class="detail-item">
+        <div v-if="state.reservation.status == 'CONFIRMED' || state.reservation.status == 'PENDING'" class="detail-item">
           <span class="label">현재 예약 인원</span>
           <span class="value">
             {{ (state.reservation.currentCount || 0) + (state.reservation.pendingCount || 0) }} / {{ state.reservation.maxCapacity }}명

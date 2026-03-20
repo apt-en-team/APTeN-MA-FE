@@ -38,17 +38,13 @@ export default {
   cancelReservation: (reservationId) =>
     axios.delete(`/api/reservations/${reservationId}`),
 
-  /** 운영 중인 시설 목록 조회 */
-  getFacilities: () =>
-    axios.get('/api/facilities'),
-
-  /** 시설 타입 목록 조회 */
-  getFacilityTypes: () =>
-    axios.get('/api/facilities/types'),
-
   /** 최대 페이지 수 조회 */
   getMaxPage: (params) =>
     axios.get('/api/admin/reservations/count', { params }),
+    
+  /** 최대 페이지 수 조회 */
+  getMyMaxPage: (params) =>
+    axios.get('/api/reservations/count', { params }),
 
   /** GX 대기 건수 조회 */
   getGxPendingCount: () =>

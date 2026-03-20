@@ -254,6 +254,18 @@ router.beforeEach(async (to) => {
         if (auth.user.role === 'ADMIN') return '/admin/dashboard'
         return '/resident/dashboard'
     }
+
+    //입주민 + 대기 상태 체크
+    if (auth.user?.role === 'RESIDENT' && auth.user?.status === 'PENDING') {
+        const allowedRoutes = ['ResidentDashboard', 'MyPage', 'MyPageEdit']
+
+        if (
+            to.path.startsWith('/resident') &&
+            !allowedRoutes.includes(to.name)
+        ) {
+            return '/resident/dashboard'
+        }
+    }
 })
 
 export default router

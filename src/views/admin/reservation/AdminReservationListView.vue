@@ -7,6 +7,7 @@ import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/layout/Pagination.vue'
 import AdminReservationDetailModal from '@/components/reservation/Adminreservationdetailmodal.vue'
 import reservationAPI from '@/api/reservation'
+import facilityAPI from '@/api/facility'
 
 const router = useRouter()
 
@@ -89,7 +90,7 @@ const statusClass = (status) => {
 // API - 시설 목록 조회
 const fetchFacilities = async () => {
   try {
-    const result = await reservationAPI.getFacilityTypes()
+    const result = await facilityAPI.getFacilityTypes()
     state.facilityTypes = result.data.resultData || []
   } catch (error) {
     console.error('시설 목록 조회 실패:', error)
