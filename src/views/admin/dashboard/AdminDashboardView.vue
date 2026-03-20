@@ -465,17 +465,6 @@ onMounted(() => {
   width: 100%;
 }
 
-/* 클릭 가능 공통 */
-.card-clickable {
-  cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-.card-clickable:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-
 /* 패널 그리드 */
 .middle-grid,
 .bottom-grid {

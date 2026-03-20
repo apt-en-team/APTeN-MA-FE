@@ -16,6 +16,7 @@ import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
 
 // 입주민 - 대시보드
 import ResidentDashboard from '@/views/resident/dashboard/DashboardView.vue'
+import PendingView from '@/components/layout/PendingView.vue'
 
 // 입주민 - 게시판
 import BoardListView from '@/views/resident/board/BoardListView.vue'
@@ -37,6 +38,8 @@ import MyVehicleView from '@/views/resident/vehicle/MyVehicleView.vue'
 import VisitorVehicleFormView from '@/views/resident/parking/VisitorVehicleFormView.vue'
 import VisitorVehiclesListView from '@/views/resident/parking/VisitorVehiclesListView.vue'
 import ParkingStatusView from '@/views/resident/parking/ParkingStatusView.vue'
+import FixedVisitorVehicleFormView from "@/views/resident/parking/FixedVisitorVehicleFormView.vue"
+import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue"
 
 // 입주민 - 마이페이지
 import MyPageView from '@/views/resident/mypage/MyPageView.vue'
@@ -94,6 +97,7 @@ const routes = [
         children: [
             // 대시보드
             {path: 'dashboard', name: 'ResidentDashboard', component: ResidentDashboard, meta: {title: '대시보드'}},
+            { path: 'pending', name: 'Pending', component: PendingView, meta: { title: '승인 후 확인' } },
 
             // 게시판
             {path: 'board/notice', name: 'NoticeList', component: NoticeListView, meta: {title: '공지사항'}},
@@ -201,23 +205,23 @@ const routes = [
 
             // 시설/예약
             { path: 'reservations/facility-status/:typeId?', name: 'AdminFacilityStatus', component: AdminFacilityStatusView, meta: { title: '시설별 예약 현황' } },
-            { 
-                path: 'facility',                
-                name: 'AdminFacilityManage',   
-                component: FacilityManageView,         
-                meta: { title: '시설 관리' } 
-            },
-            { 
-                path: 'facilities/register',      
-                name: 'AdminFacilityRegister', 
-                component: FacilityFormView,          
-                meta: { title: '시설 등록' } 
+            {
+                path: 'facility',
+                name: 'AdminFacilityManage',
+                component: FacilityManageView,
+                meta: { title: '시설 관리' }
             },
             {
-                path: 'facilities/:id/edit',      
-                name: 'AdminFacilityEdit',     
-                component: FacilityFormView,          
-                meta: { title: '시설 수정' } 
+                path: 'facilities/register',
+                name: 'AdminFacilityRegister',
+                component: FacilityFormView,
+                meta: { title: '시설 등록' }
+            },
+            {
+                path: 'facilities/:id/edit',
+                name: 'AdminFacilityEdit',
+                component: FacilityFormView,
+                meta: { title: '시설 수정' }
             },
             {
                 path: 'reservations',
@@ -239,17 +243,19 @@ router.beforeEach(async (to) => {
 
     const auth = useAuthStore()
 
+    // 로그인 상태 복원 (새로고침 시)
     if (to.meta.requiresAuth && !auth.isLoggedIn) {
         try {
             await auth.fetchMe()
-        } catch (e) {
-        }
+        } catch (e) {}
     }
 
+    // 비로그인 → 로그인 페이지로
     if (to.meta.requiresAuth && !auth.isLoggedIn) {
         return '/login'
     }
 
+    // 역할 불일치 → 본인 대시보드로
     if (to.meta.role && auth.user && auth.user.role !== to.meta.role) {
         if (auth.user.role === 'ADMIN') return '/admin/dashboard'
         return '/resident/dashboard'
