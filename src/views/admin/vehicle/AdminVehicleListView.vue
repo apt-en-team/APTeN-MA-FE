@@ -704,7 +704,7 @@ onMounted(() => {
 
 /* 버튼 */
 .btn-cancel { padding: 9px 30px; border: 1px solid #1E2A3E; border-radius: 7px; background: #1E2A3E; font-size: 13px; color: #FFFFFF; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-cancel:hover { background: #F5F6F8; color: #1E2A3E; }
+.btn-cancel:hover { background: #121a27; color: #FFFFFF; }
 .btn-submit-approve { padding: 9px 24px; background: #2B3A55; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-submit-approve:hover:not(:disabled) { background: #1E2A3E; }
 .btn-submit-reject { padding: 9px 24px; background: #E53E3E; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
