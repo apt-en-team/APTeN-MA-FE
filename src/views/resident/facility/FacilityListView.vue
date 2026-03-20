@@ -130,18 +130,18 @@ onMounted(() => {
         등록된 시설이 없습니다.
       </div>
     </div>
-  </FacilityLayout>
+  </FacilityLayout>  
 </template>
 
 <style scoped>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 .top-tab-bar  { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #E2E8F0; }
-.top-tab-btn  { padding: 10px 24px; border: none; background: none; font-size: 15px; font-weight: 600; color: #A0AEC0; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
-.top-tab-btn.active { color: #2B3A55; border-bottom-color: #2B3A55; }
-.top-tab-btn:hover:not(.active) { color: #4A5568; }
+.top-tab-btn  { padding: 10px 24px; border: none; background: none; font-size: 20px; font-weight: 600; color: #A0AEC0; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.top-tab-btn.active { color: #4973E5; border-bottom-color: #4973E5; }
+.top-tab-btn:hover:not(.active) { color: #757575; }
 .tab-bar  { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid #E2E8F0; }
-.tab-btn  { padding: 6px 16px; border: none; background: none; font-size: 13px; color: #718096; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-.tab-btn.active { color: #2B3A55; font-weight: 700; border-bottom-color: #2B3A55; }
+.tab-btn  { padding: 6px 16px; border: none; background: none; font-size: 15px; color: #757575; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab-btn.active { color: #4973E5; font-weight: 700; border-bottom-color: #4973E5; }
 .tab-btn:hover:not(.active) { color: #4A5568; }
 .facility-list { display: flex; flex-direction: column; gap: 16px; }
 .facility-card { background: #fff; border-radius: 12px; border: 1px solid #E2E8F0; padding: 20px; display: flex; gap: 20px; cursor: pointer; transition: box-shadow 0.15s; align-items: center; }
@@ -156,6 +156,6 @@ onMounted(() => {
 .facility-arrow  { font-size: 20px; color: #CBD5E0; flex-shrink: 0; }
 .status-badge           { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .status-badge.available { background: #E5F8EB; color: #50C878; }
-.status-badge.closed    { background: #FEF6E9; color: #F5A623; }
-.empty-msg { text-align: center; padding: 40px; color: #A0AEC0; font-size: 14px; }
+.status-badge.closed    { background: #E0E0E0; color: #757575; }
+.empty-msg { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
 </style>
