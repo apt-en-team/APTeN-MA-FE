@@ -105,7 +105,7 @@ const routes = [
             {path: 'board/:id', name: 'BoardDetail', component: BoardDetailView, meta: {title: '게시글 상세보기'}},
 
             // 시설/예약
-            {path: 'facility', name: 'FacilityList', component: FacilityListView, meta: {title: '시설'}},
+            {path: 'facility', name: 'FacilityList', component: FacilityListView, meta: {title: '시설 목록'}},
             {path: 'facilities/:id', name: 'FacilityDetail', component: FacilityDetailView, meta: {title: '시설 상세'}},
             {
                 path: 'reservation',
