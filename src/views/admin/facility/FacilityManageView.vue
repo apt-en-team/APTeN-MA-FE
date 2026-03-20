@@ -635,6 +635,7 @@ onMounted(() => fetchFacilities());
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 8px;
+  width: fit-content;
 }
 .detail-status-badge.active {
   background: #ebf5ee;
