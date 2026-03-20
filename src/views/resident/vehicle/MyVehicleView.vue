@@ -389,33 +389,33 @@ onMounted(async () => {
 .vehicle-card  { background: #fff; border-radius: 10px; border: 1px solid #E2E8F0; padding: 20px; display: flex; gap: 24px; align-items: flex-start; }
 .vehicle-image { width: 220px; height: 140px; background: #F5F6F8; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .vehicle-info  { flex: 1; display: flex; flex-direction: column; gap: 12px; height: 100%; }
-.vehicle-title { font-size: 15px; font-weight: 700; color: #1A202C; }
+.vehicle-title { font-size: 16px; font-weight: 600; color: #333333; }
 
 .vehicle-meta  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; }
 .meta-group    { display: flex; flex-direction: column; gap: 3px; }
-.meta-label    { font-size: 11px; color: #A0AEC0; }
-.meta-value    { font-size: 13px; color: #1A202C; }
-.meta-value.bold { font-weight: 700; font-size: 15px; }
+.meta-label    { font-size: 14px; color: #A0AEC0; }
+.meta-value    { font-size: 18px; color: #333333; }
+.meta-value.bold { font-weight: 700; font-size: 20px; }
 
 .status-badge          { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; width: fit-content; }
-.status-badge.approved { background: #EBF5EE; color: #4D8B5A; }
-.status-badge.pending  { background: #FEF9C3; color: #ca8a04; }
+.status-badge.approved { background: #C6F6D5; color: #276749; }
+.status-badge.pending  { background: #FEF6E9; color: #F5A623; }
 .status-badge.rejected { background: #FEE2E2; color: #E53E3E; }
 
 .vehicle-time    { font-size: 11px; color: #A0AEC0; }
 .vehicle-actions { display: flex; gap: 8px; margin-top: auto; justify-content: flex-end; }
 .btn-edit   { padding: 7px 18px; border: 1px solid #E2E8F0; border-radius: 7px; background: #fff; font-size: 12px; color: #2B3A55; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-edit:hover { background: #F0F4FF; }
-.btn-delete { padding: 7px 18px; border: 1px solid #FECACA; border-radius: 7px; background: #fff; font-size: 12px; color: #E53E3E; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+.btn-delete { padding: 7px 18px; border: 1px solid #E74C3C; border-radius: 7px; background: #fff; font-size: 12px; color: #E74C3C; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-delete:hover { background: #FEE2E2; }
 .btn-disabled { opacity: 0.4; cursor: not-allowed !important; }
 .btn-disabled:hover { background: #fff !important; }
 
 .vehicle-add { background: #fff; border-radius: 10px; border: 2px dashed #E2E8F0; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.15s; }
-.vehicle-add:hover { border-color: #2B3A55; background: #F8FAFF; }
-.add-icon  { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #CBD5E0; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #A0AEC0; }
-.add-label { font-size: 13px; color: #A0AEC0; }
-
+.vehicle-add:hover { border-color: #c9cacb; background: #F8FAFF; }
+.add-icon  { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #4973E5; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #4973E5; }
+.add-label { font-size: 13px; color: #4973E5; }
+ 
 .form-group   { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .form-label   { font-size: 13px; font-weight: 600; color: #4A5568; }
 .required     { color: #E53E3E; }
@@ -433,8 +433,8 @@ onMounted(async () => {
 
 .btn-cancel  { padding: 9px 20px; border: 1px solid #E2E8F0; border-radius: 7px; background: #fff; font-size: 13px; color: #718096; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .btn-cancel:hover { background: #F5F6F8; }
-.btn-submit  { padding: 9px 24px; background: #2B3A55; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.btn-submit:hover:not(:disabled) { background: #1E2A3E; }
+.btn-submit  { padding: 9px 24px; background: #4973E5; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+.btn-submit:hover:not(:disabled) { background: rgb(25, 98, 224); }
 .btn-submit:disabled { opacity: 0.5; cursor: default; }
 
 .delete-warning     { font-size: 13px; color: #718096; margin-bottom: 16px; text-align: center; }

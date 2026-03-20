@@ -3,6 +3,7 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import facilityAPI from '@/api/facility.js'
 import FacilityLayout from '@/components/layout/FacilityLayout.vue'
+import Pagination from '@/components/layout/Pagination.vue'
 
 const router = useRouter()
 
@@ -12,17 +13,29 @@ const state = reactive({
 })
 
 const FACILITY_TYPE_IDS = [1, 2, 3]
+const PAGE_SIZE = 5
 
-const topTab   = ref('facility')
-const gxSubTab = ref('전체')
+const topTab    = ref('facility')
+const gxSubTab  = ref('전체')
+const gxPage    = ref(1)
 
 const formatTime = (time) => time ? String(time).slice(0, 5) : '-'
 
-const displayFacilities = computed(() => {
-  if (topTab.value !== 'gx') return state.facilities
+/** GX 필터링된 전체 목록 */
+const filteredGxFacilities = computed(() => {
   if (gxSubTab.value === '전체') return state.facilities
   return state.facilities.filter(f => f.name.includes(gxSubTab.value === '오전' ? '오전' : '오후'))
 })
+
+/** 화면에 표시할 목록 */
+const displayFacilities = computed(() => {
+  if (topTab.value !== 'gx') return state.facilities
+  const start = (gxPage.value - 1) * PAGE_SIZE
+  return filteredGxFacilities.value.slice(start, start + PAGE_SIZE)
+})
+
+/** GX 전체 페이지 수 */
+const gxMaxPage = computed(() => Math.ceil(filteredGxFacilities.value.length / PAGE_SIZE) || 1)
 
 const fetchFacilities = async (tab) => {
   try {
@@ -51,7 +64,13 @@ const fetchTypes = async () => {
 const switchTopTab = async (tab) => {
   topTab.value   = tab
   gxSubTab.value = '전체'
+  gxPage.value   = 1
   await fetchFacilities(tab)
+}
+
+const switchGxSubTab = (sub) => {
+  gxSubTab.value = sub
+  gxPage.value   = 1
 }
 
 const goToDetail = (f) => {
@@ -75,7 +94,7 @@ onMounted(() => {
         v-for="sub in ['전체', '오전', '오후']"
         :key="sub"
         :class="['tab-btn', { active: gxSubTab === sub }]"
-        @click="gxSubTab = sub"
+        @click="switchGxSubTab(sub)"
       >{{ sub }}</button>
     </div>
 
@@ -130,7 +149,19 @@ onMounted(() => {
         등록된 시설이 없습니다.
       </div>
     </div>
-  </FacilityLayout>  
+
+    <!-- GX 탭일 때만 페이지네이션 표시 -->
+    <Pagination
+      v-if="topTab === 'gx'"
+      :currentPage="gxPage"
+      :maxPage="gxMaxPage"
+      :totalAll="filteredGxFacilities.length"
+      :totalFiltered="filteredGxFacilities.length"
+      unit="개"
+      @change="gxPage = $event"
+    />
+
+  </FacilityLayout>
 </template>
 
 <style scoped>
