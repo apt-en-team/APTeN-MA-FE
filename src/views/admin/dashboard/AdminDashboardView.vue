@@ -6,6 +6,7 @@ import {useParkingStore} from '@/stores/modules/parking.js'
 import axios from '@/api/axios.js'
 import StatsCards from '@/components/admin/StatsCards.vue'
 import { useReservationStore } from '@/stores/modules/reservation.js'
+import {getAdminVisitorVehicles} from '@/api/visitorVehicle.js'
 
 const router = useRouter()
 
@@ -62,9 +63,20 @@ const fetchDashboardData = async () => {
       time: formatTime(r.loggedAt),
     }))
 
+    // 방문차량 목록 (최신 3건)
+    const visitorsRes = await getAdminVisitorVehicles({page: 1, size: 3})
+    const visitorsData = visitorsRes.data
+    dashboardState.visitors = (visitorsData.content ?? []).map(v => ({
+      plate: v.licensePlate ?? v.vehicleNumber ?? '-',
+      resident: v.visitorName ?? '-',
+      unit: v.dong && v.ho ? `${v.dong} ${v.ho}` : '-',
+      purpose: v.purpose ?? '-',
+      date: v.visitDate ?? v.createdAt ?? '-',
+    }))
+
     // 패널 데이터 - API 연결 후 교체
-    dashboardState.visitors = []
-    dashboardState.posts = []
+    // dashboardState.visitors = []
+    // dashboardState.posts = []
 
   } catch (e) {
     console.error('대시보드 데이터 오류:', e)
@@ -77,6 +89,8 @@ const fetchDashboardData = async () => {
 // ── 주차/예약 summary (승인대기/예약은 나중에 피니아 스토어로 대체) ──
 const summary = reactive({
   pendingCount: null,  // 승인 대기 건수
+  todayReserve: null,  // 오늘 예약 건수
+  reserveDiff: null,  // 전일 대비 증감
 })
 
 // ── 패널 목록 ──
@@ -164,7 +178,7 @@ onMounted(() => {
       <!-- ── 요약 카드 4개 ── -->
       <section class="summary-section">
         <StatsCards :stats="dashboardStats" :showIcon="true"
-                    @click-0="router.push({ name: 'AdminVehicleListView' })"
+                    @click-0="router.push({ name: 'AdminVisitorVehicleList' })"
                     @click-1="router.push({ name: 'ParkingDashboardView' })"
                     @click-2="router.push({ name: 'AdminReservationListView' })"
                     @click-3="router.push({ name: 'HouseholdManage' })"
@@ -204,14 +218,14 @@ onMounted(() => {
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">방문차량 목록</h2>
-            <router-link :to="{ name: 'AdminVehicleListView' }" class="panel-more">전체보기 →</router-link>
+            <router-link :to="{ name: 'AdminVisitorVehicleList' }" class="panel-more">전체보기 →</router-link>
           </div>
           <div v-if="dashboardState.visitors.length > 0" class="visitor-list">
             <div
                 v-for="vehicle in dashboardState.visitors"
                 :key="vehicle.plate"
                 class="visitor-item card-clickable"
-                @click="router.push({ name: 'AdminVehicleListView' })"
+                @click="router.push({ name: 'AdminVisitorVehicleList' })"
             >
               <div class="visitor-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -449,17 +463,6 @@ onMounted(() => {
 /* 대시보드 래퍼 */
 .dashboard-wrapper {
   width: 100%;
-}
-
-/* 클릭 가능 공통 */
-.card-clickable {
-  cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-.card-clickable:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
 }
 
 /* 패널 그리드 */
