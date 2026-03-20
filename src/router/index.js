@@ -39,7 +39,8 @@ import VisitorVehicleFormView from '@/views/resident/parking/VisitorVehicleFormV
 import VisitorVehiclesListView from '@/views/resident/parking/VisitorVehiclesListView.vue'
 import ParkingStatusView from '@/views/resident/parking/ParkingStatusView.vue'
 import FixedVisitorVehicleFormView from "@/views/resident/parking/FixedVisitorVehicleFormView.vue"
-import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue"
+import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVisitorVehicleListView.vue'
+import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue";
 
 // 입주민 - 마이페이지
 import MyPageView from '@/views/resident/mypage/MyPageView.vue'
@@ -65,9 +66,7 @@ import AdminParkingLogView from '@/views/admin/parking/AdminParkingLogView.vue'
 import ParkingDashboardView from '@/views/admin/parking/ParkingDashboardView.vue'
 import ParkingStatsView from '@/views/admin/parking/ParkingStatsView.vue'
 import AdminVisitorVehicleStatusView from '@/views/admin/parking/AdminVisitorVehicleStatusView.vue'
-import FixedVisitorVehicleFormView from "@/views/resident/parking/FixedVisitorVehicleFormView.vue";
-import FixedVisitorVehicleListView from "@/views/resident/parking/FixedVisitorVehicleListView.vue";
-import AdminFixedVisitorVehicleListView from '@/views/admin/parking/AdminFixedVisitorVehicleListView.vue'
+
 
 // 관리자 - 시설/예약
 // 시설/예약

@@ -75,8 +75,8 @@ const fetchDashboardData = async () => {
     }))
 
     // 패널 데이터 - API 연결 후 교체
-    dashboardState.visitors = []
-    dashboardState.posts = []
+    // dashboardState.visitors = []
+    // dashboardState.posts = []
 
   } catch (e) {
     console.error('대시보드 데이터 오류:', e)
@@ -178,7 +178,7 @@ onMounted(() => {
       <!-- ── 요약 카드 4개 ── -->
       <section class="summary-section">
         <StatsCards :stats="dashboardStats" :showIcon="true"
-                    @click-0="router.push({ name: 'AdminVehicleListView' })"
+                    @click-0="router.push({ name: 'AdminVisitorVehicleList' })"
                     @click-1="router.push({ name: 'ParkingDashboardView' })"
                     @click-2="router.push({ name: 'AdminReservationListView' })"
                     @click-3="router.push({ name: 'HouseholdManage' })"
@@ -218,14 +218,14 @@ onMounted(() => {
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">방문차량 목록</h2>
-            <router-link :to="{ name: 'AdminVehicleListView' }" class="panel-more">전체보기 →</router-link>
+            <router-link :to="{ name: 'AdminVisitorVehicleList' }" class="panel-more">전체보기 →</router-link>
           </div>
           <div v-if="dashboardState.visitors.length > 0" class="visitor-list">
             <div
                 v-for="vehicle in dashboardState.visitors"
                 :key="vehicle.plate"
                 class="visitor-item card-clickable"
-                @click="router.push({ name: 'AdminVehicleListView' })"
+                @click="router.push({ name: 'AdminVisitorVehicleList' })"
             >
               <div class="visitor-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
