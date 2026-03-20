@@ -12,6 +12,22 @@ const state = reactive({
   facilities: [],
 })
 
+// 시설 이미지 추가
+const facilityImageMap = {
+  '독서실(남)': new URL('@/assets/images/readingroom.png', import.meta.url).href,
+  '독서실(여)': new URL('@/assets/images/readingroom.png', import.meta.url).href,
+  '헬스장': new URL('@/assets/images/PT.png', import.meta.url).href,
+  '골프연습장': new URL('@/assets/images/golf.png', import.meta.url).href,
+  'GX-필라테스(오전)': new URL('@/assets/images/pilates.png', import.meta.url).href,
+  'GX-필라테스(오후)': new URL('@/assets/images/pilates.png', import.meta.url).href,
+  'GX-그룹PT(오전)': new URL('@/assets/images/Group PT.png', import.meta.url).href,
+  'GX-그룹PT(오후)': new URL('@/assets/images/Group PT.png', import.meta.url).href,
+}
+
+const getFacilityImage = (name) => {
+  return facilityImageMap[name] ?? null
+}
+
 const FACILITY_TYPE_IDS = [1, 2, 3]
 const PAGE_SIZE = 5
 
@@ -105,13 +121,18 @@ onMounted(() => {
         class="facility-card"
         @click="goToDetail(f)"
       >
-        <div class="facility-img">
-          <img v-if="f.imageUrl" :src="f.imageUrl" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />
-          <svg v-else width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-          </svg>
-        </div>
+      <div class="facility-img">
+        <img
+          v-if="getFacilityImage(f.name)"
+          :src="getFacilityImage(f.name)"
+          :alt="f.name"
+          style="width:100%;height:100%;object-fit:cover;border-radius:10px;"
+        />
+        <svg v-else width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+      </div>
         <div class="facility-info">
           <div class="facility-header">
             <span class="facility-name">{{ f.name }}</span>

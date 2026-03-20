@@ -294,26 +294,26 @@ onMounted(() => fetchFacilities())
 
 /* 시설 그리드 */
 .facility-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px; }
-.facility-card { border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; background: #fff; cursor: pointer; transition: box-shadow 0.15s; }
+.facility-card { border: 1px solid #E0E0E0; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; background: #fff; cursor: pointer; transition: box-shadow 0.15s; }
 .facility-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-color: #2B3A55; }
-.facility-card.inactive { background: #FAFAFA; opacity: 0.85; }
+.facility-card.inactive { background: #EBF0F6;; opacity: 0.85; }
 .empty { grid-column: 1 / -1; text-align: center; padding: 48px; color: #A0AEC0; font-size: 13px; }
 
 /* 카드 헤더 */
 .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
 .card-title-wrap { display: flex; align-items: center; gap: 10px; }
 .card-icon { width: 36px; height: 36px; background: #F0F4FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2B3A55; flex-shrink: 0; }
-.card-name { font-size: 15px; font-weight: 700; color: #1A202C; }
-.card-id   { font-size: 11px; color: #A0AEC0; margin-top: 2px; }
+.card-name { font-size: 15px; font-weight: 700; color: #333333; }
+.card-id   { font-size: 11px; color: #687282; margin-top: 2px; }
 .status-badge          { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .status-badge.active   { background: #EBF5EE; color: #4D8B5A; }
-.status-badge.inactive { background: #F5F5F5; color: #718096; }
+.status-badge.inactive { background: #E0E0E0; color: #4A5568; }
 
 /* 카드 바디 */
 .card-body { display: flex; flex-direction: column; gap: 10px; }
 .card-info-row { display: flex; gap: 24px; }
 .card-info { display: flex; flex-direction: column; gap: 2px; }
-.info-label { font-size: 11px; color: #A0AEC0; }
+.info-label { font-size: 11px; color: #687282; }
 .info-value { font-size: 14px; font-weight: 600; color: #1A202C; }
 
 /* Stacked Bar */

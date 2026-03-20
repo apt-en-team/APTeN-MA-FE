@@ -8,6 +8,16 @@ const state = reactive({
   logs: [],
 })
 
+//차량 이미지포함
+const carImageMap = {
+  '경차':  new URL('@/assets/images/Compact car.png', import.meta.url).href,
+  '승용차': new URL('@/assets/images/Sedan.png', import.meta.url).href,
+  'SUV':   new URL('@/assets/images/suv.png', import.meta.url).href,
+  '승합차': new URL('@/assets/images/Van.png', import.meta.url).href,
+}
+
+const getCarImage = (carType) => carImageMap[carType] ?? null
+
 /** 모달 상태 */
 const registerModal = reactive({ show: false, loading: false })
 const editModal     = reactive({ show: false, vehicle: null, loading: false })
@@ -229,7 +239,13 @@ onMounted(async () => {
       <!-- 등록된 차량 카드 -->
       <div v-for="(v, idx) in state.list" :key="v.vehicleId" class="vehicle-card">
         <div class="vehicle-image">
-          <svg width="80" height="50" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1">
+          <img
+            v-if="getCarImage(v.carType)"
+            :src="getCarImage(v.carType)"
+            :alt="v.carType"
+            style="width:100%; height:100%; object-fit:cover;border-radius:8px;"
+          />
+          <svg v-else width="80" height="50" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1">
             <rect x="1" y="3" width="15" height="13" rx="2"/>
             <path d="M16 8h4l3 5v3h-7V8z"/>
             <circle cx="5.5" cy="18.5" r="2.5"/>
@@ -387,7 +403,7 @@ onMounted(async () => {
 .vehicle-list { display: flex; flex-direction: column; gap: 16px; margin-top: 40px; }
 
 .vehicle-card  { background: #fff; border-radius: 10px; border: 1px solid #E2E8F0; padding: 20px; display: flex; gap: 24px; align-items: flex-start; }
-.vehicle-image { width: 220px; height: 140px; background: #F5F6F8; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.vehicle-image { width: 350px; height: 240px; background: #F5F6F8; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .vehicle-info  { flex: 1; display: flex; flex-direction: column; gap: 12px; height: 100%; }
 .vehicle-title { font-size: 16px; font-weight: 600; color: #333333; }
 
