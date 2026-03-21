@@ -39,11 +39,11 @@ const displayedPages = computed(() => {
     <div class="pagination">
       <button class="page-btn" :disabled="currentPage === 1" @click="emit('change', 1)">&lt;&lt;</button>
       <button class="page-btn" :disabled="currentPage === 1" @click="emit('change', currentPage - 1)">&lt;</button>
-      <span
+      <button
           v-for="p in displayedPages" :key="p"
           class="page-btn" :class="{ active: p === currentPage }"
           @click="emit('change', p)"
-      >{{ p }}</span>
+      >{{ p }}</button>
       <button class="page-btn" :disabled="currentPage === maxPage || maxPage === 0"
               @click="emit('change', currentPage + 1)">&gt;
       </button>

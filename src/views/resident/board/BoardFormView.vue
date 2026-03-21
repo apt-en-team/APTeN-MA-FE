@@ -5,11 +5,20 @@ import { useAuthStore } from '@/stores/modules/auth'
 import { useBoardStore } from '@/stores/modules/board'
 import { getPostDetail } from '@/api/board'
 import BoardEditor from '@/components/board/BoardEditor.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import ActionResultModal from '@/components/common/ActionResultModal.vue'
 
 const route  = useRoute()
 const router = useRouter()
 const auth   = useAuthStore()
 const boardStore = useBoardStore()
+
+const showDeleteConfirm = ref(false)
+const alertModal = ref({ visible: false, title: '', message: '' })
+
+function showAlert(title, message) {
+  alertModal.value = { visible: true, title, message }
+}
 
 // ─── 작성 vs 수정 모드 ────────────────────────────────────────
 const isEdit = computed(() => !!route.query.id)
@@ -29,24 +38,21 @@ onMounted(async () => {
     try {
       const res = await getPostDetail(postId.value)
       const post = res.data
-
       if (post.userId !== auth.user?.userId) {
-        alert('수정 권한이 없습니다.')
+        showAlert('권한 없음', '수정 권한이 없습니다.')
         router.replace('/resident/board')
         return
       }
-
       isOwner.value   = true
-      category.value  = post.category  // 수정 시엔 기존 카테고리
+      category.value  = post.category
       title.value     = post.title
       content.value   = post.content
       createdAt.value = post.createdAt
     } catch {
-      alert('게시글을 불러올 수 없습니다.')
+      showAlert('오류', '게시글을 불러올 수 없습니다.')
       router.replace('/resident/board')
     }
   } else {
-    // 작성 모드일 때만 쿼리 카테고리 반영
     if (route.query.category) {
       category.value = route.query.category
     }
@@ -55,9 +61,8 @@ onMounted(async () => {
 
 // ─── 등록 / 수정 완료 ─────────────────────────────────────────
 async function handleSubmit() {
-  if (!title.value.trim())   return alert('제목을 입력해주세요.')
-  if (!content.value.trim()) return alert('내용을 입력해주세요.')
-
+  if (!title.value.trim())   return showAlert('알림', '제목을 입력해주세요.')
+  if (!content.value.trim()) return showAlert('알림', '내용을 입력해주세요.')
   try {
     if (isEdit.value) {
       await boardStore.updatePost(postId.value, { category: category.value, title: title.value, content: content.value })
@@ -67,19 +72,22 @@ async function handleSubmit() {
       router.push('/resident/board')
     }
   } catch (e) {
-    console.error('게시글 처리 오류:', e)  // 콘솔에서 실제 에러 확인
-    alert('처리 중 오류가 발생했습니다.')
+    showAlert('오류', '처리 중 오류가 발생했습니다.')
   }
 }
 
 // ─── 삭제 ─────────────────────────────────────────────────────
-async function handleDelete() {
-  if (!confirm('정말 삭제하시겠습니까?')) return
+function handleDelete() {
+  showDeleteConfirm.value = true
+}
+
+async function confirmDelete() {
+  showDeleteConfirm.value = false
   try {
     await boardStore.deletePost(postId.value)
     router.push('/resident/board')
   } catch {
-    alert('삭제 중 오류가 발생했습니다.')
+    showAlert('오류', '삭제 중 오류가 발생했습니다.')
   }
 }
 
@@ -221,6 +229,25 @@ function getAvatarColor(name) {
       </div>
     </div>
   </div>
+
+  <ConfirmModal
+    v-if="showDeleteConfirm"
+    title="게시글을 삭제하시겠습니까?"
+    subtitle="이 작업은 되돌릴 수 없습니다."
+    confirm-text="삭제"
+    type="danger"
+    @close="showDeleteConfirm = false"
+    @confirm="confirmDelete"
+  />
+
+  <ActionResultModal
+    v-if="alertModal.visible"
+    :title="alertModal.title"
+    :desc="alertModal.message"
+    type="warning"
+    @close="alertModal.value = { visible: false, title: '', message: '' }"
+  />
+
 </template>
 
 <style scoped>

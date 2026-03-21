@@ -22,6 +22,8 @@
  * Emit:
  *   card-click(post) - 카드 클릭 시
  */
+import { getImageUrl } from '@/utils/image.js'
+
 const props = defineProps({
   posts:       { type: Array,   default: () => [] },
   cardHeight:  { type: String,  default: 'auto'   },
@@ -48,7 +50,7 @@ const emit = defineEmits(['card-click'])
         class="card-thumb"
         :style="{ width: thumbWidth, height: thumbHeight, minWidth: thumbWidth }"
       >
-        <img :src="`http://localhost:8080${post.imageUrl}`" :alt="post.title" />
+        <img :src="getImageUrl(post.imageUrl)" :alt="post.title" />
         <!-- 뱃지 슬롯 (예약 가능 / 잔여석 등) -->
         <div v-if="$slots.badge" class="thumb-badge">
           <slot name="badge" :post="post" />

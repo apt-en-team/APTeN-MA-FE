@@ -2,10 +2,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBoardStore } from '@/stores/modules/board'
+import { getImageUrl } from '@/utils/image.js'
 import BoardList from '@/components/board/BoardList.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const router = useRouter()
 const boardStore = useBoardStore()
+
+const showDeleteConfirm = ref(false)
+const deleteTargetId = ref(null)
 
 // ─── 탭 & 페이지 ──────────────────────────────────────────────
 const activeTab   = ref('FREE')
@@ -79,8 +84,15 @@ function changePage(page) {
 
 // ─── 내가 쓴 글 삭제 ──────────────────────────────────────────
 function deleteMyPost(id) {
-  if (!confirm('삭제하시겠습니까?')) return
-  boardStore.deletePost(id)
+  deleteTargetId.value = id
+  showDeleteConfirm.value = true
+}
+
+async function confirmDeleteMyPost() {
+  showDeleteConfirm.value = false
+  await boardStore.deletePost(deleteTargetId.value)
+  deleteTargetId.value = null
+  await fetchData()
 }
 
 // ─── 유틸 ─────────────────────────────────────────────────────
@@ -280,7 +292,7 @@ function stripHtml(html) {
                 </div>
               </div>
               <div v-if="post.imageUrl" class="popular-thumb">
-                <img :src="`http://localhost:8080${post.imageUrl}`" :alt="post.title" />
+                <img :src="getImageUrl(post.imageUrl)" :alt="post.title" />
               </div>
             </li>
           </ul>
@@ -302,7 +314,7 @@ function stripHtml(html) {
             <li class="my-post-item" v-for="post in myPosts" :key="post.boardId"
                 @click="router.push(`/resident/board/${post.boardId}`)">
               <div v-if="post.imageUrl" class="my-post-thumb">
-                <img :src="`http://localhost:8080${post.imageUrl}`" :alt="post.title" />
+                <img :src="getImageUrl(post.imageUrl)" :alt="post.title" />
               </div>
               <div class="my-post-info">
                 <p class="my-post-title">{{ post.title }}</p>
@@ -328,6 +340,16 @@ function stripHtml(html) {
       </div>
     </div>
   </div>
+
+  <ConfirmModal
+    v-if="showDeleteConfirm"
+    title="게시글을 삭제하시겠습니까?"
+    subtitle="이 작업은 되돌릴 수 없습니다."
+    confirm-text="삭제"
+    type="danger"
+    @close="showDeleteConfirm = false"
+    @confirm="confirmDeleteMyPost"
+  />
 </template>
 
 <style scoped>

@@ -7,6 +7,10 @@ import { useBoardStore } from '@/stores/modules/board'
 import 'quill/dist/quill.snow.css'
 import CommentItem from '@/components/board/CommentItem.vue'
 import BoardCard from '@/components/board/BoardCard.vue'
+import BeseModel from '@/components/common/BeseModel.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import ActionResultModal from '@/components/common/ActionResultModal.vue'
+import { useComment } from '@/composables/useComment'
 
 const route  = useRoute()
 const router = useRouter()
@@ -17,11 +21,26 @@ const post    = ref(null)
 const loading = ref(false)
 const liked   = ref(false)
 
+const showDeleteConfirm = ref(false)
+
+const {
+  comments,
+  newComment,
+  isSubmitting,
+  modalState,
+  closeModal,
+  fetchComments,
+  submitComment,
+  editComment,
+  removeComment,
+} = useComment(route.params.id)
+
 onMounted(async () => {
   loading.value = true
   try {
     const res = await getPostDetail(route.params.id)
     post.value = res.data
+    await fetchComments()
   } finally {
     loading.value = false
   }
@@ -50,8 +69,12 @@ function editPost() {
   router.push(`/resident/board/form?id=${route.params.id}`)
 }
 
-async function deletePost() {
-  if (!confirm('삭제하시겠습니까?')) return
+function deletePost() {
+  showDeleteConfirm.value = true
+}
+
+async function confirmDeletePost() {
+  showDeleteConfirm.value = false
   await boardStore.deletePost(route.params.id)
   router.push('/resident/board')
 }
@@ -65,18 +88,6 @@ const avatarColors = ['#4973E5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0
 function getAvatarColor(name) {
   const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
   return avatarColors[idx]
-}
-
-// 더미 댓글
-const dummyComments = ref([])
-
-function deleteComment(commentId) {
-  // TODO: API 연동
-  console.log('delete', commentId)
-}
-function editComment({ commentId, content }) {
-  // TODO: API 연동
-  console.log('edit', commentId, content)
 }
 </script>
 
@@ -137,36 +148,71 @@ function editComment({ commentId, content }) {
         <div class="sidebar-card">
           <p class="sidebar-title">
             댓글
-            <span class="comment-badge">{{ dummyComments.filter(c => c.isDeleted !== 1).length }}</span>
+            <span class="comment-badge">
+              {{ comments.filter(c => c.isDeleted !== 1).length }}
+            </span>
           </p>
 
           <div class="comment-list">
-            <template v-if="dummyComments.length > 0">
+            <template v-if="comments.length > 0">
               <CommentItem
-                v-for="comment in dummyComments"
+                v-for="comment in comments"
                 :key="comment.commentId"
                 :comment="{ ...comment, isPostAuthor: comment.userId === post.userId }"
                 mode="resident"
                 :current-user-id="auth.user?.userId"
-                @delete="deleteComment"
+                @delete="removeComment"
                 @edit="editComment"
               />
             </template>
-
-            <div v-else class="no-comments">
-              등록된 댓글이 없습니다.
-            </div>
+            <div v-else class="no-comments">등록된 댓글이 없습니다.</div>
           </div>
 
           <div class="comment-input-wrap">
-            <input class="comment-input" placeholder="댓글을 입력해주세요..." />
-            <button class="comment-submit">등록</button>
+            <input
+              v-model="newComment"
+              class="comment-input"
+              placeholder="댓글을 입력해주세요..."
+              @keyup.enter="submitComment"
+            />
+            <button class="comment-submit" :disabled="isSubmitting" @click="submitComment">
+              등록
+            </button>
           </div>
         </div>
 
       </div>
     </div>
   </div>
+
+  <ConfirmModal
+    v-if="showDeleteConfirm"
+    title="게시글을 삭제하시겠습니까?"
+    subtitle="이 작업은 되돌릴 수 없습니다."
+    confirm-text="삭제"
+    type="danger"
+    @close="showDeleteConfirm = false"
+    @confirm="confirmDeletePost"
+  />
+
+  <BeseModel
+    v-if="modalState.visible && modalState.type === 'confirm'"
+    title="댓글 삭제"
+    @close="closeModal"
+  >
+    <p style="font-size:14px; color:#444;">댓글을 삭제하시겠습니까?</p>
+    <template #footer>
+      <button class="modal-btn-cancel" @click="closeModal">취소</button>
+      <button class="modal-btn-confirm" @click="() => { modalState.onConfirm?.(); closeModal() }">삭제</button>
+    </template>
+  </BeseModel>
+  <ActionResultModal
+    v-if="modalState.visible && modalState.type === 'alert'"
+    :title="modalState.title"
+    :desc="modalState.message"
+    type="warning"
+    @close="closeModal"
+  />
 </template>
 
 <style scoped>

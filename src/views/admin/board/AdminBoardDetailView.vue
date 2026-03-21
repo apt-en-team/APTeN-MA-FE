@@ -1,24 +1,45 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/modules/auth'
 import { useBoardStore } from '@/stores/modules/board'
-import { getPostDetail } from '@/api/board'
+import { getAdminPostDetail } from '@/api/board'
 import 'quill/dist/quill.snow.css'
 import CommentItem from '@/components/board/CommentItem.vue'
 import BoardCard from '@/components/board/BoardCard.vue'
+import BaseModal from '@/components/common/BeseModel.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import { useComment } from '@/composables/useComment'
 
 const route      = useRoute()
 const router     = useRouter()
+const auth       = useAuthStore()
 const boardStore = useBoardStore()
+
+// confirm() 대신 모달 상태
+const showDeleteConfirm = ref(false)
 
 const post    = ref(null)
 const loading = ref(false)
 
+const {
+  comments,
+  newComment,
+  isSubmitting,
+  modalState,
+  closeModal,
+  fetchComments,
+  submitComment,
+  editComment,
+  removeComment,
+} = useComment(route.params.id)
+
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await getPostDetail(route.params.id)
+    const res = await getAdminPostDetail(route.params.id)
     post.value = res.data
+    await fetchComments()
   } finally {
     loading.value = false
   }
@@ -36,29 +57,21 @@ function getCategoryLabel(category) {
   return category
 }
 
-function goBack() {
-  router.push('/admin/board')
+function goBack()  { router.push('/admin/board') }
+function editPost() { router.push(`/admin/boards/modify/${route.params.id}`) }
+
+// 버튼 클릭 시 모달 열기
+function openDeleteConfirm() {
+  showDeleteConfirm.value = true
 }
 
-function editPost() {
-  router.push(`/admin/boards/modify/${route.params.id}`)
-}
-
+// 실제 삭제 처리
 async function deletePost() {
-  if (!confirm('정말 삭제하시겠습니까?')) return
-  await boardStore.deletePost(route.params.id)
+  showDeleteConfirm.value = false
+  await boardStore.deletePostByAdmin(route.params.id)
   router.push('/admin/board')
 }
 
-const comments  = ref([])
-const newComment = ref('')
-
-function deleteComment(commentId) {
-  console.log('delete', commentId) // TODO: API 연동
-}
-function editComment({ commentId, content }) {
-  console.log('edit', commentId, content) // TODO: API 연동
-}
 </script>
 
 <template>
@@ -69,6 +82,8 @@ function editComment({ commentId, content }) {
 
       <!-- 메인 본문 -->
       <div class="detail-main">
+
+        <!-- 게시글 카드 -->
         <BoardCard
           :title="post.title"
           :content="post.content"
@@ -78,42 +93,56 @@ function editComment({ commentId, content }) {
           :view-count="post.viewCount"
           :image-url="post.imageUrl"
         >
-          <!-- 카테고리 배지: 카테고리에 따라 분기 -->
           <template #badge>
             <span v-if="post.category === 'NOTICE'" class="badge-gong">공지</span>
             <span v-else class="badge-category">{{ getCategoryLabel(post.category) }}</span>
           </template>
-
-          <!-- 관리자 배지: NOTICE일 때만 표시 -->
           <template #author-extra>
-            <span v-if="post.category === 'NOTICE'" class="badge-admin">관리자</span>
+            <span v-if="post.category === 'NOTICE'" class="badge-admin-label">관리자</span>
           </template>
         </BoardCard>
 
-        <!-- 댓글 -->
+        <!-- 댓글 카드 -->
         <div class="comment-card">
           <p class="comment-title">
             댓글
-            <span class="comment-badge">{{ comments.filter(c => c.isDeleted === 0).length }}</span>
+            <span class="comment-badge">
+              {{ comments.filter(c => c.isDeleted !== 1).length }}
+            </span>
           </p>
+
           <div class="comment-list">
-            <div v-if="comments.length === 0" class="comment-empty">
-              등록된 댓글이 없습니다.
-            </div>
-            <CommentItem
-              v-for="comment in comments"
-              :key="comment.commentId"
-              :comment="comment"
-              mode="admin"
-              @delete="deleteComment"
-              @edit="editComment"
-            />
+            <template v-if="comments.length > 0">
+              <CommentItem
+                v-for="comment in comments"
+                :key="comment.commentId"
+                :comment="comment"
+                mode="admin"
+                :current-user-id="auth.user?.userId"
+                @delete="removeComment"
+                @edit="editComment"
+              />
+            </template>
+            <div v-else class="comment-empty">등록된 댓글이 없습니다.</div>
           </div>
+
           <div class="comment-input-wrap">
-            <input v-model="newComment" class="comment-input" placeholder="관리자 댓글을 입력해주세요..." />
-            <button class="comment-submit">등록</button>
+            <input
+              v-model="newComment"
+              class="comment-input"
+              placeholder="관리자 댓글을 입력해주세요..."
+              @keyup.enter="submitComment"
+            />
+            <button
+              class="comment-submit"
+              :disabled="isSubmitting"
+              @click="submitComment"
+            >
+              등록
+            </button>
           </div>
         </div>
+
       </div>
 
       <!-- 우측 사이드바 -->
@@ -144,7 +173,7 @@ function editComment({ commentId, content }) {
           </div>
           <div class="info-row">
             <span class="info-label">댓글 수</span>
-            <span class="info-value">{{ post.commentCount }}</span>
+            <span class="info-value">{{ comments.filter(c => c.isDeleted !== 1).length }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">작성일</span>
@@ -154,7 +183,7 @@ function editComment({ commentId, content }) {
             <span class="info-label">삭제 여부</span>
             <span class="info-value">
               <span class="status-badge" :class="post.isDeleted ? 'status-deleted' : 'status-normal'">
-                {{ post.isDeleted ? '삭제' : '정상 (0)' }}
+                {{ post.isDeleted ? '삭제' : '정상' }}
               </span>
             </span>
           </div>
@@ -166,12 +195,46 @@ function editComment({ commentId, content }) {
           <div class="manage-btns">
             <button class="btn-back" @click="goBack">목록으로 돌아가기</button>
             <button v-if="post.category === 'NOTICE'" class="btn-edit" @click="editPost">게시글 수정</button>
-            <button class="btn-delete" @click="deletePost">게시글 삭제</button>
+            <button class="btn-delete" @click="openDeleteConfirm">게시글 삭제</button>
           </div>
         </div>
 
       </div>
     </div>
+    <!-- 게시글 삭제 확인 모달 -->
+    <ConfirmModal
+      v-if="showDeleteConfirm"
+      title="게시글을 삭제하시겠습니까?"
+      subtitle="이 작업은 되돌릴 수 없습니다."
+      warn-text="삭제 시 해당 게시글의 댓글도 함께 삭제됩니다."
+      confirm-text="삭제"
+      type="danger"
+      @close="showDeleteConfirm = false"
+      @confirm="deletePost"
+    >
+      <div style="font-weight:600">{{ post?.title }}</div>
+      <div style="font-size:12px; color:#999; margin-top:4px">
+        {{ getCategoryLabel(post?.category) }} · {{ post?.authorName }}
+      </div>
+    </ConfirmModal>
+
+    <!-- 댓글 공통 모달 -->
+    <BaseModal
+      v-if="modalState.visible"
+      :title="modalState.title"
+      @close="closeModal"
+    >
+      <p style="font-size:14px; color:#444;">{{ modalState.message }}</p>
+      <template #footer>
+        <template v-if="modalState.type === 'confirm'">
+          <button class="modal-btn-cancel" @click="closeModal">취소</button>
+          <button class="modal-btn-confirm" @click="() => { modalState.onConfirm?.(); closeModal() }">확인</button>
+        </template>
+        <template v-else>
+          <button class="modal-btn-confirm" @click="closeModal">확인</button>
+        </template>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -200,7 +263,7 @@ function editComment({ commentId, content }) {
   font-size: 11px; font-weight: 700;
   padding: 3px 8px; border-radius: 4px; width: fit-content;
 }
-.badge-admin {
+.badge-admin-label {
   font-size: 10px; font-weight: 700;
   background: #4973E5; color: #fff;
   padding: 2px 6px; border-radius: 4px;
@@ -239,7 +302,8 @@ function editComment({ commentId, content }) {
   font-size: 13px; font-weight: 600; cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
 }
-.comment-submit:hover { background: #1E2A3E; }
+.comment-submit:hover:not(:disabled) { background: #1E2A3E; }
+.comment-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* 사이드바 */
 .sidebar-card {
@@ -288,6 +352,21 @@ function editComment({ commentId, content }) {
   font-family: 'Noto Sans KR', sans-serif;
 }
 .btn-delete:hover { background: #FFF5F5; }
+
+.modal-btn-cancel {
+  padding: 8px 20px;
+  border: 1px solid #E2E8F0; border-radius: 8px;
+  background: #fff; color: #718096;
+  font-size: 13px; cursor: pointer;
+}
+.modal-btn-cancel:hover { background: #F5F6F8; }
+.modal-btn-confirm {
+  padding: 8px 20px;
+  border: none; border-radius: 8px;
+  background: #2B3A55; color: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.modal-btn-confirm:hover { background: #1E2A3E; }
 
 .loading { text-align: center; padding: 60px; color: #999; }
 </style>

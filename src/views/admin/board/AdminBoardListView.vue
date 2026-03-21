@@ -1,15 +1,15 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, inject, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBoardStore } from '@/stores/modules/board'
 import StatsGrid  from '@/components/admin/StatsCards.vue'
 import DataTable  from '@/components/admin/AdminTable.vue'
 import FilterBar  from '@/components/layout/FilterBar.vue'
 import Pagination from '@/components/layout/Pagination.vue'
-import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
 const boardStore = useBoardStore()
+const registerOpenModal = inject('registerOpenModal')
 
 // ── 탭 ───────────────────────────────────────────────────────
 const activeTab = ref('ALL') // 'ALL' | 'NOTICE' | 'FREE'
@@ -29,27 +29,40 @@ const loading = ref(false)
 async function fetchData() {
   loading.value = true
   try {
-    const category = activeTab.value === 'ALL' ? '' : activeTab.value
-    await boardStore.fetchAdminPosts({ category, page: currentPage.value, size: PAGE_SIZE })
+    const category = activeTab.value === 'ALL'
+      ? (filterCategory.value || '')
+      : activeTab.value
+    const isDeleted = filterDeleted.value === '' ? null : Number(filterDeleted.value)
+    await boardStore.fetchAdminPosts({ category, page: currentPage.value, size: PAGE_SIZE, isDeleted })
   } finally {
     loading.value = false
   }
 }
 
 onMounted(async () => {
+  registerOpenModal(() => {
+    router.push('/admin/board/write')
+  })
+
   loading.value = true
   try {
-    // 현재 탭 데이터 + 각 카테고리 카운트 동시 호출
     await Promise.all([
       fetchData(),
-      boardStore.fetchAdminPostCount(''),        // 전체
-      boardStore.fetchAdminPostCount('NOTICE'),  // 공지
-      boardStore.fetchAdminPostCount('FREE'),    // 자유
-      boardStore.fetchAdminPostCount('INQUIRY'), // 문의
+      boardStore.fetchAdminBoardStats()
     ])
   } finally {
     loading.value = false
   }
+})
+
+watch(filterDeleted, () => {
+  currentPage.value = 1
+  fetchData()
+})
+
+watch(filterCategory, () => {
+  currentPage.value = 1
+  fetchData()
 })
 
 // ── 탭 변경 ──────────────────────────────────────────────────
@@ -71,40 +84,39 @@ function resetFilters() {
 const posts = computed(() => boardStore.adminPosts ?? [])
 
 const filteredPosts = computed(() => {
-  return posts.value.filter(p => {
-    const kw = searchKeyword.value.trim().toLowerCase()
-    const matchKw  = !kw || p.title.toLowerCase().includes(kw) || p.authorName?.toLowerCase().includes(kw)
-    const matchCat = !filterCategory.value || p.category === filterCategory.value
-    const matchDel = filterDeleted.value === '' || String(p.isDeleted) === filterDeleted.value
-    return matchKw && matchCat && matchDel
-  })
+  const kw = searchKeyword.value.trim().toLowerCase()
+  if (!kw) return posts.value
+  return posts.value.filter(p =>
+    p.title.toLowerCase().includes(kw) ||
+    p.authorName?.toLowerCase().includes(kw)
+  )
 })
 
 // ── 통계 카드 (API 없으므로 totalCount 활용) ──────────────────
 const stats = computed(() => [
   {
     label: '전체 게시글',
-    value: boardStore.adminTotalCount ?? 0,
+    value: boardStore.adminStats.totalCount,
     unit: '개',
-    desc: `공지 · 자유 전체`,
+    desc: '공지 · 자유 · 문의 전체',
   },
   {
     label: '오늘 작성',
-    value: '-',
+    value: boardStore.adminStats.todayCount,
     unit: '개',
-    desc: '통계 API 연동 후 표시',
+    desc: '오늘 등록된 게시글',
   },
   {
     label: '전체 댓글',
-    value: '-',
+    value: boardStore.adminStats.commentCount,
     unit: '개',
-    desc: '통계 API 연동 후 표시',
+    desc: '전체 댓글 수',
   },
   {
     label: '삭제된 글',
-    value: '-',
+    value: boardStore.adminStats.deletedCount,
     unit: '개',
-    desc: '통계 API 연동 후 표시',
+    desc: '소프트 삭제된 게시글',
   },
 ])
 
@@ -134,10 +146,10 @@ function onPageChange(page) {
 
 // ── 탭별 카운트 ───────────────────────────────────────────────
 const tabCounts = computed(() => ({
-  ALL:    boardStore.adminTotalCount ?? 0,
-  NOTICE: boardStore.adminNoticeTotalCount ?? 0,
-  FREE:   boardStore.adminFreeTotalCount ?? 0,
-  INQUIRY: boardStore.adminInquiryTotalCount ?? 0,
+  ALL:     boardStore.adminStats.totalCount,
+  NOTICE:  boardStore.adminStats.noticeCount,
+  FREE:    boardStore.adminStats.freeCount,
+  INQUIRY: boardStore.adminStats.inquiryCount,
 }))
 </script>
 
@@ -213,7 +225,6 @@ const tabCounts = computed(() => ({
         <!-- 제목 + 댓글수 -->
         <template #cell-title="{ row }">
           <span class="title-text">{{ row.title }}</span>
-          <span v-if="row.commentCount > 0" class="comment-count">[{{ row.commentCount }}]</span>
         </template>
 
         <!-- 작성일 -->
