@@ -1,48 +1,59 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/modules/auth.js";
-import Modal from "@/components/Modal.vue";
-import { useReservationStore } from "@/stores/modules/reservation.js";
+import {onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthStore} from '@/stores/modules/auth.js'
+import vehicleAPI from '@/api/vehicle.js'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
-const router = useRouter();
-const auth = useAuthStore();
-const reservationStore = useReservationStore();
+const router = useRouter()
+const auth = useAuthStore()
 
-const showDeactivateConfirm = ref(false);
-const errorMsg = ref("");
+const showDeactivateConfirm = ref(false)
+const errorMsg = ref('')
+const vehicleCount = ref(0)
 
-const reservations = computed(() => reservationStore.myReservationList || []);
+// 관리자 연락처 (고정값)
+const ADMIN_PHONE = '010-1234-5678'
 
 onMounted(async () => {
-  await auth.fetchMe();
-  await reservationStore.fetchMyReservationList({ page: 1, size: 3, tab: "" });
-});
+  await auth.fetchMe()
+  // 등록 차량 수 (APPROVED만)
+  try {
+    const res = await vehicleAPI.getMyVehicles()
+    const vehicles = res.data?.resultData ?? []
+    vehicleCount.value = vehicles.filter(v => v.status === 'APPROVED').length
+  } catch (e) {
+    console.error('차량 목록 조회 실패', e)
+  }
+})
 
 async function handleLogout() {
-  await auth.logout();
-  router.push("/login");
+  await auth.logout()
+  router.push('/login')
 }
 
 async function handleDeactivate() {
   try {
-    await auth.deactivate();
-    router.push("/login");
+    await auth.deactivate()
+    router.push('/login')
   } catch (e) {
-    errorMsg.value = "탈퇴 처리에 실패했습니다";
+    errorMsg.value = '탈퇴 처리에 실패했습니다'
   }
 }
 </script>
 
 <template>
   <div class="mypage">
+
     <div class="content-wrapper">
+
+      <!-- 왼쪽 패널 -->
       <div class="left-panel">
         <div class="avatar-wrap">
           <div class="avatar"></div>
           <div class="online-dot"></div>
         </div>
-        <p class="user-name">{{ auth.user?.name || "-" }}</p>
+        <p class="user-name">{{ auth.user?.name || '-' }}</p>
         <p class="user-household">{{ auth.user?.dong }} {{ auth.user?.ho }}</p>
         <div class="line"></div>
         <div class="section-title-row">
@@ -52,25 +63,22 @@ async function handleDeactivate() {
         <div class="info-list">
           <div class="info-item">
             <span class="info-label">동/호수</span>
-            <span class="info-value">{{
-              auth.user?.dong && auth.user?.ho ? `${auth.user.dong} ${auth.user.ho}` : "-"
-            }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">입주일</span>
-            <span class="info-value">-</span>
+            <span class="info-value">
+              {{ auth.user?.dong && auth.user?.ho ? `${auth.user.dong} ${auth.user.ho}` : '-' }}
+            </span>
           </div>
           <div class="info-item">
             <span class="info-label">등록 차량</span>
-            <span class="info-value">-</span>
+            <span class="info-value">{{ vehicleCount > 0 ? `${vehicleCount}대` : '-' }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">관리자 연락처</span>
-            <span class="info-value">-</span>
+            <span class="info-value">{{ ADMIN_PHONE }}</span>
           </div>
         </div>
       </div>
 
+      <!-- 오른쪽 패널 -->
       <div class="right-panel">
         <div class="card">
           <div class="card-header">
@@ -79,27 +87,27 @@ async function handleDeactivate() {
           </div>
           <div class="quick-grid">
             <router-link to="/resident/my-vehicle" class="quick-item">
-              <div class="quick-icon" style="background: #ebf5ff">🚗</div>
+              <div class="quick-icon" style="background:#EBF5FF;">🚗</div>
               <span>내 차량 등록</span>
             </router-link>
             <router-link to="/resident/visitor-vehicles" class="quick-item">
-              <div class="quick-icon" style="background: #fff8e8">📋</div>
+              <div class="quick-icon" style="background:#FFF8E8;">📋</div>
               <span>방문 등록</span>
             </router-link>
             <router-link to="/resident/board/my-posts" class="quick-item">
-              <div class="quick-icon" style="background: #f0f0ff">👤</div>
+              <div class="quick-icon" style="background:#F0F0FF;">👤</div>
               <span>내가 쓴 글</span>
             </router-link>
-            <router-link to="/resident/facility" class="quick-item">
-              <div class="quick-icon" style="background: #edfaf4">🏋️</div>
+            <router-link to="/resident/reservation" class="quick-item">
+              <div class="quick-icon" style="background:#EDFAF4;">🏋️</div>
               <span>시설 예약</span>
             </router-link>
             <router-link to="/resident/board/form" class="quick-item">
-              <div class="quick-icon" style="background: #f5eeff">✏️</div>
+              <div class="quick-icon" style="background:#F5EEFF;">✏️</div>
               <span>글 작성</span>
             </router-link>
             <router-link to="/resident/board/notice" class="quick-item">
-              <div class="quick-icon" style="background: #fff0ec">🔔</div>
+              <div class="quick-icon" style="background:#FFF0EC;">🔔</div>
               <span>공지사항</span>
             </router-link>
           </div>
@@ -109,63 +117,37 @@ async function handleDeactivate() {
           <div class="card-header">
             <span class="card-header-icon">📅</span>
             <h3>내 예약 현황</h3>
-            <router-link to="/resident/my-reservation" class="more-link"
-              >예약하기 →</router-link
-            >
+            <router-link to="/resident/my-reservation" class="more-link">예약하기 →</router-link>
           </div>
-
-          <div v-if="reservations.length > 0" class="reservation-list">
-            <div
-              v-for="r in reservations"
-              :key="r.reservationId"
-              class="reservation-item"
-              @click="router.push('/resident/my-reservation')"
-            >
-              <div class="day">
-                {{ String(new Date(r.reservationDate).getDate()).padStart(2, "0") }}
-              </div>
-              <div class="res-info">
-                <div class="res-name">{{ r.facilityName }}</div>
-                <div class="res-time">
-                  {{ r.reservationDate }} · {{ r.startTime?.slice(0, 5) }} ~
-                  {{ r.endTime?.slice(0, 5) }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="reservation-empty">
+          <div class="reservation-empty">
             <p>예약 내역이 없습니다</p>
-            <router-link to="/resident/facility" class="btn-reserve"
-              >예약하러 가기</router-link
-            >
+            <router-link to="/resident/reservation" class="btn-reserve">예약하러 가기</router-link>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- 하단 버튼 -->
     <div class="bottom-buttons">
       <button class="btn-logout" @click="handleLogout">↪ 로그아웃</button>
-      <button class="btn-deactivate" @click="showDeactivateConfirm = true">
-        ⊗ 회원 탈퇴
-      </button>
+      <button class="btn-deactivate" @click="showDeactivateConfirm = true">⊗ 회원 탈퇴</button>
     </div>
 
-    <Modal
-      v-if="showDeactivateConfirm"
-      title="회원 탈퇴"
-      subtitle="탈퇴 후에는 복구가 불가능합니다."
-      @close="showDeactivateConfirm = false"
-    >
-      <p class="modal-desc">정말 탈퇴하시겠습니까?</p>
-      <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
-      <template #footer>
-        <button class="btn-modal-cancel" @click="showDeactivateConfirm = false">
-          취소
-        </button>
-        <button class="btn-modal-delete" @click="handleDeactivate">탈퇴하기</button>
-      </template>
-    </Modal>
+    <!-- 탈퇴 확인 모달: ConfirmModal (입주민 → theme="resident") -->
+    <ConfirmModal
+        v-if="showDeactivateConfirm"
+        title="정말 탈퇴하시겠습니까?"
+        subtitle="탈퇴 후에는 복구가 불가능합니다."
+        subtitle-color="#E53E3E"
+        item-label="계정"
+        :item-name="auth.user?.email || '-'"
+        confirm-text="탈퇴하기"
+        confirm-type="danger"
+        theme="resident"
+        @confirm="handleDeactivate"
+        @cancel="showDeactivateConfirm = false"
+    />
+
   </div>
 </template>
 
@@ -176,11 +158,13 @@ async function handleDeactivate() {
   gap: 24px;
   padding: 0px;
 }
+
 .content-wrapper {
   display: flex;
   gap: 32px;
   align-items: flex-start;
 }
+
 .left-panel {
   width: 220px;
   flex-shrink: 0;
@@ -193,128 +177,151 @@ async function handleDeactivate() {
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
 .avatar-wrap {
   position: relative;
   width: 72px;
   height: 72px;
   margin: 0 auto 12px;
 }
+
 .avatar {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #e0e3ea;
+  background: #E0E3EA;
 }
+
 .online-dot {
   position: absolute;
   bottom: 3px;
   right: 3px;
   width: 13px;
   height: 13px;
-  background: #2ead5c;
+  background: #2EAD5C;
   border-radius: 50%;
   border: 2px solid #fff;
 }
+
 .user-name {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #1A1A2E;
   margin: 0 0 4px;
 }
+
 .user-household {
   font-size: 13px;
   color: #999;
   margin: 0;
 }
+
 .section-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 16px;
 }
+
 .line {
   width: 100%;
   height: 1px;
-  background: #e0e3eb;
+  background: #E0E3EB;
   margin: 16px 0;
 }
+
 .title-text {
   font-size: 14px;
   font-weight: 700;
   text-align: left;
   color: #333;
 }
+
 .edit-link {
   margin-left: auto;
   font-size: 12px;
-  color: #4973e5;
+  color: #4973E5;
   text-decoration: none;
   font-weight: 600;
 }
+
 .edit-link:hover {
   text-decoration: underline;
 }
+
 .info-list {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
+
 .info-item {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
+
 .info-label {
   font-size: 11px;
   color: #aaa;
 }
+
 .info-value {
   font-size: 13px;
   font-weight: 600;
   color: #333;
 }
+
 .right-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
 .card {
   background: #fff;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
 .card-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 18px;
 }
+
 .card-header-icon {
   font-size: 16px;
 }
+
 .card-header h3 {
   font-size: 15px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #1A1A2E;
   margin: 0;
 }
+
 .more-link {
   margin-left: auto;
   font-size: 12px;
-  color: #4973e5;
+  color: #4973E5;
   text-decoration: none;
   font-weight: 600;
 }
+
 .more-link:hover {
   text-decoration: underline;
 }
+
 .quick-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
+
 .quick-item {
   display: flex;
   flex-direction: column;
@@ -322,18 +329,20 @@ async function handleDeactivate() {
   gap: 8px;
   padding: 18px 10px;
   border-radius: 12px;
-  background: #f8f9fc;
+  background: #F8F9FC;
   text-decoration: none;
   color: #333;
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid #f0f1f5;
+  border: 1px solid #F0F1F5;
   transition: background 0.15s, transform 0.15s;
 }
+
 .quick-item:hover {
-  background: #eef1ff;
+  background: #EEF1FF;
   transform: translateY(-2px);
 }
+
 .quick-icon {
   width: 42px;
   height: 42px;
@@ -343,51 +352,7 @@ async function handleDeactivate() {
   justify-content: center;
   font-size: 20px;
 }
-.reservation-list {
-  display: flex;
-  flex-direction: column;
-}
-.reservation-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  cursor: pointer;
-  padding: 10px 0;
-  border-bottom: 1px solid #f5f6f8;
-}
-.reservation-item:last-child {
-  border-bottom: none;
-}
-.reservation-item:hover {
-  opacity: 0.8;
-}
-.day {
-  width: 40px;
-  height: 40px;
-  background: #f0f4ff;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: #2b3a55;
-  flex-shrink: 0;
-}
-.res-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.res-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a202c;
-}
-.res-time {
-  font-size: 11px;
-  color: #a0aec0;
-}
+
 .reservation-empty {
   display: flex;
   flex-direction: column;
@@ -395,87 +360,60 @@ async function handleDeactivate() {
   padding: 28px 0;
   gap: 12px;
 }
+
 .reservation-empty p {
   font-size: 14px;
   color: #bbb;
   margin: 0;
 }
+
 .btn-reserve {
   padding: 8px 20px;
-  background: #f0f2ff;
-  color: #4973e5;
+  background: #F0F2FF;
+  color: #4973E5;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
 }
+
 .btn-reserve:hover {
-  background: #e0e5ff;
+  background: #E0E5FF;
 }
+
 .bottom-buttons {
   display: flex;
   justify-content: center;
   gap: 10px;
 }
-.btn-logout,
-.btn-deactivate {
+
+.btn-logout, .btn-deactivate {
   padding: 10px 20px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
+
 .btn-logout {
   background: #fff;
-  border: 1px solid #e0e3eb;
+  border: 1px solid #E0E3EB;
   color: #555;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
+
 .btn-logout:hover {
-  background: #f5f6fa;
+  background: #F5F6FA;
 }
+
 .btn-deactivate {
   background: #fff;
-  border: 1px solid #ffcdd2;
-  color: #e05555;
+  border: 1px solid #FFCDD2;
+  color: #E05555;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
+
 .btn-deactivate:hover {
-  background: #fff5f5;
-}
-.modal-desc {
-  font-size: 14px;
-  color: #555;
-  margin: 0;
-}
-.error-msg {
-  color: #e05555;
-  font-size: 13px;
-  margin-top: 8px;
-}
-.btn-modal-cancel {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #e0e3eb;
-  border-radius: 8px;
-  background: #fff;
-  color: #555;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-modal-delete {
-  flex: 1;
-  padding: 10px;
-  background: #e05555;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-modal-delete:hover {
-  background: #c94444;
+  background: #FFF5F5;
 }
 </style>

@@ -1,48 +1,38 @@
-<!-- src/views/resident/parking/VisitorVehiclesEditView.vue -->
 <script setup>
 import {ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {registerVisitorVehicle} from '@/api/visitorVehicle.js'
+import ActionResultModal from '@/components/common/ActionResultModal.vue'
 
 const router = useRouter()
-const loading = ref(false)   // 등록 중 버튼 비활성화용
-const errorMsg = ref('')     // 에러 메시지 표시용
-const successMsg = ref('')   // 성공 메시지 표시용
+const loading = ref(false)
+const errorMsg = ref('')
 
-// 오늘 날짜 (input date의 min 속성에 넣어서 과거 날짜 선택 차단)
+// 성공 모달 상태
+const successModal = ref({show: false, licensePlate: ''})
+
 const today = new Date().toISOString().split('T')[0]
-
-// 방문 목적 빠른 선택 태그
 const purposeTags = ['택배 수령', '친척 방문', '지인 방문', '이사 도우미', '인테리어 공사', '기타']
 
-// 폼 데이터 (백엔드 VisitorVehicleReq와 동일한 구조)
 const form = ref({
-  licensePlate: '', // 차량번호
-  visitorName: '',  // 방문자 이름
-  visitPurpose: '', // 방문 목적
-  visitDate: ''     // 방문 예정일
+  licensePlate: '',
+  visitorName: '',
+  visitPurpose: '',
+  visitDate: ''
 })
 
-// 방문 목적 태그 클릭 시 폼에 반영
-// 이미 선택된 태그 클릭 시 해제
 const selectPurposeTag = (tag) => {
   form.value.visitPurpose = form.value.visitPurpose === tag ? '' : tag
 }
 
-// 등록 버튼 클릭 시 실행
 const handleSubmit = async () => {
   errorMsg.value = ''
-  successMsg.value = ''
   loading.value = true
   try {
-    // 1. POST /api/visitor-vehicles 호출
     await registerVisitorVehicle(form.value)
-
-    // 2. 성공하면 이 줄이 실행
-    successMsg.value = '방문차량이 등록되었습니다.'
-
-    // 3. 0.3초 후 목록 페이지로 이동
-    setTimeout(() => router.push({name: 'VisitorVehiclesList'}), 300)
+    // 성공 → ActionResultModal 오픈
+    successModal.value.licensePlate = form.value.licensePlate
+    successModal.value.show = true
   } catch (error) {
     if (error.response?.status === 400) {
       errorMsg.value = '과거 날짜는 선택할 수 없습니다.'
@@ -52,6 +42,12 @@ const handleSubmit = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 모달 확인 버튼 클릭 → 목록 페이지로 이동
+const handleSuccessClose = () => {
+  successModal.value.show = false
+  router.push({name: 'VisitorVehiclesList'})
 }
 </script>
 
@@ -66,46 +62,34 @@ const handleSubmit = async () => {
           <p class="subtitle">모든 * 항목은 필수 입력입니다.</p>
         </div>
 
-        <!-- 차량번호 (필수) -->
         <div class="field">
           <label>차량번호 <span class="required">*</span></label>
           <input v-model="form.licensePlate" type="text" placeholder="예: 12가3456"/>
         </div>
 
-        <!-- 방문자 이름 (선택) -->
         <div class="field">
           <label>방문자 이름</label>
           <input v-model="form.visitorName" type="text" placeholder="방문자 이름을 입력하세요"/>
         </div>
 
-        <!-- 방문 목적 (선택) — 태그 선택 or 직접 입력 -->
         <div class="field">
           <label>방문 목적</label>
           <input v-model="form.visitPurpose" type="text" placeholder="방문 목적을 선택하거나 직접 입력하세요"/>
-          <!-- 빠른 선택 태그 -->
           <div class="tag-list">
-            <button
-                v-for="tag in purposeTags"
-                :key="tag"
-                :class="['tag-btn', form.visitPurpose === tag ? 'tag-active' : '']"
-                @click="selectPurposeTag(tag)"
-            >
+            <button v-for="tag in purposeTags" :key="tag"
+                    :class="['tag-btn', form.visitPurpose === tag ? 'tag-active' : '']" @click="selectPurposeTag(tag)">
               {{ tag }}
             </button>
           </div>
         </div>
 
-        <!-- 방문 예정일 (필수, 오늘 이후만 선택 가능) -->
         <div class="field">
           <label>방문 예정일 <span class="required">*</span></label>
           <input v-model="form.visitDate" type="date" :min="today"/>
         </div>
 
-        <!-- 에러/성공 메시지 -->
         <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
-        <p v-if="successMsg" class="success">{{ successMsg }}</p>
 
-        <!-- 하단 버튼 -->
         <div class="form-actions">
           <div class="right-actions">
             <button class="btn-cancel" @click="router.push({ name: 'VisitorVehiclesList' })">취소</button>
@@ -130,6 +114,19 @@ const handleSubmit = async () => {
       </div>
 
     </div>
+
+    <!-- 등록 완료 모달: ActionResultModal (입주민 → theme="resident") -->
+    <ActionResultModal
+        v-if="successModal.show"
+        type="success"
+        title="등록 완료"
+        subtitle="방문차량이 등록되었습니다"
+        :item-name="successModal.licensePlate"
+        action-label="방문차량 등록"
+        confirm-text="확인"
+        theme="resident"
+        @close="handleSuccessClose"
+    />
   </div>
 </template>
 
@@ -145,7 +142,6 @@ const handleSubmit = async () => {
   align-items: flex-start;
 }
 
-/* 왼쪽 폼 */
 .edit-card {
   flex: 1;
   background: #fff;
@@ -211,12 +207,6 @@ const handleSubmit = async () => {
   margin-bottom: 12px;
 }
 
-.success {
-  color: #2EAD5C;
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -265,7 +255,6 @@ const handleSubmit = async () => {
   cursor: not-allowed;
 }
 
-/* 방문 목적 태그 */
 .tag-list {
   display: flex;
   flex-wrap: wrap;
@@ -297,7 +286,6 @@ const handleSubmit = async () => {
   font-weight: 600;
 }
 
-/* 오른쪽 사이드 */
 .side-panel {
   width: 260px;
   flex-shrink: 0;

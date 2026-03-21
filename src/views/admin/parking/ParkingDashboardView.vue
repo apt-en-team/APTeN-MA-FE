@@ -3,17 +3,18 @@ import {reactive, computed, onMounted} from 'vue'
 import {getAdminParkingStatus, updateParkingLot} from '@/api/parking.js'
 import VueApexCharts from 'vue3-apexcharts'
 import StatsCards from '@/components/admin/StatsCards.vue'
-import Modal from '@/components/Modal.vue'
+// 수정 모달 → BaseModal (제목+내용+푸터 슬롯 있는 범용 모달)
+import BaseModal from '@/components/common/BeseModel.vue'
 
 // ── 상태 ──────────────────────────────────────────────────────
 const state = reactive({
-  totalSpaces: 0,        // 전체 주차면 수
-  currentCount: 0,       // 현재 주차 중인 차량 수
-  availableCount: 0,     // 현재 가용 주차면 수
-  registeredCount: 0,    // 등록 차량 수
-  visitorCount: 0,       // 방문 차량 수
-  fixedVisitorCount: 0,  // 고정방문 차량 수
-  unregisteredCount: 0,  // 미등록 차량 수
+  totalSpaces: 0,
+  currentCount: 0,
+  availableCount: 0,
+  registeredCount: 0,
+  visitorCount: 0,
+  fixedVisitorCount: 0,
+  unregisteredCount: 0,
   loading: true,
 
   // 주차장 수정 모달 상태
@@ -23,7 +24,7 @@ const state = reactive({
   submitError: '',
 })
 
-// ── 주차 사용률 계산 (현재 주차 중 / 전체 주차면 * 100) ───────
+// ── 주차 사용률 계산 ──────────────────────────────────────────
 const usageRate = computed(() =>
     state.totalSpaces > 0 ? Math.round((state.currentCount / state.totalSpaces) * 100) : 0
 )
@@ -49,19 +50,15 @@ const statsData = computed(() => [
     label: '미등록 차량',
     value: state.unregisteredCount,
     unit: '개',
-    desc: state.currentCount > 0
-        ? `전체 대비 ${Math.round((state.unregisteredCount / state.currentCount) * 100) || 0}%`
-        : '-',
+    desc: state.currentCount > 0 ? `전체 대비 ${Math.round((state.unregisteredCount / state.currentCount) * 100) || 0}%` : '-',
     descClass: state.unregisteredCount > 0 ? 'highlight-orange' : '',
   },
 ])
 
 // ── 도넛 차트 색상 ────────────────────────────────────────────
-// 등록/방문/고정방문/미등록 순서
 const defaultColors = ['#4973E5', '#34D399', '#818CF8', '#F59E0B']
 const hoverColors = ['#3560D4', '#20C080', '#6366F1', '#E08A00']
 
-// 도넛 차트 시리즈 (등록/방문/고정방문/미등록 순서)
 const chartSeries = computed(() => [
   state.registeredCount,
   state.visitorCount,
@@ -74,7 +71,6 @@ const chartOptions = computed(() => ({
   chart: {
     type: 'donut',
     events: {
-      // 호버 시 해당 색상만 진하게 변경
       dataPointMouseEnter: (event, chartContext, config) => {
         const colors = [...defaultColors]
         colors[config.dataPointIndex] = hoverColors[config.dataPointIndex]
@@ -96,9 +92,7 @@ const chartOptions = computed(() => ({
         size: '52%',
         labels: {
           show: true,
-          // 중앙 레이블: 사용률 % 표시
           total: {show: true, label: '사용률', fontSize: '13px', color: '#687282', formatter: () => `${usageRate.value}%`},
-          // 호버 시 현재/전체 면 표시
           value: {
             show: true,
             fontSize: '13px',
@@ -114,7 +108,6 @@ const chartOptions = computed(() => ({
   stroke: {show: false},
   tooltip: {
     y: {formatter: (val) => `${val}대`},
-    // 커스텀 툴팁: 유형명 + 대수 표시
     custom: ({series, seriesIndex}) => {
       const colors = ['#4973E5', '#34D399', '#818CF8', '#F59E0B']
       const labels = ['등록 차량', '방문 차량', '고정방문 차량', '미등록']
@@ -132,7 +125,6 @@ const chartOptions = computed(() => ({
 // ── API 조회 ──────────────────────────────────────────────────
 
 // 주차 현황 조회 (GET /parking/status)
-// 등록/방문/고정방문/미등록 차량 수 포함
 const fetchStatus = async () => {
   try {
     const res = await getAdminParkingStatus()
@@ -153,7 +145,7 @@ const fetchStatus = async () => {
 
 // ── 수정 모달 ─────────────────────────────────────────────────
 
-// 주차장 수정 모달 열기 (현재 데이터로 폼 초기화)
+// 주차장 수정 모달 열기
 const openEditModal = () => {
   state.editForm.name = 'APTEN 아파트 통합 주차장'
   state.editForm.totalSpaces = state.totalSpaces
@@ -162,14 +154,12 @@ const openEditModal = () => {
   state.showEditModal = true
 }
 
-// 주차장 수정 모달 닫기
 const closeEditModal = () => {
   state.showEditModal = false
   state.submitError = ''
 }
 
 // 주차장 수정 제출 (PUT /api/admin/parking/lots/{id})
-// current_count는 parking_log 집계로 계산하므로 요청에 포함하지 않음
 const submitEdit = async () => {
   if (!state.editForm.name.trim()) {
     state.submitError = '주차장 이름을 입력해주세요.';
@@ -187,7 +177,7 @@ const submitEdit = async () => {
       totalSpaces: Number(state.editForm.totalSpaces),
       note: state.editForm.note.trim() || null,
     })
-    await fetchStatus() // 수정 후 현황 새로고침
+    await fetchStatus()
     closeEditModal()
   } catch (e) {
     state.submitError = '수정에 실패했습니다.'
@@ -203,40 +193,32 @@ onMounted(fetchStatus)
 <template>
   <div class="parking-dashboard">
 
-    <!-- 상단 통계 카드 4개 (전체/사용중/가용/미등록) -->
+    <!-- 상단 통계 카드 4개 -->
     <StatsCards :stats="statsData"/>
 
-    <!-- 하단 좌우 2분할 레이아웃 -->
+    <!-- 하단 좌우 2분할 -->
     <div class="dashboard-grid">
 
       <!-- 왼쪽: 주차장 상세 + 차량 유형별 현황 -->
       <div class="card">
         <div class="section-header">
           <div class="section-title">주차장 상세</div>
-          <!-- 수정 버튼 클릭 시 수정 모달 오픈 -->
           <button class="btn-edit" @click="openEditModal">수정</button>
         </div>
-
-        <!-- 주차 사용률 프로그레스 바 (90% 이상: 빨강, 70% 이상: 주황, 미만: 파랑) -->
         <div class="usage-section">
           <div class="usage-header">
             <span class="usage-label">주차 사용률</span>
             <span class="usage-rate">{{ usageRate }}%</span>
           </div>
           <div class="usage-bar">
-            <div
-                class="usage-fill"
-                :style="{ width: usageRate + '%' }"
-                :class="{ 'fill-danger': usageRate >= 90, 'fill-warning': usageRate >= 70 && usageRate < 90, 'fill-safe': usageRate < 70 }"
-            />
+            <div class="usage-fill" :style="{ width: usageRate + '%' }"
+                 :class="{ 'fill-danger': usageRate >= 90, 'fill-warning': usageRate >= 70 && usageRate < 90, 'fill-safe': usageRate < 70 }"/>
           </div>
           <div class="usage-footer">
             <span>사용 {{ state.currentCount }}면</span>
             <span>여유 {{ state.availableCount }}면</span>
           </div>
         </div>
-
-        <!-- 차량 유형별 현황 (등록/방문/고정방문/미등록) -->
         <div class="type-title">차량 유형별 현황</div>
         <div class="type-grid">
           <div class="type-card type-registered">
@@ -278,18 +260,16 @@ onMounted(fetchStatus)
         </div>
       </div>
 
-      <!-- 오른쪽: 실시간 주차 현황 도넛 차트 -->
+      <!-- 오른쪽: 도넛 차트 -->
       <div class="card">
         <div class="section-title">실시간 주차 현황</div>
         <div class="section-sub">현재 기준</div>
         <div class="chart-wrap">
-          <!-- 주차 차량이 있을 때만 차트 렌더링 -->
           <VueApexCharts v-if="!state.loading && state.currentCount > 0" type="donut" height="300"
                          :options="chartOptions" :series="chartSeries"/>
           <div v-else-if="state.loading" class="chart-empty">조회 중...</div>
           <div v-else class="chart-empty">현재 주차 중인 차량이 없습니다</div>
         </div>
-        <!-- 범례 (등록/방문/고정방문/미등록) -->
         <div class="legend">
           <div class="legend-item"><span class="legend-dot dot-registered"/><span class="legend-label">등록 차량</span><span
               class="legend-value">{{ state.registeredCount }}대</span></div>
@@ -303,14 +283,14 @@ onMounted(fetchStatus)
       </div>
     </div>
 
-    <!-- 주차장 수정 모달 -->
-    <Modal v-if="state.showEditModal" title="주차장 수정" subtitle="ID #1 · 지하 1층" @close="closeEditModal">
+    <!-- 주차장 수정 모달: BaseModal -->
+    <BaseModal v-if="state.showEditModal" title="주차장 수정" subtitle="ID #1 · 지하 1층" @close="closeEditModal">
       <div class="modal-form">
         <div class="form-group">
           <label class="form-label">주차장 이름<span class="required">*</span></label>
           <input class="form-input" type="text" placeholder="예: 지하 1층" v-model="state.editForm.name"/>
         </div>
-        <!-- 전체 주차면 (현재 사용 중은 parking_log 집계로 계산하므로 수동 입력 불가) -->
+        <!-- current_count는 parking_log 집계로 계산하므로 수동 입력 불가 -->
         <div class="form-group">
           <label class="form-label">전체 주차면<span class="required">*</span></label>
           <input class="form-input" type="number" min="0" placeholder="예: 120" v-model="state.editForm.totalSpaces"/>
@@ -328,7 +308,7 @@ onMounted(fetchStatus)
           {{ state.submitting ? '수정 중...' : '수정 완료' }}
         </button>
       </template>
-    </Modal>
+    </BaseModal>
   </div>
 </template>
 

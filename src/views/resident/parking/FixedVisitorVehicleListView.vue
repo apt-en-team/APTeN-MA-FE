@@ -5,7 +5,8 @@ import {getMyFixedVisitorVehicles, deleteFixedVisitorVehicle} from '@/api/visito
 
 import Pagination from '@/components/layout/Pagination.vue'
 import FilterBar from '@/components/layout/FilterBar.vue'
-import Modal from '@/components/Modal.vue'
+// 삭제 확인 모달 → ConfirmModal (경고 아이콘 + 처리 항목 정보 표시)
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const router = useRouter()
 
@@ -21,11 +22,11 @@ const filter = ref({
   vehicleNumber: '',
 })
 
-// 삭제 모달
-const showDeleteModal = ref(false)
+// 삭제 확인 모달 상태 (ConfirmModal)
+const deleteModal = ref({show: false, loading: false})
 const selectedFixedId = ref(null)
-const deleteLoading = ref(false)
-const deleteError = ref('')
+// 삭제 대상 차량 정보 (ConfirmModal에 표시할 항목)
+const selectedItem = ref(null)
 
 // 사이드 카드 통계 (필터 무관)
 const allCount = ref(0)
@@ -44,7 +45,6 @@ const fetchList = async () => {
     list.value = data.content ?? []
     totalPages.value = data.totalPages ?? 1
     totalCount.value = data.totalCount ?? 0
-    // 필터 무관 통계 (사이드 카드용)
     allCount.value = data.allCount ?? 0
     unlimitedCount.value = data.unlimitedCount ?? 0
   } catch (e) {
@@ -54,49 +54,42 @@ const fetchList = async () => {
   }
 }
 
-// 페이지 변경
 const handlePageChange = (page) => {
   currentPage.value = page
   fetchList()
 }
 
-// 검색
 const handleSearch = () => {
   currentPage.value = 1
   fetchList()
 }
 
-// 초기화
 const handleReset = () => {
   filter.value = {vehicleNumber: ''}
   currentPage.value = 1
   fetchList()
 }
 
-// 삭제 모달 열기
-const openDeleteModal = (fixedId) => {
-  selectedFixedId.value = fixedId
-  deleteError.value = ''
-  showDeleteModal.value = true
+// 삭제 모달 열기 (차량 정보 저장)
+const openDeleteModal = (item) => {
+  selectedFixedId.value = item.fixedId
+  selectedItem.value = item
+  deleteModal.value.show = true
 }
 
-// 삭제 모달 닫기
-const closeDeleteModal = () => {
-  selectedFixedId.value = null
-  showDeleteModal.value = false
-}
-
-// 삭제 확인 (API-065)
+// 삭제 확인 (API-065) → ConfirmModal @confirm 이벤트에서 호출
 const confirmDelete = async () => {
-  deleteLoading.value = true
+  deleteModal.value.loading = true
   try {
     await deleteFixedVisitorVehicle(selectedFixedId.value)
-    closeDeleteModal()
+    deleteModal.value.show = false
+    selectedFixedId.value = null
+    selectedItem.value = null
     fetchList()
   } catch (e) {
-    deleteError.value = '삭제에 실패했습니다.'
+    console.error('고정 방문차량 삭제 실패', e)
   } finally {
-    deleteLoading.value = false
+    deleteModal.value.loading = false
   }
 }
 
@@ -110,41 +103,28 @@ onMounted(() => fetchList())
   <div class="fixed-vehicle-list">
     <div class="content-wrapper">
 
-      <!-- 왼쪽: 목록 영역 -->
+      <!-- 왼쪽: 목록 -->
       <div class="list-card">
-
-        <!-- 헤더 -->
         <div class="card-header">
           <div class="card-title">
             <h3>고정 방문차량 목록</h3>
             <p class="subtitle">등록한 고정 방문차량 내역을 확인할 수 있습니다.</p>
           </div>
-          <button class="btn-register" @click="router.push('/resident/visitor-vehicles/fixed/register')">
-            + 고정 방문차량 등록
+          <button class="btn-register" @click="router.push('/resident/visitor-vehicles/fixed/register')">+ 고정 방문차량 등록
           </button>
         </div>
 
-        <!-- 필터바 -->
         <FilterBar @reset="handleReset">
-          <input
-              v-model="filter.vehicleNumber"
-              type="text"
-              placeholder="차량번호 검색"
-              class="filter-input"
-              @keyup.enter="handleSearch"
-          />
+          <input v-model="filter.vehicleNumber" type="text" placeholder="차량번호 검색" class="filter-input"
+                 @keyup.enter="handleSearch"/>
           <button class="btn-search" @click="handleSearch">검색</button>
         </FilterBar>
 
-        <!-- 로딩 -->
         <div v-if="loading" class="empty-state">불러오는 중...</div>
-
-        <!-- 데이터 없을 때 -->
         <div v-else-if="list.length === 0" class="empty-state">
           {{ filter.vehicleNumber ? '검색 결과가 없습니다.' : '등록된 고정 방문차량이 없습니다.' }}
         </div>
 
-        <!-- 테이블 -->
         <div v-else class="vehicle-table-wrap">
           <table class="vehicle-table">
             <thead>
@@ -166,21 +146,16 @@ onMounted(() => fetchList())
               <td class="text-gray">{{ item.purpose || '-' }}</td>
               <td class="text-gray">{{ item.startDate?.replaceAll('-', '.') }}</td>
               <td>
-                <span :class="['end-date', { unlimited: !item.endDate }]">
-                  {{ formatEndDate(item.endDate) }}
-                </span>
+                <span :class="['end-date', { unlimited: !item.endDate }]">{{ formatEndDate(item.endDate) }}</span>
               </td>
               <td>
-                <button class="btn-act btn-act-delete" @click="openDeleteModal(item.fixedId)">
-                  삭제
-                </button>
+                <button class="btn-act btn-act-delete" @click="openDeleteModal(item)">삭제</button>
               </td>
             </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- 페이지네이션 -->
         <Pagination
             v-if="list.length > 0"
             :currentPage="currentPage"
@@ -190,10 +165,9 @@ onMounted(() => fetchList())
             unit="건"
             @change="handlePageChange"
         />
-
       </div>
 
-      <!-- 오른쪽: 사이드 통계 카드 (필터 무관) -->
+      <!-- 오른쪽: 사이드 통계 카드 -->
       <div class="side-panel">
         <div class="stat-card">
           <div class="stat-label">전체 등록 차량</div>
@@ -224,20 +198,21 @@ onMounted(() => fetchList())
 
     </div>
 
-    <!-- 삭제 확인 모달 (Modal 직접 사용) -->
-    <Modal v-if="showDeleteModal" title="고정 방문차량 삭제" @close="closeDeleteModal">
-      <p class="confirm-msg">
-        해당 차량을 고정 방문차량에서 삭제하시겠습니까?<br/>
-        <span class="confirm-sub">이 작업은 되돌릴 수 없습니다.</span>
-      </p>
-      <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <template #footer>
-        <button class="btn-modal-cancel" @click="closeDeleteModal">취소</button>
-        <button class="btn-modal-danger" @click="confirmDelete" :disabled="deleteLoading">
-          {{ deleteLoading ? '삭제 중...' : '삭제 확인' }}
-        </button>
-      </template>
-    </Modal>
+    <!-- 삭제 확인 모달: ConfirmModal (경고 아이콘 + 처리 항목 표시) -->
+    <ConfirmModal
+        v-if="deleteModal.show"
+        title="고정 방문차량을 삭제하시겠습니까?"
+        subtitle="이 작업은 되돌릴 수 없습니다."
+        item-label="차량번호"
+        action-text="방문자"
+        :item-name="selectedItem?.vehicleNumber"
+        :action-label="selectedItem?.visitorName || '-'"
+        confirm-text="삭제"
+        confirm-type="danger"
+        :loading="deleteModal.loading"
+        @confirm="confirmDelete"
+        @cancel="deleteModal.show = false"
+    />
 
   </div>
 </template>
@@ -291,7 +266,6 @@ onMounted(() => fetchList())
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-
 }
 
 .btn-register:hover {
@@ -305,7 +279,6 @@ onMounted(() => fetchList())
   font-size: 12px;
   color: #1A1A2E;
   outline: none;
-
 }
 
 .filter-input:focus {
@@ -321,7 +294,6 @@ onMounted(() => fetchList())
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-
 }
 
 .btn-search:hover {
@@ -408,7 +380,6 @@ onMounted(() => fetchList())
   cursor: pointer;
   border: 1px solid transparent;
   white-space: nowrap;
-
 }
 
 .btn-act-delete {
@@ -422,7 +393,6 @@ onMounted(() => fetchList())
   background: #FFE4E4;
 }
 
-/* 사이드 패널 */
 .side-panel {
   width: 220px;
   flex-shrink: 0;
@@ -468,59 +438,5 @@ onMounted(() => fetchList())
   right: 20px;
   top: 20px;
   opacity: 0.6;
-}
-
-/* 모달 버튼 */
-.confirm-msg {
-  font-size: 14px;
-  line-height: 1.7;
-  color: #333;
-  margin: 0;
-}
-
-.confirm-sub {
-  font-size: 12px;
-  color: #E05555;
-}
-
-.error {
-  color: #E05555;
-  font-size: 13px;
-  margin-top: 8px;
-}
-
-.btn-modal-cancel {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #E0E3EB;
-  border-radius: 8px;
-  background: #fff;
-  color: #555;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-}
-
-.btn-modal-cancel:hover {
-  background: #F5F6FA;
-}
-
-.btn-modal-danger {
-  flex: 1;
-  padding: 10px;
-  background: #E05555;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-}
-
-.btn-modal-danger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 </style>
