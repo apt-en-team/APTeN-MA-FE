@@ -3,7 +3,6 @@ import {onMounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/modules/auth.js'
 import vehicleAPI from '@/api/vehicle.js'
-import reservationAPI from '@/api/reservation.js'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const router = useRouter()
@@ -11,20 +10,14 @@ const auth = useAuthStore()
 
 const showDeactivateConfirm = ref(false)
 const errorMsg = ref('')
-
-// 승인된 차량 수 (APPROVED 상태만 카운트)
 const vehicleCount = ref(0)
-
-// 내 예약 목록 (최근 3건, 예약 있을 때 카드에 표시)
-const reservations = ref([])
 
 // 관리자 연락처 (고정값)
 const ADMIN_PHONE = '010-1234-5678'
 
 onMounted(async () => {
   await auth.fetchMe()
-
-  // 등록 차량 수 조회 (APPROVED 상태만 카운트)
+  // 등록 차량 수 (APPROVED만)
   try {
     const res = await vehicleAPI.getMyVehicles()
     const vehicles = res.data?.resultData ?? []
@@ -32,43 +25,13 @@ onMounted(async () => {
   } catch (e) {
     console.error('차량 목록 조회 실패', e)
   }
-
-  // 내 예약 목록 조회 (최근 3건)
-  // 예약 있으면 카드에 목록 표시, 없으면 시설 목록으로 이동 버튼 표시
-  try {
-    const res = await reservationAPI.getMyReservations({page: 1, size: 3, tab: ''})
-    console.log('예약 응답:', res.data)
-    reservations.value = res.data?.resultData ?? []
-  } catch (e) {
-    console.error('예약 목록 조회 실패', e)
-  }
 })
 
-// 예약 상태 → 한글 라벨 변환
-const statusLabel = (status) => {
-  if (status === 'PENDING') return '승인대기'
-  if (status === 'CONFIRMED') return '예약완료'
-  if (status === 'COMPLETED') return '이용완료'
-  if (status === 'CANCELLED') return '취소완료'
-  return status
-}
-
-// 예약 상태 → 뱃지 색상 클래스 반환
-const statusColor = (status) => {
-  if (status === 'PENDING') return 'orange'
-  if (status === 'CONFIRMED') return 'blue'
-  if (status === 'COMPLETED') return 'gray'
-  if (status === 'CANCELLED') return 'red'
-  return 'gray'
-}
-
-// 로그아웃 처리
 async function handleLogout() {
   await auth.logout()
   router.push('/login')
 }
 
-// 회원 탈퇴 처리
 async function handleDeactivate() {
   try {
     await auth.deactivate()
@@ -81,9 +44,10 @@ async function handleDeactivate() {
 
 <template>
   <div class="mypage">
+
     <div class="content-wrapper">
 
-      <!-- 왼쪽 패널: 프로필 + 세대 정보 -->
+      <!-- 왼쪽 패널 -->
       <div class="left-panel">
         <div class="avatar-wrap">
           <div class="avatar"></div>
@@ -116,8 +80,6 @@ async function handleDeactivate() {
 
       <!-- 오른쪽 패널 -->
       <div class="right-panel">
-
-        <!-- 빠른 메뉴 카드 -->
         <div class="card">
           <div class="card-header">
             <span class="card-header-icon">⚡</span>
@@ -136,8 +98,7 @@ async function handleDeactivate() {
               <div class="quick-icon" style="background:#F0F0FF;">👤</div>
               <span>내가 쓴 글</span>
             </router-link>
-            <!-- 시설 예약 → 시설 목록 페이지로 이동 -->
-            <router-link to="/resident/facility" class="quick-item">
+            <router-link to="/resident/reservation" class="quick-item">
               <div class="quick-icon" style="background:#EDFAF4;">🏋️</div>
               <span>시설 예약</span>
             </router-link>
@@ -152,55 +113,27 @@ async function handleDeactivate() {
           </div>
         </div>
 
-        <!-- 내 예약 현황 카드 -->
         <div class="card">
           <div class="card-header">
             <span class="card-header-icon">📅</span>
             <h3>내 예약 현황</h3>
             <router-link to="/resident/my-reservation" class="more-link">예약하기 →</router-link>
           </div>
-
-          <!-- 예약 없을 때: 시설 목록 페이지로 이동 -->
-          <div v-if="reservations.length === 0" class="reservation-empty">
+          <div class="reservation-empty">
             <p>예약 내역이 없습니다</p>
-            <router-link to="/resident/facility" class="btn-reserve">예약하러 가기</router-link>
-          </div>
-
-          <!-- 예약 있을 때: 목록 표시 (클릭 시 내 예약 페이지로 이동) -->
-          <div v-else class="reservation-list">
-            <div
-                v-for="res in reservations"
-                :key="res.reservationId"
-                class="reservation-item"
-                @click="router.push('/resident/my-reservation')"
-            >
-              <div class="res-left">
-                <!-- 상태 뱃지 -->
-                <span :class="['res-badge', `res-badge--${statusColor(res.status)}`]">
-                  {{ statusLabel(res.status) }}
-                </span>
-                <div>
-                  <div class="res-facility">{{ res.facilityName }}</div>
-                  <div class="res-date">
-                    {{ res.reservationDate }} ·
-                    {{ String(res.startTime).slice(0, 5) }} ~ {{ String(res.endTime).slice(0, 5) }}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <router-link to="/resident/reservation" class="btn-reserve">예약하러 가기</router-link>
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- 하단 버튼: 로그아웃 / 회원 탈퇴 -->
+    <!-- 하단 버튼 -->
     <div class="bottom-buttons">
       <button class="btn-logout" @click="handleLogout">↪ 로그아웃</button>
       <button class="btn-deactivate" @click="showDeactivateConfirm = true">⊗ 회원 탈퇴</button>
     </div>
 
-    <!-- 탈퇴 확인 모달 -->
+    <!-- 탈퇴 확인 모달: ConfirmModal (입주민 → theme="resident") -->
     <ConfirmModal
         v-if="showDeactivateConfirm"
         title="정말 탈퇴하시겠습니까?"
@@ -214,6 +147,7 @@ async function handleDeactivate() {
         @confirm="handleDeactivate"
         @cancel="showDeactivateConfirm = false"
     />
+
   </div>
 </template>
 
@@ -222,6 +156,7 @@ async function handleDeactivate() {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 0px;
 }
 
 .content-wrapper {
@@ -418,7 +353,6 @@ async function handleDeactivate() {
   font-size: 20px;
 }
 
-/* 예약 없을 때 */
 .reservation-empty {
   display: flex;
   flex-direction: column;
@@ -445,77 +379,6 @@ async function handleDeactivate() {
 
 .btn-reserve:hover {
   background: #E0E5FF;
-}
-
-/* 예약 있을 때 목록 */
-.reservation-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.reservation-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 4px;
-  border-bottom: 1px solid #F7F8FA;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.1s;
-}
-
-.reservation-item:last-child {
-  border-bottom: none;
-}
-
-.reservation-item:hover {
-  background: #F7F8FC;
-}
-
-.res-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.res-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  margin-top: 2px;
-}
-
-.res-badge--blue {
-  background: #EEF0FD;
-  color: #4973E5;
-}
-
-.res-badge--orange {
-  background: #FFF4E5;
-  color: #F59E0B;
-}
-
-.res-badge--gray {
-  background: #F3F4F6;
-  color: #9CA3AF;
-}
-
-.res-badge--red {
-  background: #FFECEC;
-  color: #EF4444;
-}
-
-.res-facility {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1A1A2E;
-}
-
-.res-date {
-  font-size: 12px;
-  color: #888;
-  margin-top: 2px;
 }
 
 .bottom-buttons {

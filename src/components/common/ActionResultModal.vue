@@ -37,12 +37,12 @@ const successBg = computed(() =>
 
 // 경고 아이콘 색
 const warningColor = computed(() =>
-    props.theme === 'resident' ? '#E53E3E' : '#E53E3E'
+    props.theme === 'resident' ? '#ED8936' : '#C08B2D'
 )
 
 // 경고 아이콘 배경색
 const warningBg = computed(() =>
-    props.theme === 'resident' ? '#FFF5F5' : '#FFF5F5'
+    props.theme === 'resident' ? '#FFFBEB' : 'rgba(192, 139, 45, 0.14)'
 )
 </script>
 
