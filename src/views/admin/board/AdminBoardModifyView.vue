@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/modules/auth'
 import { useBoardStore } from '@/stores/modules/board'
 import { getPostDetail } from '@/api/board'
 import BoardEditor from '@/components/board/BoardEditor.vue'
+import ActionResultModal from '@/components/common/ActionResultModal.vue'
 
 const route      = useRoute()
 const router     = useRouter()
@@ -16,6 +17,13 @@ const category = ref('NOTICE')
 const title    = ref('')
 const content  = ref('')
 const createdAt = ref(null)
+const updatedAt = ref(null)
+
+const alertModal = ref({ visible: false, title: '', message: '' })
+
+function showAlert(title, message) {
+  alertModal.value = { visible: true, title, message }
+}
 
 onMounted(async () => {
   try {
@@ -25,8 +33,9 @@ onMounted(async () => {
     title.value     = post.title
     content.value   = post.content
     createdAt.value = post.createdAt
+    updatedAt.value = post.updatedAt
   } catch {
-    alert('게시글을 불러올 수 없습니다.')
+    showAlert('오류', '게시글을 불러올 수 없습니다.')
     router.replace('/admin/board')
   }
 })
@@ -37,13 +46,13 @@ function formatDate(dateStr) {
 }
 
 async function handleSubmit() {
-  if (!title.value.trim())   return alert('제목을 입력해주세요.')
-  if (!content.value.trim()) return alert('내용을 입력해주세요.')
+  if (!title.value.trim())   return showAlert('알림', '제목을 입력해주세요.')
+  if (!content.value.trim()) return showAlert('알림', '내용을 입력해주세요.')
   try {
     await boardStore.updatePost(postId, { category: category.value, title: title.value, content: content.value })
     router.push(`/admin/boards/${postId}`)
   } catch {
-    alert('수정 중 오류가 발생했습니다.')
+    showAlert('오류', '수정 중 오류가 발생했습니다.')
   }
 }
 
@@ -93,6 +102,11 @@ function handleCancel() {
               <span class="edit-date">{{ formatDate(createdAt) }}</span>
               <span class="edit-label">최초 작성</span>
             </div>
+            <div class="edit-history-item" v-if="updatedAt">
+              <span class="edit-dot" />
+              <span class="edit-date">{{ formatDate(updatedAt) }}</span>
+              <span class="edit-label">최근 수정</span>
+            </div>
           </div>
 
           <!-- 하단 버튼 -->
@@ -126,7 +140,7 @@ function handleCancel() {
           <p class="sidebar-value">{{ formatDate(createdAt) }}</p>
 
           <p class="sidebar-label" style="margin-top: 12px;">수정일</p>
-          <p class="sidebar-value muted">수정 시 자동 업데이트</p>
+          <p class="sidebar-value">{{ formatDate(updatedAt) || '수정 시 자동 업데이트' }}</p>
         </div>
 
         <!-- 수정 주의사항 -->
@@ -143,6 +157,15 @@ function handleCancel() {
       </div>
     </div>
   </div>
+
+  <ActionResultModal
+    v-if="alertModal.visible"
+    :title="alertModal.title"
+    :desc="alertModal.message"
+    type="warning"
+    @close="alertModal.value = { visible: false, title: '', message: '' }"
+  />
+  
 </template>
 
 <style scoped>

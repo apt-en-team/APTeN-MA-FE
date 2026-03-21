@@ -1,21 +1,25 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from '@/api/axios.js'
 import { onMounted } from 'vue'
+import { getImageUrl } from '@/utils/image.js'
+import { getMyPosts, getPopularPosts } from '@/api/board'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const router = useRouter()
 
-// ─── 데이터 상태 ───────
+const showDeleteConfirm = ref(false)
+const deleteTargetId = ref(null)
+
+// ─── 데이터 상태 ──────────────────────────────────────────────
 const myPosts = ref([])
 const loading = ref(false)
 
-// TODO: Spring Boot API 연동 시 아래 주석 해제
 async function fetchMyPosts() {
   loading.value = true
   try {
-    // const res = await api.get('/boards/my')
-    // myPosts.value = res.data
+    const res = await getMyPosts()
+    myPosts.value = res.data
   } catch (e) {
     console.error('내가 쓴 글 조회 실패', e)
   } finally {
@@ -24,12 +28,33 @@ async function fetchMyPosts() {
 }
 onMounted(fetchMyPosts)
 
-// ─── 탭 ───
+// ─── 검색 ──────────────────────────────────────────────
+const searchKeyword = ref('')
+const inputKeyword  = ref('')
+
+// ─── 탭 ───────────────────────────────────────────────────────
 const activeTab = ref('FREE') // 'FREE' | 'INQUIRY'
 
 const filteredPosts = computed(() =>
-  myPosts.value.filter(p => p.category === activeTab.value)
+  myPosts.value.filter(p => {
+    const matchCategory = p.category === activeTab.value
+    const keyword = searchKeyword.value.trim().toLowerCase()
+    if (!keyword) return matchCategory
+    const matchKeyword = p.title?.toLowerCase().includes(keyword) || p.content?.toLowerCase().includes(keyword)
+    return matchCategory && matchKeyword
+  })
 )
+
+function onSearch() {
+  searchKeyword.value = inputKeyword.value.trim()
+  currentPage.value = 1
+}
+
+function onReset() {
+  inputKeyword.value  = ''
+  searchKeyword.value = ''
+  currentPage.value   = 1
+}
 
 function setTab(tab) {
   activeTab.value = tab
@@ -52,17 +77,22 @@ function editPost(id) {
 }
 
 function deletePost(id) {
-  if (!confirm('삭제하시겠습니까?')) return
-  myPosts.value = myPosts.value.filter(p => p.boardId !== id)
+  deleteTargetId.value = id
+  showDeleteConfirm.value = true
+}
+
+async function confirmDelete() {
+  showDeleteConfirm.value = false
+  myPosts.value = myPosts.value.filter(p => p.boardId !== deleteTargetId.value)
+  deleteTargetId.value = null
 }
 
 // ─── 인기글 (사이드바) ─
 const popularPosts = ref([])
 
-// TODO: Spring Boot API 연동 시 아래 주석 해제
 async function fetchPopularPosts() {
-  // const res = await api.get('/boards/popular')
-  // popularPosts.value = res.data
+  const res = await getPopularPosts()
+  popularPosts.value = res.data
 }
 onMounted(fetchPopularPosts)
 
@@ -73,6 +103,7 @@ function getAvatarStyle(name) {
   return { background: avatarColors[idx] }
 }
 
+// ─── HTML 태그 제거 ──────────────────────────────────────────────
 function stripHtml(html) {
   if (!html) return ''
   
@@ -100,6 +131,32 @@ function stripHtml(html) {
             <button class="tab-btn" :class="{ active: activeTab === 'FREE' }" @click="setTab('FREE')">자유게시판</button>
             <button class="tab-btn" :class="{ active: activeTab === 'INQUIRY' }" @click="setTab('INQUIRY')">문의사항</button>
           </div>
+        </div>
+
+        <!-- 검색바 -->
+        <div class="search-bar">
+          <div class="search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+            </svg>
+            <input
+              v-model="inputKeyword"
+              class="search-input"
+              placeholder="제목 또는 내용 검색"
+              @keyup.enter="onSearch"
+            />
+            <button v-if="inputKeyword" class="search-clear" @click="onReset">✕</button>
+          </div>
+          <button class="btn-search" @click="onSearch">검색</button>
+        </div>
+
+        <!-- 검색 결과 표시 -->
+        <div v-if="searchKeyword" class="search-result-info">
+          <span>
+            "<strong>{{ searchKeyword }}</strong>" 검색 결과
+            <span class="result-count">{{ filteredPosts.length }}건</span>
+          </span>
+          <button class="btn-reset-search" @click="onReset">초기화</button>
         </div>
 
         <!-- 로딩 -->
@@ -133,10 +190,10 @@ function stripHtml(html) {
             :key="post.boardId"
             @click="router.push(`/resident/board/${post.boardId}`)"
           >
-            <div v-if="post.thumbnail" class="card-thumb">
-              <img :src="post.thumbnail" :alt="post.title" />
+            <div v-if="post.imageUrl" class="card-thumb">
+              <img :src="getImageUrl(post.imageUrl)" :alt="post.title" />
             </div>
-            <div class="card-body" :class="{ 'no-thumb': !post.thumbnail }">
+            <div class="card-body" :class="{ 'no-thumb': !post.imageUrl }">
               <div class="card-meta-top">
                 <div class="author-info">
                   <div class="avatar" :style="getAvatarStyle(post.authorName)">
@@ -212,7 +269,7 @@ function stripHtml(html) {
         <div class="sidebar-card">
           <div class="sidebar-card-header">
             <span class="sidebar-card-title">인기글</span>
-            <button class="more-btn" @click="router.push('/resident/board')">더보기 →</button>
+            <!-- <button class="more-btn" @click="router.push('/resident/board')">더보기 →</button> -->
           </div>
           <div v-if="popularPosts.length === 0" class="sidebar-empty">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="32" height="32">
@@ -240,8 +297,8 @@ function stripHtml(html) {
                   </span>
                 </div>
               </div>
-              <div v-if="post.thumbnail" class="popular-thumb">
-                <img :src="post.thumbnail" :alt="post.title" />
+              <div v-if="post.imageUrl" class="popular-thumb">
+                <img :src="getImageUrl(post.imageUrl)" :alt="post.title" />
               </div>
             </li>
           </ul>
@@ -250,6 +307,17 @@ function stripHtml(html) {
 
     </div>
   </div>
+
+  <ConfirmModal
+    v-if="showDeleteConfirm"
+    title="게시글을 삭제하시겠습니까?"
+    subtitle="이 작업은 되돌릴 수 없습니다."
+    confirm-text="삭제"
+    type="danger"
+    @close="showDeleteConfirm = false"
+    @confirm="confirmDelete"
+  />
+
 </template>
 
 <style scoped>
@@ -286,12 +354,28 @@ function stripHtml(html) {
 
 /* 탭바 */
 .tab-bar { margin-bottom: 16px; }
-.tabs { display: inline-flex; gap: 4px; background: #f3f4f6; border-radius: 10px; padding: 4px; }
+.tabs { display: inline-flex; gap: 4px; border-radius: 10px; padding: 4px; }
 .tab-btn {
   padding: 8px 22px; border: none; background: transparent; border-radius: 8px;
   font-size: 14px; font-weight: 500; color: #6b7280; cursor: pointer; transition: all 0.18s;
 }
 .tab-btn.active { background: #fff; color: #3b82f6; font-weight: 700; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+
+/* 검색바 */
+.search-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+.search-wrap { position: relative; flex: 1; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: #9ca3af; pointer-events: none; }
+.search-input { width: 100%; padding: 10px 36px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; color: #374151; outline: none; transition: border-color 0.15s; box-sizing: border-box; font-family: 'Noto Sans KR', sans-serif; }
+.search-input:focus { border-color: #3b82f6; }
+.search-input::placeholder { color: #9ca3af; }
+.search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 13px; }
+.search-clear:hover { color: #374151; }
+.btn-search { padding: 10px 20px; background: #fff; color: #4973E5; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif; }
+.btn-search:hover { background: #f3f4f6; }
+.search-result-info { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #eff6ff; border-radius: 8px; font-size: 13px; color: #374151; margin-bottom: 12px; }
+.result-count { color: #3b82f6; font-weight: 700; margin-left: 4px; }
+.btn-reset-search { background: none; border: none; color: #9ca3af; font-size: 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+.btn-reset-search:hover { color: #374151; }
 
 /* 로딩 */
 .loading-state {

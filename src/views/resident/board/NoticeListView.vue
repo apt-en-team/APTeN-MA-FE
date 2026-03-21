@@ -312,8 +312,8 @@ function openNotice(notice) {
   color: #fff;
 }
 :deep(.page-btn:hover:not(:disabled)) {
-  color: #4973E5;
-  border-color: #4973E5;
+  color: #fff;
+  background-color: #416adb;
 }
 
 /* ── 열람 버튼 ────────── */

@@ -3,6 +3,10 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPostDetail } from '@/api/board'
 import { useAuthStore } from '@/stores/modules/auth'
+import { useComment } from '@/composables/useComment'
+import CommentItem from '@/components/board/CommentItem.vue'
+import BeseModel from '@/components/common/BeseModel.vue'
+import ActionResultModal from '@/components/common/ActionResultModal.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -11,13 +15,12 @@ const auth   = useAuthStore()
 const notice  = ref(null)
 const loading = ref(false)
 
-const dummyComments = ref([])
-
 onMounted(async () => {
   loading.value = true
   try {
     const res = await getPostDetail(route.params.id)
     notice.value = res.data
+    await fetchComments()
   } finally {
     loading.value = false
   }
@@ -37,6 +40,20 @@ function getAvatarColor(name) {
   const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
   return avatarColors[idx]
 }
+
+// 댓글
+const {
+  comments,
+  newComment,
+  isSubmitting,
+  modalState,
+  closeModal,
+  fetchComments,
+  submitComment,
+  editComment,
+  removeComment,
+} = useComment(route.params.id)
+
 </script>
 
 <template>
@@ -62,7 +79,6 @@ function getAvatarColor(name) {
                   <span class="badge-admin">관리자</span>
                 </div>
                 <div class="author-sub">
-                  <span class="author-unit">{{ notice.authorUnit }}</span>
                   <span class="author-date">{{ formatDate(notice.createdAt) }}</span>
                 </div>
               </div>
@@ -85,54 +101,70 @@ function getAvatarColor(name) {
           <button class="btn-back" @click="goBack">목록으로 돌아가기</button>
         </div>
 
-        <!-- 댓글 -->
         <div class="sidebar-card">
           <p class="sidebar-title">
             댓글
-            <span class="comment-badge">{{ dummyComments.length }}</span>
+            <!-- 댓글 수 -->
+            <span class="comment-badge">
+              {{ comments.filter(c => c.isDeleted !== 1).length }}
+            </span>
           </p>
 
+          <!-- 댓글 목록 -->
           <div class="comment-list">
-            <template v-if="dummyComments && dummyComments.length > 0">
-              <div
-                v-for="comment in dummyComments"
+            <template v-if="comments.length > 0">
+              <CommentItem
+                v-for="comment in comments"
                 :key="comment.commentId"
-                class="comment-item"
-              >
-                <template v-if="comment.isDeleted === 1">
-                  <p class="comment-deleted">(삭제된 댓글입니다.)</p>
-                </template>
-                <template v-else>
-                  <div class="comment-header">
-                    <div class="comment-author-wrap">
-                      <div class="comment-avatar" :style="{ background: getAvatarColor(comment.authorName) }">
-                        {{ comment.authorName?.[0] }}
-                      </div>
-                      <span class="comment-author">{{ comment.authorName }}</span>
-                      <span v-if="comment.role === 'ADMIN'" class="badge-admin">관리자</span>
-                    </div>
-                    <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
-                  </div>
-                  <p class="comment-content">{{ comment.content }}</p>
-                </template>
-              </div>
+                :comment="comment"
+                mode="resident"
+                :current-user-id="auth.user?.userId"
+                @delete="removeComment"
+                @edit="editComment"
+              />
             </template>
 
-            <div v-else class="no-comments">
-              등록된 댓글이 없습니다.
-            </div>
+            <!-- 댓글 없음 -->
+            <div v-else class="no-comments">등록된 댓글이 없습니다.</div>
           </div>
-
+          
           <!-- 댓글 입력 -->
           <div class="comment-input-wrap">
-            <input class="comment-input" placeholder="댓글을 입력해주세요..." />
-            <button class="comment-submit">등록</button>
+            <input
+              v-model="newComment"
+              class="comment-input"
+              placeholder="댓글을 입력해주세요..."
+              @keyup.enter="submitComment"
+            />
+            <button class="comment-submit" :disabled="isSubmitting" @click="submitComment">
+              등록
+            </button>
           </div>
         </div>
 
       </div>
     </div>
   </div>
+
+  <BeseModel
+    v-if="modalState.visible && modalState.type === 'confirm'"
+    title="댓글 삭제"
+    @close="closeModal"
+  >
+    <p style="font-size:14px; color:#444;">댓글을 삭제하시겠습니까?</p>
+    <template #footer>
+      <button class="modal-btn-cancel" @click="closeModal">취소</button>
+      <button class="modal-btn-confirm" @click="() => { modalState.onConfirm?.(); closeModal() }">삭제</button>
+    </template>
+  </BeseModel>
+  <ActionResultModal
+    v-if="modalState.visible && modalState.type === 'alert'"
+    :title="modalState.title"
+    :desc="modalState.message"
+    type="warning"
+    @close="closeModal"
+  />
+
 </template>
 
 <style scoped>
