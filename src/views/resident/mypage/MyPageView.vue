@@ -98,7 +98,7 @@ async function handleDeactivate() {
               <div class="quick-icon" style="background:#FFF8E8;">📋</div>
               <span>방문 등록</span>
             </router-link>
-            <router-link to="/resident/my-posts" class="quick-item">
+            <router-link to="/resident/board/my-posts" class="quick-item">
               <div class="quick-icon" style="background:#F0F0FF;">👤</div>
               <span>내가 쓴 글</span>
             </router-link>
