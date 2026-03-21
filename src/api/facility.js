@@ -22,11 +22,15 @@ export default {
     return axios.delete(`/admin/facility-types/${id}`)
   },
 
-  // API-048 | 시설 목록 조회 (타입 필터)
-  getFacilities(typeId = null) {
-    return axios.get('/facilities', {
-      params: { typeId: typeId || undefined }
-    })
+   // API-048 | 시설 목록 조회 (타입 필터)
+  getFacilities({ typeId = null, page = 1, size = 100 } = {}) {
+  return axios.get('/facilities', {
+    params: {
+      typeId: typeId || undefined,
+      page,
+      size
+    }
+  })
   },
 
   // API-049 | 시설 상세 조회
