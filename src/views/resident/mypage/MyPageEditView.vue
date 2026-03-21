@@ -152,7 +152,7 @@ async function handleDeactivate() {
         v-if="showDeleteConfirm"
         title="회원 탈퇴"
         subtitle="탈퇴 후에는 복구가 불가능합니다."
-        @close="showDeleteConfirm = false"
+        @cancel="showDeleteConfirm = false"
     >
       <p class="modal-desc">정말 탈퇴하시겠습니까?</p>
       <template #footer>

@@ -123,8 +123,12 @@ async function handleLogin() {
   background: none; border: none; cursor: pointer;
   font-size: 15px; color: #999; padding: 0;
 }
-.btn-eye:hover { color: #333; }
+.btn-eye i :hover { color: #999; }
 .error { color: #E05555; font-size: 13px; margin-bottom: 12px; }
+
+.btn-eye i {
+  color: #999;
+}
 .btn-login {
   width: 100%; padding: 12px; background: #4973E5; color: #fff;
   border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;

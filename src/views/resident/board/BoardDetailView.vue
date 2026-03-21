@@ -191,7 +191,7 @@ function getAvatarColor(name) {
     subtitle="이 작업은 되돌릴 수 없습니다."
     confirm-text="삭제"
     type="danger"
-    @close="showDeleteConfirm = false"
+    @cancel="showDeleteConfirm = false"
     @confirm="confirmDeletePost"
   />
 

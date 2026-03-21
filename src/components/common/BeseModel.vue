@@ -1,13 +1,25 @@
 <script setup>
-// 모달 제목
+// 모달 공통 props
 defineProps({
+  // 상단 제목
   title: {
     type: String,
     required: true
   },
+  // 상단 보조 제목
   subtitle: {
     type: String,
     default: ''
+  },
+  // 헤더 숨김 여부
+  hideHeader: {
+    type: Boolean,
+    default: false
+  },
+  // footer 숨김 여부
+  hideFooter: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -21,7 +33,7 @@ const emit = defineEmits(['close'])
     <div class="modal-box">
 
       <!-- 헤더 -->
-      <div class="modal-header">
+      <div v-if="!hideHeader" class="modal-header">
         <div>
           <h5 class="modal-title">{{ title }}</h5>
           <p v-if="subtitle" class="modal-subtitle">{{ subtitle }}</p>
@@ -36,7 +48,7 @@ const emit = defineEmits(['close'])
       </div>
 
       <!-- 버튼 슬롯 -->
-      <div class="modal-footer">
+      <div v-if="!hideFooter" class="modal-footer">
         <slot name="footer" />
       </div>
 
@@ -72,7 +84,7 @@ const emit = defineEmits(['close'])
 .modal-title {
   font-size: 18px;
   font-weight: 700;
-  color: #1E2533;
+
   margin: 0 0 6px;
 }
 .modal-subtitle {

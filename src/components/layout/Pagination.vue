@@ -67,7 +67,7 @@ const displayedPages = computed(() => {
 .pagination-info, .pagination-spacer {
   flex: 1;
   font-size: 12px;
-  color: #A0AEC0;
+  color: #687282;
 }
 
 .pagination {
@@ -84,12 +84,12 @@ const displayedPages = computed(() => {
   border-radius: 6px;
   background: #fff;
   font-size: 12px;
-  color: #718096;
+  color: #687282;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .page-btn:hover {

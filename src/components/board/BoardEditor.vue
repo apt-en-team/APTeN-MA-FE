@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
   border-radius: 0 0 10px 10px;
   border-color: #E0E3EB;
   font-size: 14px;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .board-editor :deep(.ql-editor) {

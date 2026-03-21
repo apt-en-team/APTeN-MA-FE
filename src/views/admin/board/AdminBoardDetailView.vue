@@ -209,7 +209,7 @@ async function deletePost() {
       warn-text="삭제 시 해당 게시글의 댓글도 함께 삭제됩니다."
       confirm-text="삭제"
       type="danger"
-      @close="showDeleteConfirm = false"
+      @cancel="showDeleteConfirm = false"
       @confirm="deletePost"
     >
       <div style="font-weight:600">{{ post?.title }}</div>
@@ -293,14 +293,14 @@ async function deletePost() {
   flex: 1; padding: 9px 12px;
   border: 1px solid #E2E8F0; border-radius: 8px;
   font-size: 13px; outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .comment-input:focus { border-color: #2B3A55; }
 .comment-submit {
   padding: 9px 18px; background: #2B3A55;
   color: #fff; border: none; border-radius: 8px;
   font-size: 13px; font-weight: 600; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .comment-submit:hover:not(:disabled) { background: #1E2A3E; }
 .comment-submit:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -318,7 +318,7 @@ async function deletePost() {
   padding: 7px 0; border-bottom: 1px solid #F0F2F6; font-size: 12px;
 }
 .info-row:last-child { border-bottom: none; }
-.info-label { color: #718096; }
+.info-label { color: #687282; }
 .info-value { color: #1A202C; font-weight: 500; text-align: right; }
 
 .status-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
@@ -331,7 +331,7 @@ async function deletePost() {
   border: 1px solid #E2E8F0; border-radius: 8px;
   background: #fff; font-size: 13px; color: #555;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-back:hover { background: #F5F6F8; }
 .btn-edit {
@@ -340,7 +340,7 @@ async function deletePost() {
   background: #2B3A55; color: #fff;
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-edit:hover { background: #1E2A3E; }
 .btn-delete {
@@ -349,7 +349,7 @@ async function deletePost() {
   background: #fff; color: #E53E3E;
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .btn-delete:hover { background: #FFF5F5; }
 

@@ -291,7 +291,7 @@ onMounted(() => fetchList())
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-register:hover {
@@ -305,7 +305,7 @@ onMounted(() => fetchList())
   font-size: 12px;
   color: #1A1A2E;
   outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .filter-input:focus {
@@ -321,7 +321,7 @@ onMounted(() => fetchList())
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-search:hover {
@@ -408,7 +408,7 @@ onMounted(() => fetchList())
   cursor: pointer;
   border: 1px solid transparent;
   white-space: nowrap;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-act-delete {
@@ -499,7 +499,7 @@ onMounted(() => fetchList())
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-modal-cancel:hover {
@@ -516,7 +516,7 @@ onMounted(() => fetchList())
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-modal-danger:disabled {

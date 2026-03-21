@@ -411,7 +411,7 @@ onMounted(() => fetchList())
   font-size: 12px;
   color: #1A1A2E;
   outline: none;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .filter-input:focus {
@@ -427,7 +427,7 @@ onMounted(() => fetchList())
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 .btn-search:hover {

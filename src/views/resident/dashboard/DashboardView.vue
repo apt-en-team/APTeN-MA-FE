@@ -1,17 +1,22 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/modules/auth.js'
-import { useRouter } from 'vue-router'
+import {ref, computed, onMounted} from 'vue'
+import {useAuthStore} from '@/stores/modules/auth.js'
+import {useRouter} from 'vue-router'
 import axios from '@/api/axios.js'
-import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Autoplay, Pagination } from 'swiper/modules'
+import {Swiper, SwiperSlide} from 'swiper/vue'
+import {Autoplay, Pagination} from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
+import {getMyVisitorVehicles} from '@/api/visitorVehicle.js'
+import {useParkingStore} from '@/stores/modules/parking.js'
 
 const auth = useAuthStore()
 const router = useRouter()
+const parkingStore = useParkingStore()
 
-// 더미 데이터 (추후 API 연결)
+// PENDING 여부
+const isPending = computed(() => auth.user?.status === 'PENDING')
+
 const stats = ref({
   vehicles: 0,
   reservations: 0,
@@ -20,31 +25,22 @@ const stats = ref({
 })
 
 const notices = ref([])
-
 const reservations = ref([])
-
-// onMounted(async () => {
-//   try {
-//     const { data } = await axios.get('/dashboard')
-//     stats.value = data.stats ?? stats.value
-//     notices.value = data.notices ?? []
-//     reservations.value = data.reservations ?? []
-//   } catch (e) {
-//     console.warn('대시보드 API 오류:', e)
-//   }
-// })
 
 onMounted(async () => {
   try {
-    // 공지사항
-    const noticeRes = await axios.get('/boards', { params: { category: 'NOTICE', page: 1, size: 3 } })
+    const noticeRes = await axios.get('/boards', {params: {category: 'NOTICE', page: 1, size: 3}})
     notices.value = noticeRes.data.content ?? []
 
-    // 예약 현황
     const reservationRes = await axios.get('/reservations/my')
     reservations.value = reservationRes.data ?? []
 
-    // stats는 차량/방문차량/주차 API 붙으면 그때 채우기
+    const visitorRes = await getMyVisitorVehicles({page: 1, size: 1})
+    stats.value.visitorVehicles = visitorRes.data?.todayCount ?? 0
+
+    await parkingStore.fetchStats()
+    stats.value.parkingRate = parkingStore.parkingPercent ?? 0
+
   } catch (e) {
     console.warn('대시보드 로딩 오류:', e)
   }
@@ -53,7 +49,7 @@ onMounted(async () => {
 const today = computed(() => {
   const d = new Date()
   const days = ['일', '월', '화', '수', '목', '금', '토']
-  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${days[d.getDay()]})`
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]})`
 })
 
 const dong = computed(() => auth.user?.dong || '101동')
@@ -98,22 +94,29 @@ const banners = [
 
 function stripHtml(html) {
   if (!html) return ''
-  
   return html
-    .replace(/<[^>]*>/g, '')         // 1. 모든 HTML 태그 제거
-    .replace(/&nbsp;/g, ' ')         // 2. 연속 공백 기호 변환
-    .replace(/&lt;/g, '<')           // 3. 부등호 변환
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .trim()                          // 4. 앞뒤 쓸데없는 공백 제거
-    .slice(0, 100)                   // 5. 요약
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .trim()
+      .slice(0, 100)
 }
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
-  return dateStr.split('T')[0] // '2024-03-27' 형태로 출력
+  return dateStr.split('T')[0]
 }
 
+// PENDING이면 접근 제한 페이지로, 아니면 해당 경로로 이동
+function navTo(path) {
+  if (isPending.value) {
+    router.push('/resident/pending')
+  } else {
+    router.push(path)
+  }
+}
 </script>
 
 <template>
@@ -125,17 +128,21 @@ function formatDate(dateStr) {
         <h1 class="greeting">안녕하세요, {{ auth.user?.name || '김가은' }}님</h1>
         <p class="sub-info">{{ today }} · {{ dong }} {{ ho }}</p>
       </div>
+      <!-- PENDING 안내 배지 -->
+      <div v-if="isPending" class="pending-badge">
+        ⏳ 관리자 승인 대기 중
+      </div>
     </div>
 
     <!-- 배너 -->
     <Swiper
-      :modules="modules"
-      :autoplay="{ delay: 3000, disableOnInteraction: false }"
-      :pagination="{ clickable: true }"
-      :slides-per-view="1"
-      :speed="900"
-      loop
-      class="banner-swiper"
+        :modules="modules"
+        :autoplay="{ delay: 3000, disableOnInteraction: false }"
+        :pagination="{ clickable: true }"
+        :slides-per-view="1"
+        :speed="900"
+        loop
+        class="banner-swiper"
     >
       <SwiperSlide v-for="(banner, i) in banners" :key="i">
         <div class="banner" :style="{ backgroundImage: `url(${banner.bg})` }">
@@ -151,8 +158,9 @@ function formatDate(dateStr) {
 
     <!-- 미니 카드 -->
     <div class="stat-grid">
+
       <!-- 내 차량 -->
-      <div class="stat-card" @click="router.push('/resident/my-vehicle')">
+      <div class="stat-card" @click="navTo('/resident/my-vehicle')">
         <div class="stat-label">내 차량</div>
         <div class="stat-value" :class="{ empty: stats.vehicles === 0 }">
           {{ stats.vehicles }} <span class="stat-unit">대</span>
@@ -169,7 +177,7 @@ function formatDate(dateStr) {
       </div>
 
       <!-- 예약 현황 -->
-      <div class="stat-card" @click="router.push('/resident/my-reservation')">
+      <div class="stat-card" @click="navTo('/resident/my-reservation')">
         <div class="stat-label">예약 현황</div>
         <div class="stat-value" :class="{ empty: stats.reservations === 0 }">
           {{ stats.reservations }} <span class="stat-unit">건</span>
@@ -183,12 +191,12 @@ function formatDate(dateStr) {
       </div>
 
       <!-- 방문차량 -->
-      <div class="stat-card" @click="router.push('/resident/visitor-vehicles/list')">
+      <div class="stat-card" @click="navTo('/resident/visitor-vehicles/list')">
         <div class="stat-label">방문 차량</div>
         <div class="stat-value" :class="{ empty: stats.visitorVehicles === 0 }">
           {{ stats.visitorVehicles }} <span class="stat-unit">대</span>
         </div>
-        <div class="stat-desc">{{ stats.visitorVehicles === 0 ? '방문 차량이 없습니다' : '승인 대기' }}</div>
+        <div class="stat-desc">{{ stats.visitorVehicles === 0 ? '방문 차량이 없습니다' : '오늘 방문 예정' }}</div>
         <div class="stat-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
@@ -197,7 +205,7 @@ function formatDate(dateStr) {
       </div>
 
       <!-- 주차 현황 -->
-      <div class="stat-card" @click="router.push('/resident/parking/status')">
+      <div class="stat-card" @click="navTo('/resident/parking/status')">
         <div class="stat-label">주차 현황</div>
         <div class="stat-value" :class="{ empty: stats.parkingRate === 0 }">
           {{ stats.parkingRate }} <span class="stat-unit">%</span>
@@ -207,6 +215,7 @@ function formatDate(dateStr) {
         </div>
         <div class="stat-icon"></div>
       </div>
+
     </div>
 
     <!-- 하단 컬럼 두 개 -->
@@ -216,7 +225,7 @@ function formatDate(dateStr) {
       <div class="card">
         <div class="card-header">
           <span class="card-title">📢최근 공지사항</span>
-          <span class="card-more" @click="router.push('/resident/board/notice')">전체보기 →</span>
+          <span class="card-more" @click="navTo('/resident/board/notice')">전체보기 →</span>
         </div>
         <div class="card-body">
           <div v-if="notices.length === 0" class="empty-state">
@@ -225,12 +234,8 @@ function formatDate(dateStr) {
             </svg>
             <p>등록된 공지사항이 없습니다.</p>
           </div>
-          <div
-            v-for="notice in notices"
-            :key="notice.boardId"
-            class="notice-item"
-            @click="router.push(`/resident/board/notice/${notice.boardId}`)"
-          >
+          <div v-for="notice in notices" :key="notice.boardId" class="notice-item"
+               @click="navTo(`/resident/board/notice/${notice.boardId}`)">
             <div class="notice-row">
               <span v-if="notice.category" class="notice-badge">{{ notice.category }}</span>
               <span v-else class="notice-dot">•</span>
@@ -246,8 +251,7 @@ function formatDate(dateStr) {
       <div class="card">
         <div class="card-header">
           <span class="card-title">📅내 예약 현황</span>
-          <span class="card-more" @click="router.push('/resident/my-reservation')">전체보기 →</span>
-
+          <span class="card-more" @click="navTo('/resident/my-reservation')">전체보기 →</span>
         </div>
         <div class="card-body">
           <div v-if="reservations.length === 0" class="empty-state">
@@ -256,17 +260,10 @@ function formatDate(dateStr) {
             </svg>
             <p>예약 내역이 없습니다.</p>
           </div>
-          <div
-            v-for="res in reservations"
-            :key="res.reservationId"
-            class="reservation-item"
-            @click="router.push(`/resident/reservations/${res.reservationId}`)"
-          >
+          <div v-for="res in reservations" :key="res.reservationId" class="reservation-item"
+               @click="navTo(`/resident/reservations/${res.reservationId}`)">
             <div class="res-left">
-              <span
-                class="res-badge"
-                :class="`res-badge--${res.statusColor}`"
-              >{{ res.status }}</span>
+              <span class="res-badge" :class="`res-badge--${res.statusColor}`">{{ res.status }}</span>
               <div>
                 <div class="res-facility">{{ res.facility }}</div>
                 <div class="res-date">{{ res.date }} · {{ res.time }}</div>
@@ -283,43 +280,56 @@ function formatDate(dateStr) {
 </template>
 
 <style scoped>
-
-/* 헤더 */
 .dash-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
+
 .greeting {
   font-size: 22px;
   font-weight: 700;
   color: #333333;
   margin: 0;
 }
+
 .sub-info {
   font-size: 13px;
   color: #999;
   margin-top: 4px;
 }
-.header-actions {
-  display: flex;
-  gap: 10px;
+
+.pending-badge {
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #FFF7E6;
+  color: #C08B2D;
+  border: 1px solid #F6D98A;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.dashboard { display: flex; flex-direction: column; gap: 20px; }
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
-/* 배너 */
 .banner-swiper {
   width: 100%;
   height: 160px;
   border-radius: 16px;
   overflow: hidden;
 }
+
 .swiper-slide {
   width: 100%;
   height: 160px;
 }
+
 .banner {
   width: 100%;
   height: 160px;
@@ -327,19 +337,20 @@ function formatDate(dateStr) {
   background-position: center;
   position: relative;
 }
+
 .banner-chip {
   margin-top: 10px;
-  color: #111;
   font-size: 11px;
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 20px;
   width: fit-content;
 }
-/* .badge-blue   { background: #4973E5; color: #fff; } */
+
 .badge-red    { background: #FF6B6B; color: #fff; }
 .badge-green  { background: #52B788; color: #fff; }
-.badge-yellow   { background: #FFD700; color: #333; }
+.badge-yellow { background: #FFD700; color: #333; }
+
 .banner-overlay {
   position: absolute;
   inset: 0;
@@ -349,6 +360,7 @@ function formatDate(dateStr) {
   flex-direction: column;
   justify-content: center;
 }
+
 .banner-badge {
   font-size: 11px;
   font-weight: 700;
@@ -356,24 +368,26 @@ function formatDate(dateStr) {
   letter-spacing: 2px;
   margin-bottom: 8px;
 }
+
 .banner-title {
   font-size: 22px;
   font-weight: 700;
   color: #fff;
   margin: 0 0 6px;
 }
+
 .banner-desc {
   font-size: 13px;
   color: rgba(255,255,255,0.75);
   margin: 0;
 }
 
-/* 미니 카드 */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+
 .stat-card {
   background: #fff;
   border-radius: 14px;
@@ -383,34 +397,44 @@ function formatDate(dateStr) {
   position: relative;
   transition: box-shadow 0.2s;
 }
-.stat-card:hover { box-shadow: 0 4px 16px rgba(73,115,229,0.1); }
+
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(73,115,229,0.1);
+}
+
 .stat-label {
   font-size: 12px;
   color: #999;
   margin-bottom: 8px;
 }
+
 .stat-value {
   font-size: 28px;
   font-weight: 700;
   color: #333333;
 }
+
 .stat-value.empty { color: #D1D5DB; }
+
 .stat-unit {
   font-size: 14px;
   font-weight: 400;
   color: #999;
 }
+
 .stat-desc {
   font-size: 11px;
   color: #bbb;
   margin-top: 4px;
 }
+
 .stat-icon {
   position: absolute;
   right: 20px;
   bottom: 20px;
   opacity: 0.5;
 }
+
 .parking-bar {
   height: 6px;
   background: #ECEEF3;
@@ -418,6 +442,7 @@ function formatDate(dateStr) {
   margin-top: 10px;
   overflow: hidden;
 }
+
 .parking-fill {
   height: 100%;
   background: #4973E5;
@@ -425,18 +450,19 @@ function formatDate(dateStr) {
   transition: width 0.5s ease;
 }
 
-/* 하단 그리드 */
 .bottom-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+
 .card {
   background: #fff;
   border-radius: 14px;
   border: 1px solid #ECEEF3;
   overflow: hidden;
 }
+
 .card-header {
   padding: 16px 20px;
   border-bottom: 1px solid #F3F4F8;
@@ -444,20 +470,23 @@ function formatDate(dateStr) {
   justify-content: space-between;
   align-items: center;
 }
+
 .card-title {
   font-size: 14px;
   font-weight: 600;
   color: #333333;
 }
+
 .card-more {
   font-size: 12px;
   color: #999;
   cursor: pointer;
 }
+
 .card-more:hover { color: #4973E5; }
+
 .card-body { padding: 8px 0; }
 
-/* 빈 상태 */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -466,27 +495,30 @@ function formatDate(dateStr) {
   padding: 36px 20px;
   gap: 12px;
 }
+
 .empty-state p {
   font-size: 13px;
   color: #C0C4CE;
   margin: 0;
 }
 
-/* 공지사항 */
 .notice-item {
   padding: 12px 20px;
   border-bottom: 1px solid #F7F8FA;
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .notice-item:hover { background: #F7F8FC; }
 .notice-item:last-child { border-bottom: none; }
+
 .notice-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
+
 .notice-badge {
   font-size: 10px;
   font-weight: 600;
@@ -495,11 +527,13 @@ function formatDate(dateStr) {
   padding: 2px 7px;
   border-radius: 4px;
 }
+
 .notice-dot {
   color: #ccc;
   font-size: 16px;
   line-height: 1;
 }
+
 .notice-title {
   font-size: 13px;
   font-weight: 500;
@@ -509,6 +543,7 @@ function formatDate(dateStr) {
   text-overflow: ellipsis;
   max-width: 280px;
 }
+
 .notice-content {
   font-size: 12px;
   color: #999;
@@ -517,13 +552,13 @@ function formatDate(dateStr) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .notice-meta {
   font-size: 11px;
   color: #bbb;
   margin: 0;
 }
 
-/* 예약 현황 */
 .reservation-item {
   padding: 14px 20px;
   border-bottom: 1px solid #F7F8FA;
@@ -533,13 +568,16 @@ function formatDate(dateStr) {
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .reservation-item:hover { background: #F7F8FC; }
 .reservation-item:last-child { border-bottom: none; }
+
 .res-left {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
+
 .res-badge {
   font-size: 10px;
   font-weight: 600;
@@ -548,24 +586,29 @@ function formatDate(dateStr) {
   white-space: nowrap;
   margin-top: 2px;
 }
-.res-badge--blue { background: #EEF0FD; color: #4973E5; }
+
+.res-badge--blue   { background: #EEF0FD; color: #4973E5; }
 .res-badge--orange { background: #FFF4E5; color: #F59E0B; }
-.res-badge--gray { background: #F3F4F6; color: #9CA3AF; }
+.res-badge--gray   { background: #F3F4F6; color: #9CA3AF; }
+
 .res-facility {
   font-size: 13px;
   font-weight: 600;
   color: #333333;
 }
+
 .res-date {
   font-size: 12px;
   color: #888;
   margin-top: 2px;
 }
+
 .res-desc {
   font-size: 11px;
   color: #bbb;
   margin-top: 2px;
 }
+
 .btn-cancel {
   padding: 5px 14px;
   border: 1px solid #E0E3EB;
@@ -576,5 +619,10 @@ function formatDate(dateStr) {
   cursor: pointer;
   white-space: nowrap;
 }
-.btn-cancel:hover { background: #FFF0F0; color: #EF4444; border-color: #EF4444; }
+
+.btn-cancel:hover {
+  background: #FFF0F0;
+  color: #EF4444;
+  border-color: #EF4444;
+}
 </style>

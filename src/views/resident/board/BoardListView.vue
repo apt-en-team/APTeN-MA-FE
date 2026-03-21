@@ -25,11 +25,11 @@ const inputKeyword  = ref('')  // 입력 중인 값 (엔터/버튼 클릭 시 se
 const currentPosts = computed(() => boardStore.posts || [])
 const totalPages   = computed(() => boardStore.maxPage || 0)
 
-// ─── 인기글 & 내가 쓴 글 ──────────────────────────────────────
+// ─── 인기글 & 내가 쓴 글 ────────────
 const popularPosts = computed(() => boardStore.popularPosts || [])
 const myPosts      = computed(() => boardStore.myPosts || [])
 
-// ─── 데이터 불러오기 ──────────────────────────────────────────
+// ─── 데이터 불러오기 ───
 async function fetchData() {
   await boardStore.fetchPosts({
     category: activeTab.value,
@@ -42,7 +42,7 @@ async function fetchData() {
 }
 onMounted(() => fetchData())
 
-// ─── 탭 변경 ──────────────────────────────────────────────────
+// ─── 탭 변경 ───────────
 function setTab(tab) {
   activeTab.value   = tab
   currentPage.value = 1
@@ -82,7 +82,7 @@ function changePage(page) {
   })
 }
 
-// ─── 내가 쓴 글 삭제 ──────────────────────────────────────────
+// ─── 내가 쓴 글 삭제 ───
 function deleteMyPost(id) {
   deleteTargetId.value = id
   showDeleteConfirm.value = true
@@ -95,7 +95,7 @@ async function confirmDeleteMyPost() {
   await fetchData()
 }
 
-// ─── 유틸 ─────────────────────────────────────────────────────
+// ─── 유틸 ─
 const avatarColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 function getAvatarStyle(name) {
   const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
@@ -122,7 +122,7 @@ function stripHtml(html) {
   <div class="board-list-view">
     <div class="board-layout">
 
-      <!-- ── 메인 컨텐츠 ─────────────────────────────────────── -->
+      <!-- ── 메인 컨텐츠  -->
       <div class="board-main">
 
         <!-- 탭 + 글쓰기 버튼 -->
@@ -255,7 +255,7 @@ function stripHtml(html) {
         </div>
       </div>
 
-      <!-- ── 사이드바 ──────────────────────────────────────────── -->
+      <!-- ── 사이드바 ───── -->
       <div class="board-sidebar">
 
         <!-- 인기글 -->
@@ -353,7 +353,7 @@ function stripHtml(html) {
 </template>
 
 <style scoped>
-.board-list-view { max-width: 1200px; margin: 0 auto; font-family: 'Noto Sans KR', sans-serif; }
+.board-list-view { max-width: 1200px; margin: 0 auto;  }
 
 .board-layout { display: grid; grid-template-columns: 1fr 268px; gap: 34px; align-items: start; }
 .board-sidebar { margin-top: 60px; }
@@ -364,14 +364,14 @@ function stripHtml(html) {
 .tab-btn {
   padding: 8px 22px; border: none; background: transparent; border-radius: 8px;
   font-size: 14px; font-weight: 500; color: #6b7280; cursor: pointer; transition: all 0.18s;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 .tab-btn.active { background: #fff; color: #3b82f6; font-weight: 700; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
 .write-btn {
   display: flex; align-items: center; gap: 6px;
   background: #3b82f6; color: #fff; border: none; border-radius: 10px;
   padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
-  transition: background 0.15s; font-family: 'Noto Sans KR', sans-serif;
+  transition: background 0.15s;
 }
 .write-btn:hover { background: #2563eb; }
 
@@ -435,7 +435,7 @@ function stripHtml(html) {
   display: flex; align-items: center; gap: 7px;
   background: #3b82f6; color: #fff; border: none; border-radius: 10px;
   padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+
 }
 
 /* 카드 슬롯 */

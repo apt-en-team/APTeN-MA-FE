@@ -24,13 +24,13 @@ function showAlert(title, message) {
 const isEdit = computed(() => !!route.query.id)
 const postId = computed(() => route.query.id ? Number(route.query.id) : null)
 
-// ─── 폼 데이터 ────────────────────────────────────────────────
+// ─── 폼 데이터 ─────────
 const category = ref('FREE')
 const title    = ref('')
 const content  = ref('')
 const createdAt = ref(null)
 
-// ─── 권한 체크 ────────────────────────────────────────────────
+// ─── 권한 체크 ─────────
 const isOwner = ref(false)
 
 onMounted(async () => {
@@ -59,7 +59,7 @@ onMounted(async () => {
   }
 })
 
-// ─── 등록 / 수정 완료 ─────────────────────────────────────────
+// ─── 등록 / 수정 완료 ──
 async function handleSubmit() {
   if (!title.value.trim())   return showAlert('알림', '제목을 입력해주세요.')
   if (!content.value.trim()) return showAlert('알림', '내용을 입력해주세요.')
@@ -91,7 +91,7 @@ async function confirmDelete() {
   }
 }
 
-// ─── 취소 ─────────────────────────────────────────────────────
+// ─── 취소 ─
 function handleCancel() {
   if (isEdit.value) {
     router.push(`/resident/board/${postId.value}`)
@@ -251,7 +251,7 @@ function getAvatarColor(name) {
 </template>
 
 <style scoped>
-.board-form { width: 100%; font-family: 'Noto Sans KR'; }
+.board-form { width: 100%; font-family: 'Noto  KR'; }
 
 .form-layout {
   display: grid;
@@ -321,7 +321,7 @@ function getAvatarColor(name) {
   width: 100%; min-height: 280px; padding: 14px;
   border: none; outline: none; resize: none;
   font-size: 14px; line-height: 1.7; color: #1A1A2E;
-  font-family: 'Noto Sans KR'; box-sizing: border-box;
+  font-family: 'Noto  KR'; box-sizing: border-box;
 }
 .char-count {
   text-align: right; padding: 6px 12px;
