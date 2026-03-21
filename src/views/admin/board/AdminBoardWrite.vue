@@ -141,7 +141,7 @@ function handleFileUpload() {
     :title="alertModal.title"
     :desc="alertModal.message"
     type="warning"
-    @close="alertModal.value = { visible: false, title: '', message: '' }"
+    @close="alertModal = { visible: false, title: '', message: '' }"
   />
 
 </template>
