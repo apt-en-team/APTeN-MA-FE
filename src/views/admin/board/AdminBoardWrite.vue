@@ -132,17 +132,6 @@ function handleFileUpload() {
           <p class="sidebar-value">{{ today }}</p>
         </div>
 
-        <!-- 첨부 파일 -->
-        <div class="sidebar-card">
-          <p class="sidebar-title">첨부 파일</p>
-          <div class="upload-box">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#687282" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
-            </svg>
-            <p class="upload-text">클릭하여 파일 업로드</p>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -152,7 +141,7 @@ function handleFileUpload() {
     :title="alertModal.title"
     :desc="alertModal.message"
     type="warning"
-    @close="alertModal.value = { visible: false, title: '', message: '' }"
+    @close="alertModal = { visible: false, title: '', message: '' }"
   />
 
 </template>
@@ -269,14 +258,4 @@ function handleFileUpload() {
   flex-shrink: 0;
 }
 .status-text { font-size: 13px; font-weight: 600; color: #1A202C; }
-
-/* 첨부 파일 */
-.upload-box {
-  border: 1.5px dashed #E2E8F0; border-radius: 8px;
-  padding: 28px; display: flex; flex-direction: column;
-  align-items: center; gap: 8px; cursor: pointer;
-  transition: border-color 0.15s;
-}
-.upload-box:hover { border-color: #2B3A55; }
-.upload-text { font-size: 12px; color: #687282; }
 </style>

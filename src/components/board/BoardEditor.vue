@@ -64,7 +64,7 @@ function imageHandler() {
     if (!file) return
     try {
       const res = await uploadBoardImage(file)
-      const imageUrl = `${import.meta.env.SERVER_PORT}${res.data.imageUrl}`
+      const imageUrl = `http://localhost:8080${res.data.imageUrl}`
       const range = quill.getSelection(true)
       quill.insertEmbed(range.index, 'image', imageUrl)
       quill.setSelection(range.index + 1)

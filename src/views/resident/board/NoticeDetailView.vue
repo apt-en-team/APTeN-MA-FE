@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPostDetail } from '@/api/board'
 import { useAuthStore } from '@/stores/modules/auth'
 import { useComment } from '@/composables/useComment'
 import CommentItem from '@/components/board/CommentItem.vue'
+import BoardCard from '@/components/board/BoardCard.vue'
 import BeseModel from '@/components/common/BeseModel.vue'
 import ActionResultModal from '@/components/common/ActionResultModal.vue'
 
@@ -26,20 +27,10 @@ onMounted(async () => {
   }
 })
 
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  return dateStr.replace('T', ' ').slice(0, 16)
-}
-
 function goBack() {
   router.push('/resident/board/notice')
 }
 
-const avatarColors = ['#4973E5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
-function getAvatarColor(name) {
-  const idx = (name?.charCodeAt(0) ?? 0) % avatarColors.length
-  return avatarColors[idx]
-}
 
 // 댓글
 const {
@@ -64,32 +55,20 @@ const {
 
       <!-- 메인 본문 -->
       <div class="detail-main">
-        <div class="detail-card">
-          <span class="badge-gong">공지</span>
-          <h1 class="detail-title">{{ notice.title }}</h1>
-
-          <div class="detail-meta">
-            <div class="author-info">
-              <div class="avatar" :style="{ background: getAvatarColor(notice.authorName) }">
-                {{ notice.authorName?.[0] }}
-              </div>
-              <div class="author-detail">
-                <div class="author-name-wrap">
-                  <span class="author-name">{{ notice.authorName }}</span>
-                  <span class="badge-admin">관리자</span>
-                </div>
-                <div class="author-sub">
-                  <span class="author-date">{{ formatDate(notice.createdAt) }}</span>
-                </div>
-              </div>
-            </div>
-            <span class="view-count">조회 {{ notice.viewCount }}</span>
-          </div>
-
-          <div class="divider"/>
-
-          <div class="detail-body ql-editor" v-html="notice.content" />
-        </div>
+        <BoardCard
+          :title="notice.title"
+          :content="notice.content"
+          :author-name="notice.authorName"
+          :created-at="notice.createdAt"
+          :view-count="notice.viewCount"
+        >
+          <template #badge>
+            <span class="badge-gong">공지</span>
+          </template>
+          <template #author-extra>
+            <span class="badge-admin">관리자</span>
+          </template>
+        </BoardCard>
       </div>
 
       <!-- 우측 사이드바 -->
