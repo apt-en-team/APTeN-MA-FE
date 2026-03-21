@@ -273,7 +273,7 @@ function navTo(path) {
 .logo-text {
   font-size: 15px;
   font-weight: 700;
-
+  color: #333333;
 }
 
 .logo-role {
@@ -397,7 +397,7 @@ function navTo(path) {
 .profile-name {
   font-size: 13px;
   font-weight: 600;
-
+  color: #333333;
 }
 
 .profile-status {
