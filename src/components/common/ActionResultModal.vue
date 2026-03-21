@@ -256,7 +256,6 @@ const emit = defineEmits(['close'])
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
 }
 
 .btn-submit:hover {

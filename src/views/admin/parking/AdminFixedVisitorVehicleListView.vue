@@ -3,7 +3,7 @@ import {ref, computed, inject, onMounted} from 'vue'
 import {
   getAdminFixedVisitorVehicles,
   getAdminFixedVisitorVehicleStats,
-  registerFixedVisitorVehicle,
+  adminRegisterFixedVisitorVehicle,
   deleteAdminFixedVisitorVehicle
 } from '@/api/visitorVehicle.js'
 import householdAPI from '@/api/household.js'
@@ -121,15 +121,15 @@ const fetchStats = async () => {
 const fetchList = async () => {
   try {
     const params = {page: currentPage.value, size: size.value}
-    // 값이 있을 때만 파라미터에 추가 (빈 문자열은 전송 안 함)
     if (vehicleNumber.value) params.vehicleNumber = vehicleNumber.value
     if (dong.value) params.dong = dong.value
 
     const res = await getAdminFixedVisitorVehicles(params)
     const data = res.data
-    list.value = data.content
-    totalPages.value = data.totalPages
-    totalCount.value = data.totalCount
+
+    list.value = data.content ?? data ?? []
+    totalPages.value = data.totalPages ?? 0
+    totalCount.value = data.totalCount ?? data.length ?? 0
   } catch (e) {
     console.error('고정 방문차량 목록 조회 실패', e)
   }
@@ -190,7 +190,7 @@ const submitRegister = async () => {
   }
   registerModal.value.loading = true
   try {
-    await registerFixedVisitorVehicle({
+    await adminRegisterFixedVisitorVehicle({
       ...form.value,
       // 날짜 input이 비어있으면 빈 문자열("")이 오는데
       // 백엔드 LocalDate 타입은 null을 기대하므로 명시적으로 null 변환

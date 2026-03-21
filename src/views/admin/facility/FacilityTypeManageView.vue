@@ -295,7 +295,7 @@ onMounted(async () => {
 .facility-type-manage-view {
   display: flex;
   flex-direction: column;
-  font-family: "Noto Sans KR", sans-serif;
+
   color: #333;
 }
 .table-section {
@@ -437,7 +437,7 @@ onMounted(async () => {
   font-size: 13px;
   outline: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-input:focus,
 .form-textarea:focus {
@@ -456,7 +456,7 @@ onMounted(async () => {
   font-size: 13px;
   color: #718096;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-cancel:hover {
   background: #f5f6f8;
@@ -470,7 +470,7 @@ onMounted(async () => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-submit:hover:not(:disabled) {
   background: #1e2a3e;

@@ -131,12 +131,11 @@ defineEmits(["confirm", "cancel"]);
   font-weight: 700;
   color: #1a202c;
   margin-bottom: 6px;
-  font-family: "Noto Sans KR", sans-serif;
 }
 .confirm-subtitle {
   font-size: 13px;
   margin-bottom: 20px;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 
 .confirm-info-box {
@@ -160,14 +159,14 @@ defineEmits(["confirm", "cancel"]);
 .confirm-info-label {
   font-size: 12px;
   color: #94a3b8;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .confirm-info-value {
   font-size: 13px;
   font-weight: 600;
   color: #1a202c;
   text-align: right;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 
 .confirm-footer {
@@ -185,7 +184,6 @@ defineEmits(["confirm", "cancel"]);
   font-size: 13px;
   color: #718096;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
 }
 .btn-cancel:hover {
   background: #f5f6f8;
@@ -198,7 +196,7 @@ defineEmits(["confirm", "cancel"]);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-confirm:disabled {
   opacity: 0.5;

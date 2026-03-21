@@ -493,7 +493,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  font-family: "Noto Sans KR", sans-serif;
+
   color: #333;
 }
 .vehicle-list {
@@ -531,7 +531,7 @@ onMounted(async () => {
 .vehicle-title {
   font-size: 16px;
   font-weight: 600;
-  color: #333333;
+  color: ;
 }
 .vehicle-meta {
   display: grid;
@@ -549,7 +549,7 @@ onMounted(async () => {
 }
 .meta-value {
   font-size: 18px;
-  color: #333333;
+  color: ;
 }
 .meta-value.bold {
   font-weight: 700;
@@ -593,7 +593,7 @@ onMounted(async () => {
   font-size: 12px;
   color: #2b3a55;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-edit:hover {
   background: #f0f4ff;
@@ -606,7 +606,7 @@ onMounted(async () => {
   font-size: 12px;
   color: #e74c3c;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-delete:hover {
   background: #fee2e2;
@@ -671,7 +671,7 @@ onMounted(async () => {
   color: #333;
   outline: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-input:focus {
   border-color: #2b3a55;
@@ -688,7 +688,7 @@ onMounted(async () => {
   appearance: none;
   outline: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-row {
   display: grid;
@@ -732,7 +732,7 @@ onMounted(async () => {
   font-size: 13px;
   color: #718096;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-cancel:hover {
   background: #f5f6f8;
@@ -746,7 +746,7 @@ onMounted(async () => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-submit:hover:not(:disabled) {
   background: rgb(25, 98, 224);

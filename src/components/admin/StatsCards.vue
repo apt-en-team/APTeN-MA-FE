@@ -41,7 +41,7 @@ defineProps({
 .stat-card  { height: 139px; background: #fff; border-radius: 10px; padding: 22px 24px; border: 1px solid #E2E8F0; display: flex; align-items: flex-start; justify-content: space-between; }
 .card-main  { display: flex; flex-direction: column; justify-content: space-between; height: 95px; }
 .stat-label { font-size: 12px; color: #687282; font-weight: 500; }
-.stat-value { font-size: 30px; font-weight: 800; color: #333333; line-height: 1.2; }
+.stat-value { font-size: 30px; font-weight: 800; color: ; line-height: 1.2; }
 .stat-unit  { font-size: 12px; font-weight: 500; color: #6b7280; padding: 5px;}
 .stat-desc  { font-size: 12px; color: #6B7280; }
 .stat-desc.success { color: #276749; }

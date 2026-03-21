@@ -1,6 +1,6 @@
 <script setup>
 import {reactive, computed, onMounted, inject} from 'vue'
-import axios from '@/api/axios.js'
+import {getParkingLogStats, getParkingLogs, createParkingLog} from '@/api/parking.js'
 
 import StatsCards from '@/components/admin/StatsCards.vue'
 import FilterBar from '@/components/layout/FilterBar.vue'
@@ -8,17 +8,16 @@ import AdminTable from '@/components/admin/AdminTable.vue'
 import Pagination from '@/components/layout/Pagination.vue'
 import Model from '@/components/Modal.vue'
 
-
-// 페이지 전체 상태 관리
+// ── 상태 ──────────────────────────────────────────────────────
 const state = reactive({
   list: [], // 입출차 기록 목록
 
-  // 상단 통계 카드 데이터
+  // 상단 통계 카드 데이터 (오늘 입출차, 미등록, 이번달 전체)
   stats: {
-    todayIn: 0,      // 오늘 입차 건수
-    todayOut: 0,     // 오늘 출차 건수
-    unregistered: 0, // 미등록 차량 건수
-    monthTotal: 0,   // 이번 달 전체 건수
+    todayIn: 0,
+    todayOut: 0,
+    unregistered: 0,
+    monthTotal: 0,
   },
 
   // 검색 필터
@@ -55,16 +54,14 @@ const state = reactive({
   selectedRow: null, // 클릭한 행 데이터
 })
 
-
-// 등록 모달 기록 시각 기본값 (YYYY-MM-DD HH:mm)
+// ── 등록 모달 기록 시각 기본값 (YYYY-MM-DD HH:mm) ─────────────
 const getNow = () => {
   const d = new Date()
   const pad = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-
-// AdminTable 컬럼 정의
+// ── 테이블 컬럼 정의 ──────────────────────────────────────────
 const columns = [
   {label: 'ID', key: 'logId'},
   {label: '차량번호', key: 'licensePlate'},
@@ -74,8 +71,7 @@ const columns = [
   {label: '비고', key: 'vehicleInfo'},
 ]
 
-
-// StatsCards에 넘길 통계 데이터 (미등록 차량 있으면 warning 표시)
+// ── 상단 통계 카드 데이터 ─────────────────────────────────────
 const statsData = computed(() => [
   {label: '오늘 입차', value: state.stats.todayIn, unit: '건', desc: '오늘 기준'},
   {label: '오늘 출차', value: state.stats.todayOut, unit: '건', desc: '오늘 기준'},
@@ -89,11 +85,13 @@ const statsData = computed(() => [
   {label: '이번 달 전체', value: state.stats.monthTotal, unit: '건', desc: '월간 누적'},
 ])
 
+// ── API 조회 ──────────────────────────────────────────────────
 
 // 입출차 통계 조회 (GET /parking/logs/stats)
+// 오늘 입차/출차, 미등록 건수, 이번달 전체 건수
 const fetchStats = async () => {
   try {
-    const res = await axios.get('/parking/logs/stats')
+    const res = await getParkingLogStats()
     const data = res.data?.resultData ?? res.data
     state.stats.todayIn = data.todayIn ?? 0
     state.stats.todayOut = data.todayOut ?? 0
@@ -104,8 +102,8 @@ const fetchStats = async () => {
   }
 }
 
-
 // 입출차 기록 목록 조회 (GET /parking/logs)
+// 차량번호, 입출차 구분, 차량 유형, 날짜 범위 필터 + 페이지네이션
 const fetchList = async () => {
   try {
     const params = {page: state.currentPage, size: state.size}
@@ -115,7 +113,7 @@ const fetchList = async () => {
     if (state.entryType) params.entryType = state.entryType
     if (state.vehicleType) params.vehicleType = state.vehicleType
 
-    const res = await axios.get('/parking/logs', {params})
+    const res = await getParkingLogs(params)
     const data = res.data?.resultData ?? res.data
     state.list = data.content ?? []
     state.totalPages = data.totalPages ?? 0
@@ -125,8 +123,7 @@ const fetchList = async () => {
   }
 }
 
-
-// 필터 처리
+// ── 필터 처리 ──────────────────────────────────────────────────
 const filteredRows = computed(() => state.list)
 
 // 검색 버튼 클릭 또는 엔터 시 1페이지부터 재조회
@@ -151,13 +148,13 @@ const goToPage = (page) => {
   fetchList()
 }
 
-
-// 날짜 포맷 (ISO → 'YYYY-MM-DD HH:mm')
+// ── 날짜 포맷 (ISO → 'YYYY-MM-DD HH:mm') ─────────────────────
 const formatDate = (val) => {
   if (!val) return '-'
   return val.replace('T', ' ').slice(0, 16)
 }
 
+// ── 등록 모달 ─────────────────────────────────────────────────
 
 // 등록 모달 열기 (폼 초기화 후 오픈)
 const openRegisterModal = () => {
@@ -185,18 +182,16 @@ const submitLog = async () => {
   state.submitting = true
   state.submitError = ''
   state.result = null
-
   try {
-    const res = await axios.post('/parking/logs', {
+    const res = await createParkingLog({
       licensePlate: state.form.licensePlate.trim(),
       entryType: state.form.entryType,
     })
     state.result = res.data?.resultData ?? res.data
+    state.successResult = state.result
     fetchList()
     fetchStats()
-
     // 등록 모달 닫고 성공 모달 열기
-    state.successResult = state.result
     closeRegisterModal()
     state.showSuccessModal = true
   } catch (e) {
@@ -207,27 +202,31 @@ const submitLog = async () => {
   }
 }
 
+// ── 상세 모달 ─────────────────────────────────────────────────
 
 // 상세 모달 열기 (행 클릭 시 호출)
 const openDetailModal = (row) => {
-  state.selectedRow = row
+  state.selectedRow = row;
   state.showDetailModal = true
 }
 
 // 상세 모달 닫기
 const closeDetailModal = () => {
-  state.showDetailModal = false
+  state.showDetailModal = false;
   state.selectedRow = null
 }
 
-
-// 차량 유형별 뱃지 CSS 클래스 반환
+// ── 차량 유형별 뱃지 CSS 클래스 반환 ─────────────────────────
 const typeClass = (type) => {
   switch (type) {
-    case '등록차량':  return 'type-registered'
-    case '방문차량': return 'type-visitor'
-    case '고정방문차량': return 'type-fixed'
-    default: return 'type-unknown'
+    case '등록차량':
+      return 'type-registered'
+    case '방문차량':
+      return 'type-visitor'
+    case '고정방문차량':
+      return 'type-fixed'
+    default:
+      return 'type-unknown'
   }
 }
 
@@ -244,26 +243,29 @@ onMounted(() => {
 <template>
   <div class="parking-log-page">
 
-    <!-- 상단 통계 카드 4개 -->
+    <!-- 상단 통계 카드 4개 (오늘 입출차, 미등록, 이번달 전체) -->
     <StatsCards :stats="statsData"/>
 
     <!-- 필터 + 테이블 + 페이지네이션 섹션 -->
     <div class="table-section">
       <FilterBar @reset="resetFilters">
+        <!-- 차량번호 검색 -->
         <div class="search-wrap">
-          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input class="search-input" type="text" placeholder="차량번호 검색"
-                 v-model="state.licensePlate" @keyup.enter="doSearch"/>
+          <input class="search-input" type="text" placeholder="차량번호 검색" v-model="state.licensePlate"
+                 @keyup.enter="doSearch"/>
         </div>
+        <!-- 입/출차 필터 -->
         <select class="filter-select" v-model="state.entryType" @change="doSearch">
           <option value="">입/출차</option>
           <option value="IN">입차</option>
           <option value="OUT">출차</option>
         </select>
+        <!-- 차량 유형 필터 -->
         <select class="filter-select" v-model="state.vehicleType" @change="doSearch">
           <option value="">차량 유형</option>
           <option value="등록차량">등록차량</option>
@@ -271,6 +273,7 @@ onMounted(() => {
           <option value="고정방문차량">고정방문차량</option>
           <option value="미등록차량">미등록차량</option>
         </select>
+        <!-- 날짜 범위 필터 -->
         <input class="filter-date" type="date" v-model="state.startDate" @change="doSearch"/>
         <span class="date-sep">~</span>
         <input class="filter-date" type="date" v-model="state.endDate" @change="doSearch"/>
@@ -278,26 +281,16 @@ onMounted(() => {
 
       <!-- 테이블 (행 클릭 시 상세 모달 오픈) -->
       <AdminTable :columns="columns" :rows="filteredRows" @row-click="openDetailModal">
-        <template #cell-logId="{ row }">
-          <span class="log-id">#{{ row.logId }}</span>
-        </template>
-        <template #cell-licensePlate="{ row }">
-          <span class="license">{{ row.licensePlate }}</span>
-        </template>
+        <template #cell-logId="{ row }"><span class="log-id">#{{ row.logId }}</span></template>
+        <template #cell-licensePlate="{ row }"><span class="license">{{ row.licensePlate }}</span></template>
         <template #cell-entryType="{ row }">
-          <span :class="['badge-entry', row.entryType === 'IN' ? 'badge-in' : 'badge-out']">
-            {{ row.entryType }}
-          </span>
+          <span :class="['badge-entry', row.entryType === 'IN' ? 'badge-in' : 'badge-out']">{{ row.entryType }}</span>
         </template>
         <template #cell-vehicleType="{ row }">
-          <span :class="['badge-type', typeClass(row.vehicleType)]">
-            {{ row.vehicleType ?? '미등록차량' }}
-          </span>
+          <span :class="['badge-type', typeClass(row.vehicleType)]">{{ row.vehicleType ?? '미등록차량' }}</span>
         </template>
         <template #cell-loggedAt="{ row }">{{ formatDate(row.loggedAt) }}</template>
-        <template #cell-vehicleInfo="{ row }">
-          <span class="vehicle-info">{{ row.vehicleInfo ?? '-' }}</span>
-        </template>
+        <template #cell-vehicleInfo="{ row }"><span class="vehicle-info">{{ row.vehicleInfo ?? '-' }}</span></template>
       </AdminTable>
 
       <Pagination
@@ -310,23 +303,14 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 등록 모달: 차량번호 입력 후 수동 입출차 기록 등록 -->
-    <Model
-        v-if="state.showRegisterModal"
-        title="입출차 기록 등록"
-        subtitle="수동으로 입출차 기록을 추가합니다"
-        @close="closeRegisterModal"
-    >
+    <!-- 등록 모달: 차량번호 + 입/출차 선택으로 수동 기록 등록 -->
+    <Model v-if="state.showRegisterModal" title="입출차 기록 등록" subtitle="수동으로 입출차 기록을 추가합니다" @close="closeRegisterModal">
       <div class="modal-form">
-
-        <!-- 차량번호 -->
         <div class="form-group">
           <label class="form-label">차량번호 <span class="required">*</span></label>
-          <input class="form-input" type="text" placeholder="예: 12가 3456"
-                 v-model="state.form.licensePlate" @keyup.enter="submitLog"/>
+          <input class="form-input" type="text" placeholder="예: 12가 3456" v-model="state.form.licensePlate"
+                 @keyup.enter="submitLog"/>
         </div>
-
-        <!-- 입/출차 선택 -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">입/출차 <span class="required">*</span></label>
@@ -340,14 +324,12 @@ onMounted(() => {
             </div>
           </div>
         </div>
-
-        <!-- 기록 시각 -->
         <div class="form-group">
           <label class="form-label">기록 시각</label>
           <div class="input-icon-wrap">
             <input class="form-input" type="text" v-model="state.form.loggedAt"/>
-            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2"/>
               <line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/>
@@ -355,18 +337,13 @@ onMounted(() => {
             </svg>
           </div>
         </div>
-
-        <!-- 비고 -->
         <div class="form-group">
           <label class="form-label">비고 (선택)</label>
-          <textarea class="form-textarea" placeholder="관리자 메모 입력 (선택사항)"
-                    v-model="state.form.note" rows="3"/>
+          <textarea class="form-textarea" placeholder="관리자 메모 입력 (선택사항)" v-model="state.form.note" rows="3"/>
         </div>
-
         <p v-if="state.submitError" class="error-msg">{{ state.submitError }}</p>
         <p class="form-note">* 표시는 필수 입력 정보입니다.</p>
       </div>
-
       <template #footer>
         <button class="btn-cancel" @click="closeRegisterModal">취소</button>
         <button class="btn-primary" @click="submitLog" :disabled="state.submitting">
@@ -376,32 +353,23 @@ onMounted(() => {
     </Model>
 
     <!-- 성공 모달: 등록 완료 후 결과 표시 -->
-    <Model
-        v-if="state.showSuccessModal"
-        title="등록 완료"
-        subtitle="입출차 기록이 성공적으로 등록되었습니다"
-        @close="state.showSuccessModal = false"
-    >
+    <Model v-if="state.showSuccessModal" title="등록 완료" subtitle="입출차 기록이 성공적으로 등록되었습니다"
+           @close="state.showSuccessModal = false">
       <div class="success-body">
-        <!-- 성공 아이콘 -->
         <div class="success-icon">✓</div>
-
-        <!-- 등록된 차량번호 -->
         <div class="success-plate">{{ state.form.licensePlate }}</div>
-
-        <!-- 결과 정보 -->
         <div class="success-grid">
           <div class="success-cell">
             <span class="success-label">입/출차</span>
-            <span :class="['badge-entry', state.form.entryType === 'IN' ? 'badge-in' : 'badge-out']">
-              {{ state.form.entryType }}
-            </span>
+            <span :class="['badge-entry', state.form.entryType === 'IN' ? 'badge-in' : 'badge-out']">{{
+                state.form.entryType
+              }}</span>
           </div>
           <div class="success-cell">
             <span class="success-label">차량 유형</span>
-            <span :class="['badge-type', typeClass(state.successResult?.vehicleType)]">
-              {{ state.successResult?.vehicleType ?? '미등록차량' }}
-            </span>
+            <span :class="['badge-type', typeClass(state.successResult?.vehicleType)]">{{
+                state.successResult?.vehicleType ?? '미등록차량'
+              }}</span>
           </div>
           <div class="success-cell" v-if="state.successResult?.vehicleInfo">
             <span class="success-label">차량 정보</span>
@@ -409,76 +377,59 @@ onMounted(() => {
           </div>
         </div>
       </div>
-
       <template #footer>
         <button class="btn-primary" @click="state.showSuccessModal = false">확인</button>
       </template>
     </Model>
 
     <!-- 상세 모달: 선택한 입출차 기록 상세 정보 표시 -->
-    <Model
-        v-if="state.showDetailModal && state.selectedRow"
-        title="입출차 기록 상세"
-        :subtitle="`ID #${state.selectedRow.logId}`"
-        @close="closeDetailModal"
-    >
+    <Model v-if="state.showDetailModal && state.selectedRow" title="입출차 기록 상세"
+           :subtitle="`ID #${state.selectedRow.logId}`" @close="closeDetailModal">
       <div class="detail-body">
         <div class="detail-header">
-          <span :class="['badge-entry', state.selectedRow.entryType === 'IN' ? 'badge-in' : 'badge-out']">
-            {{ state.selectedRow.entryType }}
-          </span>
+          <span :class="['badge-entry', state.selectedRow.entryType === 'IN' ? 'badge-in' : 'badge-out']">{{
+              state.selectedRow.entryType
+            }}</span>
           <div class="detail-plate">{{ state.selectedRow.licensePlate }}</div>
           <div class="detail-type">{{ state.selectedRow.vehicleType ?? '미등록차량' }}</div>
         </div>
-
         <div class="detail-divider"/>
-
         <div class="detail-grid">
-          <div class="detail-item">
-            <span class="detail-label">기록 ID</span>
-            <span class="detail-value">#{{ state.selectedRow.logId }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">차량번호</span>
-            <span class="detail-value">{{ state.selectedRow.licensePlate }}</span>
-          </div>
+          <div class="detail-item"><span class="detail-label">기록 ID</span><span
+              class="detail-value">#{{ state.selectedRow.logId }}</span></div>
+          <div class="detail-item"><span class="detail-label">차량번호</span><span
+              class="detail-value">{{ state.selectedRow.licensePlate }}</span></div>
           <div class="detail-item">
             <span class="detail-label">입/출차</span>
-            <span :class="['badge-entry', state.selectedRow.entryType === 'IN' ? 'badge-in' : 'badge-out']">
-              {{ state.selectedRow.entryType }}
-            </span>
+            <span :class="['badge-entry', state.selectedRow.entryType === 'IN' ? 'badge-in' : 'badge-out']">{{
+                state.selectedRow.entryType
+              }}</span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">기록 시각</span>
-            <span class="detail-value">{{ formatDate(state.selectedRow.loggedAt) }}</span>
-          </div>
+          <div class="detail-item"><span class="detail-label">기록 시각</span><span
+              class="detail-value">{{ formatDate(state.selectedRow.loggedAt) }}</span></div>
           <div class="detail-item">
             <span class="detail-label">등록 차량 여부</span>
             <span :class="['badge-type', typeClass(state.selectedRow.vehicleType)]">
-              {{ state.selectedRow.vehicleType ?? '미등록' }}
-              <template v-if="state.selectedRow.vehicleId"> ({{ state.selectedRow.vehicleId }})</template>
-              <template v-else-if="!state.selectedRow.vehicleId && !state.selectedRow.visitorVehicleId && !state.selectedRow.fixedVisitorVehicleId"> (0)</template>
-            </span>
+       {{ state.selectedRow.vehicleType ?? '미등록' }}
+       <template v-if="state.selectedRow.vehicleId"> ({{ state.selectedRow.vehicleId }})</template>
+       <template
+           v-else-if="!state.selectedRow.vehicleId && !state.selectedRow.visitorVehicleId && !state.selectedRow.fixedVisitorVehicleId"> (0)</template>
+      </span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">비고</span>
-            <span class="detail-value">{{ state.selectedRow.vehicleInfo ?? '-' }}</span>
-          </div>
+          <div class="detail-item"><span class="detail-label">비고</span><span
+              class="detail-value">{{ state.selectedRow.vehicleInfo ?? '-' }}</span></div>
         </div>
-
-        <!-- 미등록 차량 경고 -->
+        <!-- 미등록 차량 경고 박스 -->
         <div
             v-if="!state.selectedRow.vehicleId && !state.selectedRow.visitorVehicleId && !state.selectedRow.fixedVisitorVehicleId"
             class="warning-box">
           미등록 차량입니다.<br/>등록 여부를 확인하고 필요시 조치해주세요.
         </div>
       </div>
-
       <template #footer>
         <button class="btn-primary" @click="closeDetailModal">닫기</button>
       </template>
     </Model>
-
   </div>
 </template>
 
@@ -502,7 +453,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 버튼 */
 .btn-primary {
   padding: 9px 18px;
   background: #2B3A55;
@@ -537,7 +487,6 @@ onMounted(() => {
   background: #F5F6F8;
 }
 
-/* 필터 */
 .search-wrap {
   display: flex;
   align-items: center;
@@ -591,7 +540,6 @@ onMounted(() => {
   color: #687282;
 }
 
-/* 테이블 셀 */
 .log-id {
   color: #687282;
   font-size: 12px;
@@ -608,7 +556,6 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* 뱃지 */
 .badge-entry {
   display: inline-block;
   padding: 4px 18px;
@@ -655,7 +602,6 @@ onMounted(() => {
   color: #687282;
 }
 
-/* 등록 모달 폼 */
 .modal-form {
   display: flex;
   flex-direction: column;
@@ -753,12 +699,7 @@ onMounted(() => {
   transition: all 0.15s;
 }
 
-.type-in.active {
-  background: #2B3A55;
-  color: #fff;
-}
-
-.type-out.active {
+.type-in.active, .type-out.active {
   background: #2B3A55;
   color: #fff;
 }
@@ -774,7 +715,6 @@ onMounted(() => {
   color: #E53E3E;
 }
 
-/* 성공 모달 */
 .success-body {
   display: flex;
   flex-direction: column;
@@ -832,7 +772,6 @@ onMounted(() => {
   color: #1A202C;
 }
 
-/* 상세 모달 */
 .detail-body {
   display: flex;
   flex-direction: column;

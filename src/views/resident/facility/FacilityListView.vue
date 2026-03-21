@@ -228,7 +228,7 @@ onMounted(async () => {
   font-weight: 600;
   color: #a0aec0;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
   transition: all 0.15s;
@@ -253,7 +253,7 @@ onMounted(async () => {
   font-size: 15px;
   color: #757575;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }

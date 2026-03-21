@@ -1,8 +1,8 @@
 <script setup>
-import { reactive, computed, onMounted, onUnmounted } from 'vue'
-import axios from '@/api/axios.js'
+import {reactive, computed, onMounted, onUnmounted} from 'vue'
+import {getParkingStatus} from '@/api/parking.js'
 
-// 주차 현황 상태 데이터
+// ── 상태 ──────────────────────────────────────────────────────
 const state = reactive({
   totalSpaces: 0,    // 전체 주차면 수
   currentCount: 0,   // 현재 주차 중인 차량 수
@@ -10,30 +10,32 @@ const state = reactive({
   loading: true,     // 데이터 로딩 여부
 })
 
-// 주차 사용률 (현재 주차 중 / 전체 주차면 * 100)
+// ── 주차 사용률 (현재 주차 중 / 전체 주차면 * 100) ───────────
 const usageRate = computed(() =>
     state.totalSpaces > 0
         ? Math.round((state.currentCount / state.totalSpaces) * 100)
         : 0
 )
 
-// 사용률에 따른 상태 레이블 및 색상 (90% 이상: 혼잡, 70% 이상: 보통, 미만: 여유)
+// ── 사용률에 따른 상태 레이블 및 색상 ────────────────────────
+// 90% 이상: 혼잡(빨강) / 70% 이상: 보통(주황) / 미만: 여유(초록)
 const statusLabel = computed(() => {
-  if (usageRate.value >= 90) return { text: '혼잡', color: '#E74C3C', bg: '#FFF5F5' }
-  if (usageRate.value >= 70) return { text: '보통', color: '#F59E0B', bg: '#FFFBEB' }
-  return { text: '여유', color: '#2EAD5C', bg: '#F0FFF4' }
+  if (usageRate.value >= 90) return {text: '혼잡', color: '#E74C3C', bg: '#FFF5F5'}
+  if (usageRate.value >= 70) return {text: '보통', color: '#F59E0B', bg: '#FFFBEB'}
+  return {text: '여유', color: '#2EAD5C', bg: '#F0FFF4'}
 })
 
-// 주차 현황 API 호출 (GET /parking/status)
+// ── API 조회 ──────────────────────────────────────────────────
+// GET /parking/status
 // total_spaces / current_count snake_case 응답도 fallback 처리
 // availableCount가 없으면 전체 - 현재로 직접 계산
 const fetchStatus = async () => {
   state.loading = true
   try {
-    const res = await axios.get('/parking/status')
+    const res = await getParkingStatus()
     const data = res.data?.resultData ?? res.data
-    state.totalSpaces    = data.totalSpaces    ?? data.total_spaces  ?? 0
-    state.currentCount   = data.currentCount   ?? data.current_count ?? 0
+    state.totalSpaces = data.totalSpaces ?? data.total_spaces ?? 0
+    state.currentCount = data.currentCount ?? data.current_count ?? 0
     state.availableCount = data.availableCount ?? (state.totalSpaces - state.currentCount)
   } catch (e) {
     console.error('주차 현황 조회 실패', e)
@@ -42,6 +44,7 @@ const fetchStatus = async () => {
   }
 }
 
+// ── 자동 갱신 ─────────────────────────────────────────────────
 // 컴포넌트 마운트 시 최초 조회 후 30초마다 자동 갱신
 // 컴포넌트 언마운트 시 타이머 제거
 let timer = null
@@ -78,28 +81,29 @@ onUnmounted(() => clearInterval(timer))
 
         <!-- 현재 주차장 혼잡도 상태 배지 (여유/보통/혼잡) -->
         <div class="status-banner" :style="{ background: statusLabel.bg, borderColor: statusLabel.color + '44' }">
-          <span class="status-dot" :style="{ background: statusLabel.color }" />
+          <span class="status-dot" :style="{ background: statusLabel.color }"/>
           <span class="status-text">
-            현재 주차장 상태:
-            <strong :style="{ color: statusLabel.color }">{{ statusLabel.text }}</strong>
-          </span>
+      현재 주차장 상태:
+      <strong :style="{ color: statusLabel.color }">{{ statusLabel.text }}</strong>
+     </span>
         </div>
 
         <!-- 주차 사용률 게이지 바 (사용률에 따라 색상 변경) -->
         <div class="gauge-section">
           <div class="gauge-header">
             <span class="gauge-label">주차 사용률</span>
-            <span class="gauge-rate" :style="{ color: usageRate >= 90 ? '#E74C3C' : usageRate >= 70 ? '#F59E0B' : '#4973E5' }">
-              {{ usageRate }}%
-            </span>
+            <span class="gauge-rate"
+                  :style="{ color: usageRate >= 90 ? '#E74C3C' : usageRate >= 70 ? '#F59E0B' : '#4973E5' }">
+       {{ usageRate }}%
+      </span>
           </div>
           <div class="gauge-track">
             <div
                 class="gauge-fill"
                 :style="{
-                width: usageRate + '%',
-                background: usageRate >= 90 ? '#E74C3C' : usageRate >= 70 ? '#F59E0B' : '#4973E5'
-              }"
+        width: usageRate + '%',
+        background: usageRate >= 90 ? '#E74C3C' : usageRate >= 70 ? '#F59E0B' : '#4973E5'
+       }"
             />
           </div>
           <div class="gauge-footer">
@@ -133,7 +137,8 @@ onUnmounted(() => clearInterval(timer))
             <div class="stat-sub" :style="{ color: statusLabel.color }">{{ statusLabel.text }}</div>
             <div class="stat-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5">
-                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                <path
+                    d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
                 <circle cx="7" cy="17" r="2"/>
                 <path d="M9 17h6"/>
                 <circle cx="17" cy="17" r="2"/>
@@ -157,7 +162,6 @@ onUnmounted(() => clearInterval(timer))
               </svg>
             </div>
           </div>
-
         </div>
 
         <!-- 자동 갱신 안내 문구 -->
@@ -169,7 +173,6 @@ onUnmounted(() => clearInterval(timer))
           </svg>
           주차 현황은 30초마다 자동으로 갱신됩니다.
         </div>
-
       </template>
     </div>
   </div>
@@ -191,7 +194,6 @@ onUnmounted(() => clearInterval(timer))
   gap: 20px;
 }
 
-/* 헤더 */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -225,9 +227,10 @@ onUnmounted(() => clearInterval(timer))
   cursor: pointer;
 }
 
-.btn-refresh:hover { background: #3a5bd9; }
+.btn-refresh:hover {
+  background: #3a5bd9;
+}
 
-/* 로딩 */
 .empty-state {
   text-align: center;
   padding: 60px 0;
@@ -235,7 +238,6 @@ onUnmounted(() => clearInterval(timer))
   font-size: 14px;
 }
 
-/* 상태 배너 */
 .status-banner {
   display: flex;
   align-items: center;
@@ -254,8 +256,12 @@ onUnmounted(() => clearInterval(timer))
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .status-text {
@@ -263,7 +269,6 @@ onUnmounted(() => clearInterval(timer))
   color: #687282;
 }
 
-/* 게이지 */
 .gauge-section {
   display: flex;
   flex-direction: column;
@@ -280,8 +285,16 @@ onUnmounted(() => clearInterval(timer))
   align-items: center;
 }
 
-.gauge-label { font-size: 13px; font-weight: 600; color: #687282; }
-.gauge-rate  { font-size: 22px; font-weight: 800; }
+.gauge-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #687282;
+}
+
+.gauge-rate {
+  font-size: 22px;
+  font-weight: 800;
+}
 
 .gauge-track {
   width: 100%;
@@ -304,7 +317,6 @@ onUnmounted(() => clearInterval(timer))
   color: #aaa;
 }
 
-/* 통계 카드 */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -351,7 +363,6 @@ onUnmounted(() => clearInterval(timer))
   opacity: 0.6;
 }
 
-/* 안내 */
 .info-box {
   display: flex;
   align-items: center;

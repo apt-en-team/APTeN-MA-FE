@@ -425,7 +425,7 @@ onMounted(async () => {
   padding: 0;
 }
 .facility-form-view {
-  font-family: "Noto Sans KR", sans-serif;
+
   color: #333;
 }
 .form-layout {
@@ -470,7 +470,7 @@ onMounted(async () => {
   color: #333;
   outline: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-input:focus {
   border-color: #2b3a55;
@@ -487,7 +487,7 @@ onMounted(async () => {
   appearance: none;
   outline: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-textarea {
   border: 1px solid #e2e8f0;
@@ -498,7 +498,7 @@ onMounted(async () => {
   outline: none;
   resize: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-textarea:focus {
   border-color: #2b3a55;
@@ -623,7 +623,7 @@ input:checked + .slider:before {
   font-size: 13px;
   color: #718096;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-cancel:hover {
   background: #f5f6f8;
@@ -637,7 +637,7 @@ input:checked + .slider:before {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-submit:hover {
   background: #1e2a3e;
@@ -651,7 +651,7 @@ input:checked + .slider:before {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-delete:hover {
   background: #fecaca;
