@@ -1,5 +1,12 @@
 <script setup>
-// 일반 시설 예약 카드
+//이미지 import
+import readingroomImg from '@/assets/images/readingroom.png'
+import ptImg from '@/assets/images/PT.png'
+import golfImg from '@/assets/images/golf.png'
+import pilatesImg from '@/assets/images/pilates.png'
+import groupPtImg from '@/assets/images/Group PT.png'
+
+//props
 const props = defineProps({
   item: {
     type: Object,
@@ -7,40 +14,38 @@ const props = defineProps({
   },
 })
 
-// 부모에 상세/취소 이벤트 전달
+//이벤트
 const emit = defineEmits(['detail', 'cancel'])
 
-/**
- * 상태 한글 표시
- */
+//상태 텍스트
 const statusTextMap = {
   CONFIRMED: '승인',
   PENDING: '대기',
   CANCELLED: '취소',
-  COMPLETED: '이용 완료',
+  COMPLETED: '완료',
 }
 
-/**
- * 상태별 badge class 반환
- */
+//상태 클래스
 const getStatusClass = (status) => {
-  if (status === 'CONFIRMED') return 'confirmed'
+  if (status === 'CONFIRMED') return 'available'
   if (status === 'PENDING') return 'pending'
-  if (status === 'CANCELLED') return 'cancelled'
+  if (status === 'CANCELLED') return 'closed'
   return 'completed'
 }
 
-/**
- * 취소 가능한 상태인지 판단
- * 승인 / 대기 상태만 취소 버튼 노출
- */
+//취소 가능 여부
 const canCancel = () => {
   return ['CONFIRMED', 'PENDING'].includes(props.item.status)
 }
 
-/**
- * 날짜 포맷팅
- */
+//GX 여부
+const isGxReservation = () => {
+  const name = props.item.facilityName || ''
+  const typeName = props.item.typeName || ''
+  return name.includes('GX') || name.includes('필라테스') || name.includes('그룹PT') || typeName.includes('GX')
+}
+
+//날짜 포맷
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
@@ -52,136 +57,283 @@ const formatDate = (dateStr) => {
   return `${yyyy}.${mm}.${dd}`
 }
 
-const getReservationImage = (facilityName) => {
-  if (facilityName?.includes('독서실')) return '/images/facility-library.jpg'
-  if (facilityName?.includes('헬스')) return '/images/facility-gym.jpg'
-  if (facilityName?.includes('골프')) return '/images/facility-golf.jpg'
-  if (facilityName?.includes('GX') || facilityName?.includes('필라테스')) {
-    return '/images/facility-gx.jpg'
-  }
-  return '/images/facility-default.jpg'
+//시간 포맷
+const formatTime = (timeStr) => {
+  if (!timeStr) return '-'
+  return String(timeStr).slice(0, 5)
 }
 
+//좌석 텍스트
+const getSeatText = () => {
+  if (!props.item.seatNo) return '-'
+  return `${props.item.seatNo}번 좌석`
+}
 
+//상태 텍스트
+const getStatusText = (status) => {
+  return statusTextMap[status] || '완료'
+}
+
+//이미지 매핑
+const getReservationImage = (name) => {
+  if (!name) return readingroomImg
+  if (name.includes('독서실')) return readingroomImg
+  if (name.includes('헬스')) return ptImg
+  if (name.includes('골프')) return golfImg
+  if (name.includes('필라테스')) return pilatesImg
+  if (name.includes('그룹PT')) return groupPtImg
+  if (name.includes('GX')) return pilatesImg
+  return readingroomImg
+}
+
+//설명 텍스트
+const getDescription = () => {
+  if (isGxReservation()) {
+    return `기간 : ${props.item.startDate} ~ ${props.item.endDate}`
+  }
+
+  if ((props.item.facilityName || '').includes('독서실')) {
+    return `좌석 예약${props.item.seatNo ? ` (${props.item.seatNo}번)` : ''}`
+  }
+
+  if ((props.item.facilityName || '').includes('골프')) {
+    return `타석 예약${props.item.seatNo ? ` (${props.item.seatNo}번)` : ''}`
+  }
+
+  if ((props.item.facilityName || '').includes('헬스')) {
+    return '자유 이용 예약'
+  }
+
+  return '시설 예약 내역'
+}
 </script>
 
 <template>
   <article class="reservation-card">
-    <!-- 시설 썸네일 -->
-    <div class="thumb-wrap">
-      <img :src="getReservationImage(item.facilityName)" alt="GX 이미지" class="thumb" />
+    <!--이미지-->
+    <div class="reservation-img">
+      <img
+        :src="getReservationImage(item.facilityName)"
+        :alt="item.facilityName"
+        class="reservation-thumb"
+      />
     </div>
 
-    <!-- 카드 본문 -->
-    <div class="card-body">
-      <!-- 상단: 시설명 + 상태 -->
-      <div class="body-top">
-        <div class="title-wrap">
-          <p class="category">{{ item.facilityTypeName }}</p>
-          <h3 class="title">{{ item.facilityName }}</h3>
-        </div>
+    <!--정보-->
+    <div class="reservation-info">
+      <div class="reservation-header">
+        <span class="reservation-name">{{ item.facilityName }}</span>
 
         <span :class="['status-badge', getStatusClass(item.status)]">
-          {{ statusTextMap[item.status] }}
+          {{ getStatusText(item.status) }}
         </span>
       </div>
 
-      <!-- 예약 정보 -->
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="label">예약 일시</span>
-          <span class="value">
-            {{ formatDate(item.reservationDate) }} {{ item.startTime }} ~ {{ item.endTime }}
+      <p class="reservation-desc">{{ getDescription() }}</p>
+
+      <div class="reservation-meta">
+        <!--GX-->
+        <template v-if="isGxReservation()">
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            수업 시간: {{ formatTime(item.startTime) }} ~ {{ formatTime(item.endTime) }}
           </span>
-        </div>
+        </template>
 
-        <div class="info-item">
-          <span class="label">좌석 정보</span>
-          <span class="value">{{ item.seatLabel || '-' }}</span>
-        </div>
+        <!--헬스장-->
+        <template v-else-if="item.typeName == '헬스장'">
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            운영 시간: 05:00 ~ {{ formatTime(item.endTime) }}
+          </span>
+        </template>
 
-        <div class="info-item">
-          <span class="label">등록일</span>
-          <span class="value">{{ formatDate(item.createdAt) }}</span>
-        </div>
+        <!--독서실-->
+        <template v-else-if="item.typeName == '독서실'">
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            운영 시간: {{ formatTime(item.startTime) }} ~ {{ formatTime(item.endTime) }}
+          </span>
+        </template>
+
+        <!--골프연습장-->
+        <template v-else-if="item.typeName == '골프연습장'">
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            예약 시간: {{ formatTime(item.startTime) }} ~ {{ formatTime(item.endTime) }}
+          </span>
+        </template>
+
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 2v4M16 2v4M3 10h18M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/>
+            </svg>
+            예약일: {{ formatDate(item.reservationDate) }}
+          </span>
       </div>
+    </div>
 
-      <!-- 하단 버튼 -->
-      <div class="action-row">
-        <button class="btn-outline" @click="emit('detail')">상세보기</button>
-        <button v-if="canCancel()" class="btn-danger" @click="emit('cancel')">예약 취소</button>
-      </div>
+    <!--버튼-->
+    <div class="reservation-actions">
+      <button class="action-btn detail-btn" @click.stop="emit('detail')">
+        상세보기
+      </button>
+
+      <button
+        v-if="canCancel()"
+        class="action-btn cancel-btn"
+        @click.stop="emit('cancel')"
+      >
+        예약 취소
+      </button>
     </div>
   </article>
 </template>
 
 <style scoped>
 .reservation-card {
-  display: flex;
-  gap: 14px;
-  padding: 14px 16px;
+  background: #fff;
+  border-radius: 12px;
   border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  background: #FFFFFF;
-  box-shadow: 0 6px 18px rgba(30, 42, 62, 0.05);
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  cursor: default;
+  transition: box-shadow 0.15s;
 }
 
-.thumb-wrap {
+.reservation-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border-color: #D5DCE6;
+}
+
+.reservation-img {
+  width: 180px;
+  height: 110px;
+  background: #F5F6F8;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-.thumb {
-  width: 132px;
-  height: 88px;
+.reservation-thumb {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 12px;
   display: block;
+  border-radius: 10px;
 }
 
-.card-body {
+.reservation-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   min-width: 0;
+}
+
+.reservation-header {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
 
-.body-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.title-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.category {
-  font-size: 12px;
-  color: #757575;
-}
-
-.title {
-  font-size: 17px;
-  font-weight: 800;
-  color: #333333;
+.reservation-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1A202C;
   line-height: 1.2;
 }
 
-.status-badge {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+.reservation-desc {
+  font-size: 15px;
+  font-weight: 600;
+  color: #718096;
+  line-height: 1.4;
 }
 
-.status-badge.confirmed {
-  background: #E8F6ED;
-  color: #2F855A;
+.reservation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-top: 2px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #718096;
+}
+
+.reservation-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  min-width: 84px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.detail-btn {
+  background: #FFFFFF;
+  color: #333333;
+  border: 1px solid #D5DCE6;
+}
+
+.detail-btn:hover {
+  background: #F8FAFC;
+}
+
+.cancel-btn {
+  background: #FFFFFF;
+  color: #E53E3E;
+  border: 1px solid #F3B1B1;
+}
+
+.cancel-btn:hover {
+  background: #FFF5F5;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.status-badge.available {
+  background: #E5F8EB;
+  color: #50C878;
 }
 
 .status-badge.pending {
@@ -189,7 +341,7 @@ const getReservationImage = (facilityName) => {
   color: #C08B2D;
 }
 
-.status-badge.cancelled {
+.status-badge.closed {
   background: #FDECEC;
   color: #E53E3E;
 }
@@ -197,63 +349,5 @@ const getReservationImage = (facilityName) => {
 .status-badge.completed {
   background: #EEF3FB;
   color: #4973E5;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.label {
-  font-size: 12px;
-  color: #757575;
-}
-
-.value {
-  font-size: 13px;
-  color: #333333;
-  font-weight: 600;
-}
-
-.action-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: auto;
-}
-
-.btn-outline,
-.btn-danger {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-size: 12px;
-}
-
-.btn-outline {
-  background: #FFFFFF;
-  color: #333333;
-  border: 1px solid #D5DCE6;
-}
-
-.btn-outline:hover {
-  background: #F8FAFC;
-}
-
-.btn-danger {
-  background: #FFFFFF;
-  color: #E53E3E;
-  border: 1px solid #F3B1B1;
-}
-
-.btn-danger:hover {
-  background: #FFF5F5;
 }
 </style>

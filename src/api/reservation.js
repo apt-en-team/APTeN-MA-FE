@@ -86,4 +86,12 @@ export default {
   getDashboardFacilitySummary: () =>
   axios.get('/api/admin/reservations/dashboard-facility-summary'),
 
+  //독서실 좌석 상태 조회
+  getStudyRoomSeatStatus: (params) =>
+    axios.get('/api/reservations/study-room/seats', { params }),
+
+  //골프 타석 상태 조회
+  getGolfSeatStatus: (params) =>
+    axios.get('/api/reservations/golf/seats', { params }),
+
 }

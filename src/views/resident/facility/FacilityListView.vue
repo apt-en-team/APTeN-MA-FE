@@ -56,12 +56,24 @@ const gxMaxPage = computed(() => Math.ceil(filteredGxFacilities.value.length / P
 const fetchFacilities = async (tab) => {
   try {
     if (tab === 'facility') {
-      const results = await Promise.all(
-        FACILITY_TYPE_IDS.map(id => facilityAPI.getFacilities(id))
-      )
+      //이거 내가 수정한거임
+          const results = await Promise.all(
+          FACILITY_TYPE_IDS.map(id =>
+            facilityAPI.getFacilities({
+              typeId: id,
+              page: 1,
+              size: 100
+            })
+          )
+        )
       state.facilities = results.flatMap(r => r.data.resultData ?? [])
     } else {
-      const { data } = await facilityAPI.getFacilities(4)
+      //이거 내가 수정한거임
+        const { data } = await facilityAPI.getFacilities({
+        typeId: 4,
+        page: 1,
+        size: 100
+      })
       state.facilities = data.resultData?.content ?? data.resultData ?? []
     }
   } catch (e) { console.error('시설 목록 조회 실패', e) }
@@ -209,5 +221,5 @@ onMounted(() => {
 .status-badge           { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .status-badge.available { background: #E5F8EB; color: #50C878; }
 .status-badge.closed    { background: #E0E0E0; color: #757575; }
-.empty-msg { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+.empty-msg { text-align: center; padding: 40px; color: #E53E3E; font-size: 14px; }
 </style>

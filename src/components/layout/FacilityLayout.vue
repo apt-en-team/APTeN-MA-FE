@@ -1,13 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getPostList } from '@/api/board.js'
-import reservationAPI from '@/api/reservation.js'
+//소영
+import { useReservationStore } from '@/stores/modules/reservation.js'
 
 const router = useRouter()
+const reservationStore = useReservationStore()
 
 const notices = ref([])
-const reservations = ref([])
 
 /** 공지 조회 */
 const fetchNotices = async () => {
@@ -19,16 +20,21 @@ const fetchNotices = async () => {
   }
 }
 
-/** 내 예약 조회 */
+//내 예약 조회 - 소영
 const fetchMyReservations = async () => {
   try {
-    const { data } = await reservationAPI.getMyReservations({ size: 3 })
-    reservations.value = data.content ?? data.resultData ?? []
+    await reservationStore.fetchMyReservationList({
+      page: 1,
+      size: 3,
+      tab: 'UPCOMING',
+    })
   } catch (e) {
     console.error('예약 조회 실패', e)
-    reservations.value = []
   }
 }
+
+//내 예약 리스트
+const reservations = computed(() => reservationStore.myReservationList || [])
 
 /** 페이지 이동 */
 const notice = () => router.push('/resident/board/notice')

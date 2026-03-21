@@ -1,10 +1,8 @@
 <script setup>
-// 일반 예약 카드
+//카드 컴포넌트
 import ResidentReservationCard from '@/components/reservation/ResidentReservationCard.vue'
-// GX 예약 카드
-import ResidentGxReservationCard from '@/components/reservation/ResidentGxReservationCard.vue'
 
-// 부모에서 받은 props
+//props
 defineProps({
   list: {
     type: Array,
@@ -16,28 +14,27 @@ defineProps({
   },
 })
 
-// 부모에 이벤트 전달
+//이벤트
 const emit = defineEmits(['detail', 'cancel'])
 </script>
 
 <template>
   <div class="reservation-list-wrap">
-    <!-- 로딩 상태 -->
+    <!--로딩-->
     <div v-if="isLoading" class="empty-box">
       예약 내역을 불러오는 중입니다.
     </div>
 
-    <!-- 데이터 없을 때 -->
+    <!--빈값-->
     <div v-else-if="list.length === 0" class="empty-box">
       조건에 맞는 예약 내역이 없습니다.
     </div>
 
-    <!-- 데이터 있을 때 -->
+    <!--리스트-->
     <div v-else class="reservation-list">
-      <component
+      <ResidentReservationCard
         v-for="item in list"
         :key="item.reservationId"
-        :is="item.reservationType === 'GX' ? ResidentGxReservationCard : ResidentReservationCard"
         :item="item"
         @detail="emit('detail', item)"
         @cancel="emit('cancel', item)"

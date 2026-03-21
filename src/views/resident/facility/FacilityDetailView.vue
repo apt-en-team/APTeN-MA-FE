@@ -25,16 +25,46 @@ const fetchFacility = async () => {
   }
 }
 
-/** 예약하기 버튼 */
-const goToReservation = () => {
+/** 이전 버튼 */
+const goBack = () => router.back()
+
+
+//수정한다!!!!!!!!!!!
+const handleNextAction = async () => {
+  //독서실
+  if (facility.typeId === 1) {
+    router.push({
+      name: 'StudyRoomReservationView',
+      query: {
+        facilityId: facility.facilityId,
+        typeId: facility.typeId,
+      },
+    })
+    return
+  }
+
+  //골프연습장
+  if (facility.typeId === 3) {
+    router.push({
+      name: 'GolfReservationView',
+      query: {
+        facilityId: facility.facilityId,
+        typeId: facility.typeId,
+      },
+    })
+    return
+  }
+
+  //헬스장 / GX
   router.push({
-    name: 'ReservationCalendar',
-    query: { facilityId: facility.facilityId }
+    name: 'MyReservation',
   })
 }
 
-/** 이전 버튼 */
-const goBack = () => router.back()
+//버튼 텍스트
+const actionButtonText = () => {
+  return facility.typeId === 1 || facility.typeId === 3 ? '다음' : '예약하기'
+}
 
 onMounted(() => fetchFacility())
 </script>
@@ -74,13 +104,13 @@ onMounted(() => fetchFacility())
             </tr>
             <tr>
               <td class="info-label">사용료</td>
-              <td class="info-value">{{ facility.price > 0 ? facility.price.toLocaleString() + '원' : '무료' }}</td>
+              <td class="info-value">{{ facility.price ? facility.price.toLocaleString() + '원' : '무료' }}</td>
           </tr>
             <tr>
               <td class="info-label">운영 여부</td>
               <td class="info-value">
-                <span :class="['status-badge', facility.isActive ? 'available' : 'closed']">
-                  {{ facility.isActive ? '운영 중' : '점검중' }}
+                <span :class="['status-badge', facility.active ? 'available' : 'closed']">
+                  {{ facility.active ? '운영 중' : '점검중' }}
                 </span>
               </td>
             </tr>
@@ -103,9 +133,11 @@ onMounted(() => fetchFacility())
           <button class="btn-back" @click="goBack">이전</button>
           <button
             class="btn-reserve"
-            @click="goToReservation"
-            :disabled="!facility.isActive"
-          >예약하기</button>
+            @click="handleNextAction"
+            :disabled="!facility.active"
+          >
+            {{ actionButtonText() }}
+          </button>
         </div>
       </div>
     </template>

@@ -31,6 +31,8 @@ import FacilityListView from '@/views/resident/facility/FacilityListView.vue'
 import FacilityDetailView from '@/views/resident/facility/FacilityDetailView.vue'
 import ReservationCalendarView from '@/views/resident/facility/ReservationCalendarView.vue'
 import MyReservationView from '@/views/resident/reservation/MyReservationView.vue'
+import StudyRoomReservationView from '@/views/resident/reservation/StudyRoomReservationView.vue'
+import GolfReservationView from '@/views/resident/reservation/GolfReservationView.vue'
 
 // 입주민 - 차량
 import MyVehicleView from '@/views/resident/vehicle/MyVehicleView.vue'
@@ -117,6 +119,8 @@ const routes = [
                 meta: {title: '시설 예약'}
             },
             {path: 'my-reservation', name: 'MyReservation', component: MyReservationView, meta: {title: '내 예약'}},
+            { path: 'reservation/study-room', name: 'StudyRoomReservationView', component: StudyRoomReservationView ,meta: {title: '독서실 예약하기'}},
+            { path: 'reservation/golf', name: 'GolfReservationView', component: GolfReservationView,meta: {title: '골프연습장 예약하기'} },
 
             // 차량
             {path: 'my-vehicle', name: 'MyVehicle', component: MyVehicleView, meta: {title: '내 차량'}},

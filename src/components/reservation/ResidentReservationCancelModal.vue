@@ -71,11 +71,11 @@ const handleConfirm = () => {
         </div>
 
         <!-- GX 예약이면 기간 표시 -->
-        <template v-if="item.reservationType === 'GX'">
+        <template v-if="item.typeName === 'GX'">
           <div class="summary-row">
             <span class="label">수강 기간</span>
             <span class="value">
-              {{ formatDate(item.courseStartDate) }} ~ {{ formatDate(item.courseEndDate) }}
+              {{ formatDate(item.startDate) }} ~ {{ formatDate(item.endDate) }}
             </span>
           </div>
 
@@ -103,7 +103,7 @@ const handleConfirm = () => {
 
           <div class="summary-row">
             <span class="label">좌석 정보</span>
-            <span class="value">{{ item.seatLabel || '-' }}</span>
+            <span class="value">{{ item.seatNo ? `${item.seatNo}번` : '-' }}</span>
           </div>
         </template>
       </div>

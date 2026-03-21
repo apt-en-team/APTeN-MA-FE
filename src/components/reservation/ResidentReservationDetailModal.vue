@@ -2,6 +2,13 @@
 // 공통 모달 컴포넌트
 import Modal from '@/components/common/BeseModel.vue'
 
+//이미지 import
+import readingroomImg from '@/assets/images/readingroom.png'
+import ptImg from '@/assets/images/PT.png'
+import golfImg from '@/assets/images/golf.png'
+import pilatesImg from '@/assets/images/pilates.png'
+import groupPtImg from '@/assets/images/Group PT.png'
+
 // 부모에서 전달받는 예약 정보
 const props = defineProps({
   item: {
@@ -12,6 +19,18 @@ const props = defineProps({
 
 // 부모에게 닫기 이벤트 전달
 const emit = defineEmits(['close'])
+
+//이미지 매핑
+const getReservationImage = (name) => {
+  if (!name) return readingroomImg
+  if (name.includes('독서실')) return readingroomImg
+  if (name.includes('헬스')) return ptImg
+  if (name.includes('골프')) return golfImg
+  if (name.includes('필라테스')) return pilatesImg
+  if (name.includes('그룹PT')) return groupPtImg
+  if (name.includes('GX')) return pilatesImg
+  return readingroomImg
+}
 
 /**
  * 예약 상태 한글 매핑
@@ -60,7 +79,11 @@ const formatTime = (timeStr) => {
     <div class="detail-wrap">
       <!-- 상단 썸네일 -->
       <div class="thumb-box">
-        <img :src="item.imageUrl" alt="예약 이미지" class="thumb" />
+        <img
+        :src="getReservationImage(item.facilityName)"
+        :alt="item.facilityName"
+        class="reservation-thumb"
+      />
       </div>
 
       <!-- 예약 기본 정보 -->
@@ -69,14 +92,14 @@ const formatTime = (timeStr) => {
         <div class="detail-row">
           <span class="label">예약 구분</span>
           <span class="value">
-            {{ item.reservationType === 'GX' ? 'GX 강습' : '편의시설' }}
+            {{ item.typeName === 'GX' ? 'GX 강습' : '편의시설' }}
           </span>
         </div>
 
         <!-- 시설 종류 -->
         <div class="detail-row">
           <span class="label">시설 종류</span>
-          <span class="value">{{ item.facilityTypeName || '-' }}</span>
+          <span class="value">{{ item.facilityName || '-' }}</span>
         </div>
 
         <!-- 상태 -->
@@ -86,11 +109,11 @@ const formatTime = (timeStr) => {
         </div>
 
         <!-- GX 예약일 경우 -->
-        <template v-if="item.reservationType === 'GX'">
+        <template v-if="item.typeName === 'GX'">
           <div class="detail-row">
             <span class="label">수강 기간</span>
             <span class="value">
-              {{ formatDate(item.courseStartDate) }} ~ {{ formatDate(item.courseEndDate) }}
+              {{ formatDate(item.startDate) }} ~ {{ formatDate(item.endDate) }}
             </span>
           </div>
 
@@ -118,7 +141,7 @@ const formatTime = (timeStr) => {
 
           <div class="detail-row">
             <span class="label">좌석 정보</span>
-            <span class="value">{{ item.seatLabel || '-' }}</span>
+            <span class="value">{{ item.seatNo ? `${item.seatNo}번` : '-' }}</span>
           </div>
         </template>
 
@@ -210,5 +233,13 @@ const formatTime = (timeStr) => {
 
 .btn-close:hover {
   background: #F8FAFC;
+}
+
+.reservation-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
 }
 </style>

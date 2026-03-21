@@ -6,6 +6,9 @@ import ResidentReservationList from '@/components/reservation/ResidentReservatio
 import ResidentReservationDetailModal from '@/components/reservation/ResidentReservationDetailModal.vue'
 import ResidentReservationCancelModal from '@/components/reservation/ResidentReservationCancelModal.vue'
 import reservationAPI from '@/api/reservation'
+import { useReservationStore } from '@/stores/modules/reservation.js'
+
+const reservationStore = useReservationStore()
 
 const state = reactive({
   isLoading: false,
@@ -21,10 +24,10 @@ const state = reactive({
 
   // 페이지
   currentPage: 1,
-  size: 6,
+  size: 4,
   maxPage: 0,
   totalFiltered: 0,
-  totalAll: 0,
+  totalAll: reservationStore.myTotalCount || 0,
 
   // 모달
   selectedReservation: null,
@@ -55,21 +58,19 @@ const getNowText = () => {
   return `${yyyy}.${mm}.${dd} ${hh}:${mi}`
 }
 
-// ㄴ 목록 조회
+//목록 조회
 const fetchMyReservations = async () => {
   state.isLoading = true
 
   try {
-    const res = await reservationAPI.getMyReservations({
+    await reservationStore.fetchMyReservationList({
       page: state.currentPage,
       size: state.size,
       tab: state.tab,
       keyword: state.keyword?.trim() || undefined,
     })
 
-    const data = res.data?.resultData || []
-
-    state.reservationList = Array.isArray(data) ? data : []
+    state.reservationList = reservationStore.myReservationList || []
   } catch (error) {
     console.error('내 예약 조회 실패', error)
     state.reservationList = []
@@ -78,26 +79,33 @@ const fetchMyReservations = async () => {
   }
 }
 
-// API - 최대 페이지 수 조회
+//최대 페이지 조회
 const getMaxPage = async () => {
   try {
-    const result = await reservationAPI.getMyMaxPage({
+    await reservationStore.fetchMyReservationCount({
+      page: state.currentPage,
       size: state.size,
       tab: state.tab,
       keyword: state.keyword?.trim() || undefined,
     })
 
-    const data = result.data?.resultData || {}
+    state.maxPage = reservationStore.myReservationMaxPage || 0
+    state.totalFiltered = reservationStore.myReservationTotalCount || 0
 
-    state.maxPage = data.maxPage || 1
-    state.totalFiltered = data.totalCount || 0
-    state.totalAll = data.totalCount || 0
   } catch (error) {
     console.error('최대 페이지 조회 실패:', error)
-    state.maxPage = 1
+    state.maxPage = 0
     state.totalFiltered = 0
-    state.totalAll = 0
   }
+}
+
+//탭 변경
+const changeTab = async (tab) => {
+  if (state.tab === tab) return
+  state.tab = tab
+  state.currentPage = 1
+  await fetchMyReservations()
+  await getMaxPage()
 }
 
 // ㄴ 검색
@@ -165,7 +173,7 @@ const handleConfirmCancel = async () => {
   } catch (error) {
     console.error('예약 취소 실패', error)
 
-    state.resultModal.type = 'error'
+    state.resultModal.type = 'danger'
     state.resultModal.title = '예약 취소에 실패했습니다'
     state.resultModal.subtitle = state.selectedReservation?.facilityName || '예약'
     state.resultModal.desc =
@@ -182,10 +190,12 @@ const handleCloseResult = () => {
   state.resultModal.show = false
 }
 
-// ㄴ 최초 조회
+//최초 조회
 onMounted(async () => {
-  await Promise.all([fetchMyReservations(), getMaxPage()])
+  await fetchMyReservations()
+  await getMaxPage()
 })
+
 </script>
 
 <template>
@@ -309,7 +319,7 @@ onMounted(async () => {
 .tabs {
   display: flex;
   gap: 4px;
-  background: #f3f4f6;
+  background: #ffffff;
   border-radius: 10px;
   padding: 4px;
 }
@@ -327,8 +337,8 @@ onMounted(async () => {
 }
 
 .tab-btn.active {
-  background: #ffffff;
-  color: #4973E5;
+  background: #4973E5;
+  color: #ffffff;
   font-weight: 700;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
 }
