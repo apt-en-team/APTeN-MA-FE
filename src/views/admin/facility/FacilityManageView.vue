@@ -13,7 +13,6 @@ import { useReservationStore } from "@/stores/modules/reservation.js";
 const router = useRouter();
 const facilityStore = useFacilityStore();
 
-//피니아 스토어
 const reservationStore = useReservationStore();
 
 const state = reactive({
@@ -73,7 +72,7 @@ const getTotalSlots = (f) => {
   return Math.floor(totalMinutes / f.slotDuration);
 };
 
-// 예약 비율 (0~100)
+// 예약 비율 (0~100) — 일반 시설용
 const getReservedRatio = (f) => {
   if (!f.isActive) return 0;
   if (f.typeId === 3) {
@@ -88,17 +87,48 @@ const getReservedRatio = (f) => {
 
 // 예약 비율에 따른 색상
 const getBarColor = (f) => {
-  const ratio = getReservedRatio(f);
+  const ratio = f.typeId === 3 ? getGolfPersonRatio(f) : getReservedRatio(f);
   if (ratio >= 80) return "#E53E3E";
   if (ratio >= 40) return "#ED8936";
   return "#48BB78";
 };
 
 const getRemainingColor = (f) => {
-  const ratio = getReservedRatio(f);
+  const ratio = f.typeId === 3 ? getGolfPersonRatio(f) : getReservedRatio(f);
   if (ratio >= 80) return "#FED7D7";
   if (ratio >= 50) return "#FEEBC8";
   return "#C6F6D5";
+};
+
+// 골프: 통계바 비율 — 오늘 예약 인원 합계 / (총 타임 × maxCapacity)
+const getGolfPersonRatio = (f) => {
+  if (!f.isActive) return 0;
+  const totalSlots = getTotalSlots(f);
+  const totalSeats = totalSlots * (f.maxCapacity ?? 0);
+  if (totalSeats === 0) return 0;
+  return Math.min(
+    Math.round(((f.todayReservedPersons ?? f.todayReserved ?? 0) / totalSeats) * 100),
+    100
+  );
+};
+
+// 골프: 현재 운영 타임의 예약 수 / 잔여 수
+const getCurrentSlotReserved = (f) => {
+  if (!f.openTime || !f.closeTime) return { reserved: 0, remaining: f.maxCapacity ?? 0 };
+  const open = f.openTime.split(":").map(Number);
+  const close = f.closeTime.split(":").map(Number);
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const openMinutes = open[0] * 60 + open[1];
+  const closeMins = close[0] * 60 + close[1];
+  if (nowMinutes < openMinutes || nowMinutes >= closeMins)
+    return { reserved: 0, remaining: f.maxCapacity ?? 0 };
+  const totalSlots = getTotalSlots(f);
+  const perSlot =
+    f.currentSlotReserved ??
+    (totalSlots > 0 ? Math.round((f.todayReserved ?? 0) / totalSlots) : 0);
+  const remaining = Math.max((f.maxCapacity ?? 0) - perSlot, 0);
+  return { reserved: perSlot, remaining };
 };
 
 // 필터링
@@ -142,6 +172,22 @@ const fetchFacilities = async () => {
   }
 };
 
+// 현재 시간 기준 현재 타임 (골프용)
+const getCurrentSlotText = (f) => {
+  if (!f.openTime || !f.closeTime) return "-";
+  const open = f.openTime.split(":").map(Number);
+  const close = f.closeTime.split(":").map(Number);
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const openMinutes = open[0] * 60 + open[1];
+  const closeMinutes = close[0] * 60 + close[1];
+  if (nowMinutes < openMinutes) return "미운영";
+  if (nowMinutes >= closeMinutes) return "마감";
+  const slotIndex = Math.floor((nowMinutes - openMinutes) / f.slotDuration) + 1;
+  const totalSlots = getTotalSlots(f);
+  return slotIndex > totalSlots ? "마감" : slotIndex + "타임";
+};
+
 // 모달
 const openDetail = (f) => {
   detailModal.facility = f;
@@ -176,7 +222,10 @@ const onSearch = () => {
   }, 300);
 };
 
-onMounted(() => fetchFacilities());
+onMounted(() => {
+  fetchFacilities();
+  setInterval(fetchFacilities, 30000);
+});
 </script>
 
 <template>
@@ -261,72 +310,160 @@ onMounted(() => fetchFacilities());
           </div>
 
           <div class="card-body">
-            <div class="card-info-row">
-              <div class="card-info">
-                <span class="info-label">최대 인원</span>
-                <span class="info-value">{{ f.maxCapacity }}명</span>
+            <!-- ─── 골프연습장 (typeId === 3) ─── -->
+            <template v-if="f.typeId === 3">
+              <!-- 줄 1: 최대 인원 / 예약 단위 -->
+              <div class="card-info-row">
+                <div class="card-info">
+                  <span class="info-label">최대 인원</span>
+                  <span class="info-value">{{ f.maxCapacity }}명</span>
+                </div>
+                <div class="card-info">
+                  <span class="info-label">예약 단위</span>
+                  <span class="info-value">{{ f.slotDuration }}분</span>
+                </div>
               </div>
-              <div class="card-info">
-                <span class="info-label">예약 단위</span>
-                <span class="info-value">{{ f.slotDuration }}분</span>
-              </div>
-            </div>
-            <div class="card-info-row">
-              <div class="card-info">
-                <span class="info-label">운영 시간</span>
-                <span class="info-value"
-                  >{{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}</span
-                >
-              </div>
-              <div class="card-info">
-                <span class="info-label">오늘 예약</span>
-                <span class="info-value">
-                  {{
-                    f.isActive
-                      ? f.typeId === 3
-                        ? (f.todayReserved ?? 0) + " / " + getTotalSlots(f) + " 타임"
-                        : (f.todayReserved ?? 0) + " / " + f.maxCapacity + "명"
-                      : "운영 중단"
-                  }}
-                </span>
-              </div>
-            </div>
 
-            <!-- Stacked Bar (% 별 색상) -->
-            <div class="stacked-bar-wrap">
-              <div class="stacked-bar">
-                <div
-                  class="bar-segment bar-reserved"
-                  :style="{
-                    width: f.isActive ? getReservedRatio(f) + '%' : '0%',
-                    background: getBarColor(f),
-                  }"
-                ></div>
-                <div
-                  class="bar-segment bar-remaining"
-                  :style="{
-                    width: f.isActive ? 100 - getReservedRatio(f) + '%' : '100%',
-                    background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
-                  }"
-                ></div>
+              <!-- 줄 2: 운영 시간 + 오늘 예약 (같은 줄) -->
+              <div class="card-info-row">
+                <div class="card-info">
+                  <span class="info-label">운영 시간</span>
+                  <span class="info-value">
+                    {{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}
+                  </span>
+                </div>
+                <div class="card-info">
+                  <span class="info-label">오늘 예약</span>
+                  <span class="info-value">
+                    {{
+                      f.isActive
+                        ? (f.todayReserved ?? 0) + " / 총 " + getTotalSlots(f) + "타임"
+                        : "운영 중단"
+                    }}
+                  </span>
+                </div>
               </div>
-              <div class="stacked-bar-legend">
-                <span class="legend-item">
-                  <span
-                    class="legend-dot"
-                    :style="{ background: f.isActive ? getBarColor(f) : '#A0AEC0' }"
-                  ></span>
-                  예약 완료 {{ f.isActive ? getReservedRatio(f) : 0 }}%
-                </span>
-                <span class="legend-item">
-                  <span
-                    class="legend-dot"
-                    :style="{ background: f.isActive ? getRemainingColor(f) : '#E2E8F0' }"
-                  ></span>
-                  잔여 {{ f.isActive ? 100 - getReservedRatio(f) : 0 }}%
-                </span>
+
+              <!-- 통계 바: 오늘 예약 인원 / 전체 좌석(총 타임 × maxCapacity) 기준 -->
+              <div class="stacked-bar-wrap">
+                <div class="stacked-bar">
+                  <div
+                    class="bar-segment bar-reserved"
+                    :style="{
+                      width: f.isActive ? getGolfPersonRatio(f) + '%' : '0%',
+                      background: getBarColor(f),
+                    }"
+                  ></div>
+                  <div
+                    class="bar-segment bar-remaining"
+                    :style="{
+                      width: f.isActive ? 100 - getGolfPersonRatio(f) + '%' : '100%',
+                      background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                    }"
+                  ></div>
+                </div>
+                <div class="stacked-bar-legend">
+                  <!-- 예약완료: 인원 / 전체좌석 % -->
+                  <span class="legend-item">
+                    <span
+                      class="legend-dot"
+                      :style="{ background: f.isActive ? getBarColor(f) : '#A0AEC0' }"
+                    ></span>
+                    예약완료
+                    {{
+                      f.isActive
+                        ? (f.todayReservedPersons ?? f.todayReserved ?? 0) +
+                          "명 / " +
+                          getTotalSlots(f) * f.maxCapacity +
+                          "석 (" +
+                          getGolfPersonRatio(f) +
+                          "%)"
+                        : "0%"
+                    }}
+                  </span>
+                  <!-- 잔여 - 현재 운영타임: 예약 N / 잔여 N -->
+                  <span class="legend-item">
+                    <span
+                      class="legend-dot"
+                      :style="{
+                        background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                      }"
+                    ></span>
+                    {{ getCurrentSlotText(f) }} · 예약
+                    {{ getCurrentSlotReserved(f).reserved }} / 잔여
+                    {{ getCurrentSlotReserved(f).remaining }}
+                  </span>
+                </div>
               </div>
-            </div>
+            </template>
+
+            <!-- ─── 일반 시설 (기존 그대로) ─── -->
+            <template v-else>
+              <div class="card-info-row">
+                <div class="card-info">
+                  <span class="info-label">최대 인원</span>
+                  <span class="info-value">{{ f.maxCapacity }}명</span>
+                </div>
+                <div class="card-info">
+                  <span class="info-label">예약 단위</span>
+                  <span class="info-value">{{ f.slotDuration }}분</span>
+                </div>
+              </div>
+              <div class="card-info-row">
+                <div class="card-info">
+                  <span class="info-label">운영 시간</span>
+                  <span class="info-value">
+                    {{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}
+                  </span>
+                </div>
+                <div class="card-info">
+                  <span class="info-label">오늘 예약</span>
+                  <span class="info-value">
+                    {{
+                      f.isActive
+                        ? (f.todayReserved ?? 0) + " / " + f.maxCapacity + "명"
+                        : "운영 중단"
+                    }}
+                  </span>
+                </div>
+              </div>
+              <div class="stacked-bar-wrap">
+                <div class="stacked-bar">
+                  <div
+                    class="bar-segment bar-reserved"
+                    :style="{
+                      width: f.isActive ? getReservedRatio(f) + '%' : '0%',
+                      background: getBarColor(f),
+                    }"
+                  ></div>
+                  <div
+                    class="bar-segment bar-remaining"
+                    :style="{
+                      width: f.isActive ? 100 - getReservedRatio(f) + '%' : '100%',
+                      background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                    }"
+                  ></div>
+                </div>
+                <div class="stacked-bar-legend">
+                  <span class="legend-item">
+                    <span
+                      class="legend-dot"
+                      :style="{ background: f.isActive ? getBarColor(f) : '#A0AEC0' }"
+                    ></span>
+                    예약 완료 {{ f.isActive ? getReservedRatio(f) : 0 }}%
+                  </span>
+                  <span class="legend-item">
+                    <span
+                      class="legend-dot"
+                      :style="{
+                        background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                      }"
+                    ></span>
+                    잔여 {{ f.isActive ? 100 - getReservedRatio(f) : 0 }}%
+                  </span>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -359,30 +496,30 @@ onMounted(() => fetchFacilities());
       <div class="detail-divider"></div>
       <div class="detail-grid">
         <div class="detail-cell">
-          <span class="detail-label">시설 ID</span
-          ><span class="detail-value">#{{ detailModal.facility?.facilityId }}</span>
+          <span class="detail-label">시설 ID</span>
+          <span class="detail-value">#{{ detailModal.facility?.facilityId }}</span>
         </div>
         <div class="detail-cell">
-          <span class="detail-label">시설명</span
-          ><span class="detail-value">{{ detailModal.facility?.name }}</span>
+          <span class="detail-label">시설명</span>
+          <span class="detail-value">{{ detailModal.facility?.name }}</span>
         </div>
         <div class="detail-cell">
-          <span class="detail-label">최대 인원</span
-          ><span class="detail-value">{{ detailModal.facility?.maxCapacity }}명</span>
+          <span class="detail-label">최대 인원</span>
+          <span class="detail-value">{{ detailModal.facility?.maxCapacity }}명</span>
         </div>
         <div class="detail-cell">
-          <span class="detail-label">예약 단위</span
-          ><span class="detail-value">{{ detailModal.facility?.slotDuration }}분</span>
+          <span class="detail-label">예약 단위</span>
+          <span class="detail-value">{{ detailModal.facility?.slotDuration }}분</span>
         </div>
         <div class="detail-cell">
-          <span class="detail-label">운영 시작</span
-          ><span class="detail-value">{{
+          <span class="detail-label">운영 시작</span>
+          <span class="detail-value">{{
             formatTime(detailModal.facility?.openTime)
           }}</span>
         </div>
         <div class="detail-cell">
-          <span class="detail-label">운영 종료</span
-          ><span class="detail-value">{{
+          <span class="detail-label">운영 종료</span>
+          <span class="detail-value">{{
             formatTime(detailModal.facility?.closeTime)
           }}</span>
         </div>
@@ -393,10 +530,10 @@ onMounted(() => fetchFacilities());
           </span>
         </div>
         <div class="detail-cell">
-          <span class="detail-label">등록일</span
-          ><span class="detail-value">{{
-            detailModal.facility?.createdAt?.slice(0, 10) ?? "-"
-          }}</span>
+          <span class="detail-label">등록일</span>
+          <span class="detail-value">
+            {{ detailModal.facility?.createdAt?.slice(0, 10) ?? "-" }}
+          </span>
         </div>
       </div>
       <template #footer>

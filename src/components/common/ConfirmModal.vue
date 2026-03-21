@@ -10,7 +10,7 @@
  *   itemName      - 1열 값
  *   itemLabel     - 1열 레이블 (기본: '처리 항목')
  *   actionLabel   - 2열 값
- *   actionText    - 2열 레이블 (기본: '처리 내용')
+ *   actionText    - 2열 레이블 (기본: '처리 항목')
  *   extraValue    - 3열 값 (없으면 행 미표시)
  *   extraLabel    - 3열 레이블 (기본: '')
  *   confirmText   - 확인 버튼 텍스트 (기본: '확인')
@@ -27,9 +27,9 @@ defineProps({
   subtitle: { type: String, default: "" },
   subtitleColor: { type: String, default: "#757575" },
   itemName: { type: String, default: "" },
-  itemLabel: { type: String, default: "처리 항목" },
+  itemLabel: { type: String, default: "" },
   actionLabel: { type: String, default: "" },
-  actionText: { type: String, default: "처리 내용" },
+  actionText: { type: String, default: "" },
   extraValue: { type: String, default: "" },
   extraLabel: { type: String, default: "" },
   confirmText: { type: String, default: "확인" },
