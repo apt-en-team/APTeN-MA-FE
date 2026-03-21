@@ -16,6 +16,7 @@ const route = useRoute();
 const vehicleStore = useVehicleStore();
 const registerOpenModal = inject("registerOpenModal");
 
+// 페이지 상태
 const state = reactive({
   list: [],
   searchQuery: "",
@@ -31,8 +32,10 @@ const state = reactive({
   totalAll: 0,
 });
 
+// 상세 모달 상태
 const detailModal = reactive({ show: false, vehicle: null });
 
+// 승인 모달 상태
 const approveModal = reactive({
   show: false,
   stage: "confirm",
@@ -43,6 +46,7 @@ const approveModal = reactive({
   resultSubtitle: "",
 });
 
+// 거부 모달 상태
 const rejectModal = reactive({
   show: false,
   stage: "confirm",
@@ -55,6 +59,7 @@ const rejectModal = reactive({
   resultSubtitle: "",
 });
 
+// 삭제 모달 상태
 const deleteModal = reactive({
   show: false,
   stage: "confirm",
@@ -65,8 +70,10 @@ const deleteModal = reactive({
   resultSubtitle: "",
 });
 
+// 등록 모달 상태
 const registerModal = reactive({ show: false, loading: false });
 
+// 등록 폼
 const registerForm = reactive({
   dong: "",
   householdId: null,
@@ -76,7 +83,10 @@ const registerForm = reactive({
   carType: "",
 });
 
+// 등록 폼 에러
 const errors = reactive({
+  dong: "",
+  householdId: "",
   userId: "",
   licensePlate: "",
   carModel: "",
@@ -84,13 +94,28 @@ const errors = reactive({
   general: "",
 });
 
+// 하단 에러 요약 - 첫 번째 에러만 표시
+const firstError = computed(() => {
+  if (errors.dong) return errors.dong;
+  if (errors.householdId) return errors.householdId;
+  if (errors.userId) return errors.userId;
+  if (errors.licensePlate) return errors.licensePlate;
+  if (errors.carModel) return errors.carModel;
+  if (errors.carType) return errors.carType;
+  if (errors.general) return errors.general;
+  return "";
+});
+
+// 등록 모달 드롭다운 데이터
 const registerDongs = ref([]);
 const registerHouseholds = ref([]);
 const registerResidents = ref([]);
 const vehicleCount = ref(0);
 
+// 거부 사유 목록
 const rejectReasons = ["중복 차량", "세대 한도 초과", "정보 불일치", "직접 입력"];
 
+// 테이블 컬럼 정의
 const columns = [
   { label: "ID", key: "vehicleId" },
   { label: "차량번호", key: "licensePlate" },
@@ -102,6 +127,7 @@ const columns = [
   { label: "등록일", key: "createdAt" },
 ];
 
+// 상단 통계 카드
 const statsCards = computed(() => [
   {
     label: "전체 등록 차량",
@@ -134,17 +160,22 @@ const statsCards = computed(() => [
   },
 ]);
 
+// 승인 상태 라벨
 const statusLabel = (s) =>
   ({ APPROVED: "승인", PENDING: "대기", REJECTED: "거부" }[s] ?? s);
+// 승인 상태 클래스
 const statusClass = (s) =>
   ({ APPROVED: "approved", PENDING: "pending", REJECTED: "rejected" }[s] ?? "");
+// 날짜 포맷
 const formatDate = (val) => (val ? val.replace("T", " ").substring(0, 16) : "-");
 
+// 세대 라벨 (동 + 호)
 const householdLabel = (household) => {
   if (!household) return "-";
   return `${household.dong ?? ""} ${household.ho ?? ""}`.trim() || "-";
 };
 
+// 승인/거부 일시
 const getApprovalDate = (vehicle) => {
   if (vehicle?.approvedAt) return formatDate(vehicle.approvedAt);
   if (vehicle?.status === "REJECTED" && vehicle?.deletedAt)
@@ -154,6 +185,7 @@ const getApprovalDate = (vehicle) => {
   return "-";
 };
 
+// 대기 차량 우선 정렬
 const sortByPendingFirst = (list) =>
   [...list].sort((a, b) => {
     if (a.status === "PENDING" && b.status !== "PENDING") return -1;
@@ -161,6 +193,7 @@ const sortByPendingFirst = (list) =>
     return 0;
   });
 
+// 차량 목록 조회
 const fetchVehicles = async () => {
   try {
     const { data } = await vehicleAPI.getAllVehicles({
@@ -182,8 +215,10 @@ const fetchVehicles = async () => {
   }
 };
 
+// 통계 조회
 const fetchStats = () => vehicleStore.fetchStats();
 
+// 필터용 동 목록 조회
 const fetchDongs = async () => {
   try {
     const { data } = await vehicleAPI.getDongs();
@@ -193,7 +228,7 @@ const fetchDongs = async () => {
   }
 };
 
-/* ───────── 상세 모달 ───────── */
+// 상세 모달 열기
 const openDetailModal = async (vehicle) => {
   detailModal.vehicle = vehicle;
   detailModal.show = true;
@@ -214,29 +249,33 @@ const openDetailModal = async (vehicle) => {
     vehicleCount.value = 0;
   }
 };
+// 상세 모달 닫기
 const closeDetailModal = () => {
   detailModal.show = false;
   detailModal.vehicle = null;
 };
 
-/* ───────── 승인 모달 ───────── */
+// 승인 모달 열기
 const openApproveModal = (vehicle) => {
   approveModal.vehicle = vehicle;
   approveModal.loading = false;
   approveModal.stage = "confirm";
   approveModal.show = true;
 };
+// 승인 확인 닫기
 const closeApproveConfirm = () => {
   approveModal.show = false;
   approveModal.vehicle = null;
   approveModal.stage = "confirm";
 };
+// 승인 결과 닫기
 const closeApproveResult = () => {
   approveModal.show = false;
   approveModal.vehicle = null;
   approveModal.stage = "confirm";
 };
 
+// 승인 처리
 const handleApprove = async () => {
   approveModal.loading = true;
   try {
@@ -256,7 +295,7 @@ const handleApprove = async () => {
   }
 };
 
-/* ───────── 거부 모달 ───────── */
+// 거부 모달 열기
 const openRejectModal = (vehicle) => {
   rejectModal.vehicle = vehicle;
   rejectModal.loading = false;
@@ -265,17 +304,20 @@ const openRejectModal = (vehicle) => {
   rejectModal.stage = "confirm";
   rejectModal.show = true;
 };
+// 거부 확인 닫기
 const closeRejectConfirm = () => {
   rejectModal.show = false;
   rejectModal.vehicle = null;
   rejectModal.stage = "confirm";
 };
+// 거부 결과 닫기
 const closeRejectResult = () => {
   rejectModal.show = false;
   rejectModal.vehicle = null;
   rejectModal.stage = "confirm";
 };
 
+// 거부 처리
 const handleReject = async () => {
   rejectModal.loading = true;
   try {
@@ -295,24 +337,27 @@ const handleReject = async () => {
   }
 };
 
-/* ───────── 삭제 모달 ───────── */
+// 삭제 모달 열기
 const openDeleteModal = (vehicle) => {
   deleteModal.vehicle = vehicle;
   deleteModal.loading = false;
   deleteModal.stage = "confirm";
   deleteModal.show = true;
 };
+// 삭제 확인 닫기
 const closeDeleteConfirm = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
+// 삭제 결과 닫기
 const closeDeleteResult = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
 
+// 삭제 처리
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
@@ -333,7 +378,7 @@ const handleDelete = async () => {
   }
 };
 
-/* ───────── 차량 등록 모달 ───────── */
+// 등록 모달 열기 - 동 목록 조회 포함
 const openRegisterModal = async () => {
   Object.assign(registerForm, {
     dong: "",
@@ -344,6 +389,8 @@ const openRegisterModal = async () => {
     carType: "",
   });
   Object.assign(errors, {
+    dong: "",
+    householdId: "",
     userId: "",
     licensePlate: "",
     carModel: "",
@@ -361,15 +408,19 @@ const openRegisterModal = async () => {
   }
   registerModal.show = true;
 };
+// 등록 모달 닫기
 const closeRegisterModal = () => {
   registerModal.show = false;
 };
 
+// 동 변경 시 호수 목록 재조회
 const onDongChange = async () => {
   registerForm.householdId = null;
   registerForm.userId = null;
   registerResidents.value = [];
   vehicleCount.value = 0;
+  errors.dong = "";
+  errors.householdId = "";
   if (!registerForm.dong) {
     registerHouseholds.value = [];
     return;
@@ -382,9 +433,11 @@ const onDongChange = async () => {
   }
 };
 
+// 호수 변경 시 입주민 및 차량 수 조회
 const onHouseholdChange = async () => {
   registerForm.userId = null;
   vehicleCount.value = 0;
+  errors.householdId = "";
   if (!registerForm.householdId) {
     registerResidents.value = [];
     return;
@@ -401,14 +454,25 @@ const onHouseholdChange = async () => {
   }
 };
 
+// 차량 등록 처리 - 유효성 검사 후 API 호출
 const handleRegister = async () => {
   Object.assign(errors, {
+    dong: "",
+    householdId: "",
     userId: "",
     licensePlate: "",
     carModel: "",
     carType: "",
     general: "",
   });
+  if (!registerForm.dong) {
+    errors.dong = "동을 선택해주세요.";
+    return;
+  }
+  if (!registerForm.householdId) {
+    errors.householdId = "호수를 선택해주세요.";
+    return;
+  }
   if (!registerForm.userId) {
     errors.userId = "입주민을 선택해주세요.";
     return;
@@ -429,6 +493,7 @@ const handleRegister = async () => {
     errors.general = "세대당 최대 2대까지 등록 가능합니다.";
     return;
   }
+  // 차량번호 중복 체크
   try {
     const { data } = await vehicleAPI.getAllVehicles({
       search: registerForm.licensePlate,
@@ -468,6 +533,39 @@ const handleRegister = async () => {
   }
 };
 
+// 차량번호 입력 즉시 중복 체크 - 디바운스 400ms
+let licensePlateTimer = null;
+watch(
+  () => registerForm.licensePlate,
+  async (val) => {
+    if (!registerModal.show) return;
+    clearTimeout(licensePlateTimer);
+    if (!val?.trim()) {
+      errors.licensePlate = "";
+      return;
+    }
+    licensePlateTimer = setTimeout(async () => {
+      try {
+        const { data } = await vehicleAPI.getAllVehicles({
+          search: val.trim(),
+          size: 999,
+        });
+        const existing = data.resultData?.content?.find(
+          (v) =>
+            v.licensePlate === val.trim() &&
+            (v.status === "APPROVED" || v.status === "PENDING")
+        );
+        errors.licensePlate = existing
+          ? "이미 등록된 차량입니다. (승인 또는 대기 중)"
+          : "";
+      } catch (e) {
+        // 중복 체크 실패 시 에러 표시 안 함
+      }
+    }, 400);
+  }
+);
+
+// URL 쿼리로 등록 모달 자동 오픈
 watch(
   () => route.query.register,
   (val) => {
@@ -475,15 +573,18 @@ watch(
   }
 );
 
+// 검색 실행
 const doSearch = () => {
   state.currentPage = 1;
   fetchVehicles();
 };
+// 검색 디바운스
 let searchTimer = null;
 const onSearch = () => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => doSearch(), 300);
 };
+// 필터 초기화
 const resetFilters = () => {
   state.searchQuery = "";
   state.filterStatus = "";
@@ -493,6 +594,7 @@ const resetFilters = () => {
   state.currentPage = 1;
   fetchVehicles();
 };
+// 페이지 이동
 const goToPage = (page) => {
   state.currentPage = page;
   fetchVehicles();
@@ -521,6 +623,7 @@ onMounted(() => {
     </div>
 
     <div class="table-section">
+      <!-- 검색 / 필터 바 -->
       <FilterBar @reset="resetFilters">
         <div class="search-wrap">
           <svg
@@ -563,6 +666,7 @@ onMounted(() => {
         </select>
       </FilterBar>
 
+      <!-- 차량 목록 테이블 -->
       <AdminTable :columns="columns" :rows="state.list" @row-click="openDetailModal">
         <template #cell-vehicleId="{ row }"
           ><span class="td-cell td-id">#{{ row.vehicleId }}</span></template
@@ -592,6 +696,7 @@ onMounted(() => {
         <template #cell-createdAt="{ row }"
           ><span class="td-cell">{{ formatDate(row.createdAt) }}</span></template
         >
+        <!-- 승인/거부 액션 버튼 - 대기 상태만 표시 -->
         <template #action="{ row }">
           <div class="action-buttons">
             <template v-if="row.status === 'PENDING'">
@@ -605,6 +710,7 @@ onMounted(() => {
         </template>
       </AdminTable>
 
+      <!-- 페이지네이션 -->
       <Pagination
         :currentPage="state.currentPage"
         :maxPage="state.maxPage"
@@ -615,7 +721,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 상세 모달 -->
+    <!-- 차량 상세 모달 -->
     <BaseModal
       v-if="detailModal.show"
       title="차량 상세 정보"
@@ -689,7 +795,7 @@ onMounted(() => {
       </template>
     </BaseModal>
 
-    <!-- ✅ 승인 confirm (3열: 차량번호 / 차모델·차종 / 등록자) -->
+    <!-- 승인 확인 모달 -->
     <ConfirmModal
       v-if="approveModal.show && approveModal.stage === 'confirm'"
       title="차량을 승인하시겠습니까?"
@@ -708,6 +814,7 @@ onMounted(() => {
       @confirm="handleApprove"
       @cancel="closeApproveConfirm"
     />
+    <!-- 승인 결과 모달 -->
     <ActionResultModal
       v-if="approveModal.show && approveModal.stage === 'result'"
       :type="approveModal.resultType"
@@ -717,7 +824,7 @@ onMounted(() => {
       @close="closeApproveResult"
     />
 
-    <!-- ✅ 거부 confirm (3열: 차량번호 / 차모델·차종 / 등록자) + 거부사유 슬롯 -->
+    <!-- 거부 확인 모달 -->
     <ConfirmModal
       v-if="rejectModal.show && rejectModal.stage === 'confirm'"
       title="차량을 거부하시겠습니까?"
@@ -763,6 +870,7 @@ onMounted(() => {
         />
       </div>
     </ConfirmModal>
+    <!-- 거부 결과 모달 -->
     <ActionResultModal
       v-if="rejectModal.show && rejectModal.stage === 'result'"
       :type="rejectModal.resultType"
@@ -772,7 +880,7 @@ onMounted(() => {
       @close="closeRejectResult"
     />
 
-    <!-- ✅ 삭제 confirm (3열: 차량번호 / 차모델·차종 / 등록자) -->
+    <!-- 삭제 확인 모달 -->
     <ConfirmModal
       v-if="deleteModal.show && deleteModal.stage === 'confirm'"
       title="차량을 삭제하시겠습니까?"
@@ -792,6 +900,7 @@ onMounted(() => {
       @confirm="handleDelete"
       @cancel="closeDeleteConfirm"
     />
+    <!-- 삭제 결과 모달 -->
     <ActionResultModal
       v-if="deleteModal.show && deleteModal.stage === 'result'"
       :type="deleteModal.resultType"
@@ -808,31 +917,43 @@ onMounted(() => {
       subtitle="새 차량 정보를 입력해주세요"
       @close="closeRegisterModal"
     >
+      <!-- 소속 세대 - 동/호수 선택 -->
       <div class="form-group">
         <label class="form-label">소속 세대 <span class="required">*</span></label>
         <div class="form-row-2">
-          <select v-model="registerForm.dong" class="form-select" @change="onDongChange">
-            <option value="">동 선택</option>
-            <option v-for="dong in registerDongs" :key="dong" :value="dong">
-              {{ dong }}
-            </option>
-          </select>
-          <select
-            v-model="registerForm.householdId"
-            class="form-select"
-            @change="onHouseholdChange"
-            :disabled="!registerForm.dong"
-          >
-            <option :value="null">호수 선택</option>
-            <option
-              v-for="h in registerHouseholds"
-              :key="h.householdId"
-              :value="h.householdId"
+          <div>
+            <select
+              v-model="registerForm.dong"
+              class="form-select"
+              :class="{ 'input-error': errors.dong }"
+              @change="onDongChange"
             >
-              {{ h.ho }}
-            </option>
-          </select>
+              <option value="">동 선택</option>
+              <option v-for="dong in registerDongs" :key="dong" :value="dong">
+                {{ dong }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <select
+              v-model="registerForm.householdId"
+              class="form-select"
+              :class="{ 'input-error': errors.householdId }"
+              @change="onHouseholdChange"
+              :disabled="!registerForm.dong"
+            >
+              <option :value="null">호수 선택</option>
+              <option
+                v-for="h in registerHouseholds"
+                :key="h.householdId"
+                :value="h.householdId"
+              >
+                {{ h.ho }}
+              </option>
+            </select>
+          </div>
         </div>
+        <!-- 세대 차량 등록 현황 -->
         <div
           v-if="registerForm.householdId"
           class="vehicle-count-badge"
@@ -842,8 +963,9 @@ onMounted(() => {
             · 등록 불가</span
           >
         </div>
-        <span v-if="errors.general" class="field-error">{{ errors.general }}</span>
       </div>
+
+      <!-- 등록자 선택 -->
       <div class="form-group">
         <label class="form-label">등록자 (입주민) <span class="required">*</span></label>
         <select
@@ -857,8 +979,9 @@ onMounted(() => {
             {{ r.name }}
           </option>
         </select>
-        <span v-if="errors.userId" class="field-error">{{ errors.userId }}</span>
       </div>
+
+      <!-- 차량 번호 입력 -->
       <div class="form-group">
         <label class="form-label">차량 번호 <span class="required">*</span></label>
         <input
@@ -867,10 +990,9 @@ onMounted(() => {
           :class="{ 'input-error': errors.licensePlate }"
           placeholder="예: 12가 3456"
         />
-        <span v-if="errors.licensePlate" class="field-error">{{
-          errors.licensePlate
-        }}</span>
       </div>
+
+      <!-- 차 모델 / 차종 -->
       <div class="form-row-2">
         <div class="form-group">
           <label class="form-label">차 모델 <span class="required">*</span></label>
@@ -880,7 +1002,6 @@ onMounted(() => {
             :class="{ 'input-error': errors.carModel }"
             placeholder="예: 현대 소나타"
           />
-          <span v-if="errors.carModel" class="field-error">{{ errors.carModel }}</span>
         </div>
         <div class="form-group">
           <label class="form-label">차종 <span class="required">*</span></label>
@@ -895,10 +1016,14 @@ onMounted(() => {
             <option value="SUV">SUV</option>
             <option value="승합차">승합차</option>
           </select>
-          <span v-if="errors.carType" class="field-error">{{ errors.carType }}</span>
         </div>
       </div>
+
       <div class="form-divider"></div>
+
+      <!-- 하단 에러메시지 -->
+      <div v-if="firstError" class="form-bottom-error">{{ firstError }}</div>
+
       <template #footer>
         <span class="form-hint">* 표시는 필수 입력 항목입니다.</span>
         <button type="button" class="btn-cancel" @click="closeRegisterModal">취소</button>
@@ -1255,7 +1380,13 @@ onMounted(() => {
 .form-divider {
   height: 1px;
   background: #e2e8f0;
-  margin: 4px 0;
+  margin: 4px 0 8px 0;
+}
+.form-bottom-error {
+  font-size: 12px;
+  color: #e53e3e;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 .form-hint {
   font-size: 11px;

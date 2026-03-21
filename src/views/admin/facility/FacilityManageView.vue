@@ -24,6 +24,11 @@ const state = reactive({
   pageSize: 9,
 });
 
+// 전체 시설 현재 이용 중 인원 합산
+const totalInUse = computed(() =>
+  reservationStore.facilitySummaryList.reduce((sum, f) => sum + (f.current ?? 0), 0)
+);
+
 // 상단 통계 카드
 const statsCards = computed(() => [
   {
@@ -40,7 +45,7 @@ const statsCards = computed(() => [
   },
   {
     label: "현재 이용 중",
-    value: reservationStore.inUse ?? "-",
+    value: totalInUse.value,
     unit: "명",
     desc: "피크 타임 진행",
   },

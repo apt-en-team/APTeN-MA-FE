@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, watch } from "vue";
+import { onMounted, reactive, watch, computed } from "vue";
 import vehicleAPI from "@/api/vehicle.js";
 import BaseModal from "@/components/common/BeseModel.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
@@ -29,9 +29,25 @@ const deleteModal = reactive({
 });
 
 const registerForm = reactive({ licensePlate: "", carModel: "", carType: "" });
-const editForm = reactive({ licensePlate: "", carModel: "" });
+const editForm = reactive({ licensePlate: "", carModel: "", carType: "" });
 const registerError = reactive({ licensePlate: "", carModel: "", carType: "" });
-const editError = reactive({ licensePlate: "", carModel: "" });
+const editError = reactive({ licensePlate: "", carModel: "", carType: "" });
+
+// 등록 모달 하단 에러 요약
+const firstRegisterError = computed(() => {
+  if (registerError.licensePlate) return registerError.licensePlate;
+  if (registerError.carModel) return registerError.carModel;
+  if (registerError.carType) return registerError.carType;
+  return "";
+});
+
+// 수정 모달 하단 에러 요약
+const firstEditError = computed(() => {
+  if (editError.licensePlate) return editError.licensePlate;
+  if (editError.carModel) return editError.carModel;
+  if (editError.carType) return editError.carType;
+  return "";
+});
 
 const statusLabel = (s) =>
   ({ APPROVED: "완료", PENDING: "대기", REJECTED: "거부" }[s] ?? s);
@@ -39,9 +55,10 @@ const statusClass = (s) =>
   ({ APPROVED: "approved", PENDING: "pending", REJECTED: "rejected" }[s] ?? "");
 const formatDate = (val) => (val ? val.slice(0, 10).replace(/-/g, ".") : "-");
 
+// 입출차 기록 시간 포맷 - vehicleId 타입 무관하게 비교
 const formatLogTime = (vehicleId) => {
   const logs = state.logs
-    .filter((l) => l.vehicleId === vehicleId)
+    .filter((l) => String(l.vehicleId) === String(vehicleId))
     .sort((a, b) => new Date(b.loggedAt) - new Date(a.loggedAt));
   if (!logs.length) return "-";
   const log = logs[0];
@@ -59,6 +76,7 @@ const formatLogTime = (vehicleId) => {
   return `${type} : ${yyyy}.${mm}.${dd}(${day}) ${ampm} ${hour}시 ${min}분`;
 };
 
+// 차량 목록 조회
 const fetchVehicles = async () => {
   try {
     const { data } = await vehicleAPI.getMyVehicles();
@@ -68,6 +86,7 @@ const fetchVehicles = async () => {
   }
 };
 
+// 입출차 기록 조회
 const fetchLogs = async () => {
   try {
     const { data } = await vehicleAPI.getMyVehicleLogs();
@@ -77,6 +96,7 @@ const fetchLogs = async () => {
   }
 };
 
+// 등록 모달 열기
 const openRegister = () => {
   registerForm.licensePlate = "";
   registerForm.carModel = "";
@@ -86,6 +106,7 @@ const openRegister = () => {
   registerError.carType = "";
   registerModal.show = true;
 };
+// 등록 모달 닫기
 const closeRegister = () => {
   registerModal.show = false;
   registerError.licensePlate = "";
@@ -93,6 +114,7 @@ const closeRegister = () => {
   registerError.carType = "";
 };
 
+// 등록 처리
 const handleRegister = async () => {
   registerError.licensePlate = "";
   registerError.carModel = "";
@@ -106,7 +128,7 @@ const handleRegister = async () => {
     return;
   }
   if (!registerForm.carType) {
-    registerError.carType = "차량 종류를 선택해주세요.";
+    registerError.carType = "차량를 선택해주세요.";
     return;
   }
   registerModal.loading = true;
@@ -125,25 +147,33 @@ const handleRegister = async () => {
   }
 };
 
+// 수정 모달 열기
 const openEdit = (v) => {
   editForm.licensePlate = v.licensePlate;
   editForm.carModel = v.carModel;
+  editForm.carType = v.carType ?? "";
   editError.licensePlate = "";
   editError.carModel = "";
+  editError.carType = "";
   editModal.vehicle = v;
   editModal.loading = false;
   editModal.show = true;
 };
+// 수정 모달 닫기
 const closeEdit = () => {
   editModal.show = false;
   editModal.vehicle = null;
   editError.licensePlate = "";
   editError.carModel = "";
+  editError.carType = "";
+  editForm.carType = "";
 };
 
+// 수정 처리
 const handleEdit = async () => {
   editError.licensePlate = "";
   editError.carModel = "";
+  editError.carType = "";
   if (!editForm.licensePlate?.trim()) {
     editError.licensePlate = "차량 번호를 입력해주세요.";
     return;
@@ -152,11 +182,16 @@ const handleEdit = async () => {
     editError.carModel = "차 모델을 입력해주세요.";
     return;
   }
+  if (!editForm.carType?.trim()) {
+    editError.carType = "차종을 선택해주세요.";
+    return;
+  }
   editModal.loading = true;
   try {
     await vehicleAPI.updateVehicle(editModal.vehicle.vehicleId, {
       licensePlate: editForm.licensePlate,
       carModel: editForm.carModel,
+      carType: editForm.carType,
     });
     closeEdit();
     await fetchVehicles();
@@ -172,23 +207,27 @@ const handleEdit = async () => {
   }
 };
 
+// 삭제 모달 열기
 const openDelete = (v) => {
   deleteModal.vehicle = v;
   deleteModal.loading = false;
   deleteModal.stage = "confirm";
   deleteModal.show = true;
 };
+// 삭제 확인 닫기
 const closeDeleteConfirm = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
+// 삭제 결과 닫기
 const closeDeleteResult = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
 
+// 삭제 처리
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
@@ -208,6 +247,7 @@ const handleDelete = async () => {
   }
 };
 
+// 등록 - 차량번호 실시간 중복 체크
 watch(
   () => registerForm.licensePlate,
   (val) => {
@@ -224,6 +264,7 @@ watch(
   }
 );
 
+// 수정 - 차량번호 실시간 중복 체크
 watch(
   () => editForm.licensePlate,
   (val) => {
@@ -331,6 +372,7 @@ onMounted(async () => {
 
     <!-- 차량 등록 모달 -->
     <BaseModal v-if="registerModal.show" title="차량 등록" @close="closeRegister">
+      <!-- 차량 번호 -->
       <div class="form-group">
         <label class="form-label">차량 번호 <span class="required">*</span></label>
         <input
@@ -339,10 +381,8 @@ onMounted(async () => {
           :class="{ 'input-error': registerError.licensePlate }"
           placeholder="예: 12가 3456"
         />
-        <span v-if="registerError.licensePlate" class="field-error">{{
-          registerError.licensePlate
-        }}</span>
       </div>
+      <!-- 차 모델 -->
       <div class="form-group">
         <label class="form-label">차 모델 <span class="required">*</span></label>
         <input
@@ -351,12 +391,10 @@ onMounted(async () => {
           :class="{ 'input-error': registerError.carModel }"
           placeholder="예: 현대 소나타"
         />
-        <span v-if="registerError.carModel" class="field-error">{{
-          registerError.carModel
-        }}</span>
       </div>
+      <!-- 차종 -->
       <div class="form-group">
-        <label class="form-label">차량 종류 <span class="required">*</span></label>
+        <label class="form-label">차종 <span class="required">*</span></label>
         <select
           v-model="registerForm.carType"
           class="form-select"
@@ -368,9 +406,10 @@ onMounted(async () => {
           <option value="SUV">SUV</option>
           <option value="승합차">승합차</option>
         </select>
-        <span v-if="registerError.carType" class="field-error">{{
-          registerError.carType
-        }}</span>
+      </div>
+      <!-- 하단 에러메시지 -->
+      <div v-if="firstRegisterError" class="form-bottom-error">
+        {{ firstRegisterError }}
       </div>
       <template #footer>
         <button class="btn-cancel" @click="closeRegister">취소</button>
@@ -391,6 +430,7 @@ onMounted(async () => {
       subtitle="수정할 차량 정보를 입력해주세요"
       @close="closeEdit"
     >
+      <!-- 차주명 -->
       <div class="form-group">
         <label class="form-label">차주명 <span class="required">*</span></label>
         <div class="select-wrap">
@@ -407,19 +447,20 @@ onMounted(async () => {
           </svg>
         </div>
       </div>
+
+      <!-- 차량번호 - 풀 너비 -->
+      <div class="form-group">
+        <label class="form-label">차량번호 <span class="required">*</span></label>
+        <input
+          v-model="editForm.licensePlate"
+          class="form-input"
+          :class="{ 'input-error': editError.licensePlate }"
+          placeholder="예: 12가 3456"
+        />
+      </div>
+
+      <!-- 차 모델 + 차종 한 줄 -->
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">차량번호 <span class="required">*</span></label>
-          <input
-            v-model="editForm.licensePlate"
-            class="form-input"
-            :class="{ 'input-error': editError.licensePlate }"
-            placeholder="예: 12가 3456"
-          />
-          <span v-if="editError.licensePlate" class="field-error">{{
-            editError.licensePlate
-          }}</span>
-        </div>
         <div class="form-group">
           <label class="form-label">차 모델 <span class="required">*</span></label>
           <input
@@ -428,11 +469,28 @@ onMounted(async () => {
             :class="{ 'input-error': editError.carModel }"
             placeholder="예: 현대 소나타"
           />
-          <span v-if="editError.carModel" class="field-error">{{
-            editError.carModel
-          }}</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">차종 <span class="required">*</span></label>
+          <select
+            v-model="editForm.carType"
+            class="form-select"
+            :class="{ 'input-error': editError.carType }"
+          >
+            <option value="">선택</option>
+            <option value="경차">경차</option>
+            <option value="승용차">승용차</option>
+            <option value="SUV">SUV</option>
+            <option value="승합차">승합차</option>
+          </select>
         </div>
       </div>
+
+      <!-- 하단 에러메시지 -->
+      <div v-if="firstEditError" class="form-bottom-error">
+        {{ firstEditError }}
+      </div>
+
       <p class="form-hint">* 표시는 필수 입력 항목입니다.</p>
       <template #footer>
         <button class="btn-cancel" @click="closeEdit">취소</button>
@@ -442,7 +500,7 @@ onMounted(async () => {
       </template>
     </BaseModal>
 
-    <!-- ✅ 1단계: 삭제 확인 → ConfirmModal -->
+    <!-- 삭제 확인 모달 -->
     <ConfirmModal
       v-if="deleteModal.show && deleteModal.stage === 'confirm'"
       title="차량을 삭제하시겠습니까?"
@@ -461,7 +519,7 @@ onMounted(async () => {
       @cancel="closeDeleteConfirm"
     />
 
-    <!-- ✅ 2단계: 삭제 결과 → ActionResultModal -->
+    <!-- 삭제 결과 모달 -->
     <ActionResultModal
       v-if="deleteModal.show && deleteModal.stage === 'result'"
       :type="deleteModal.resultType"
@@ -688,7 +746,7 @@ onMounted(async () => {
 .form-hint {
   font-size: 11px;
   color: #a0aec0;
-  margin-top: -8px;
+  margin-top: -4px;
   margin-bottom: 8px;
 }
 .input-error {
@@ -698,6 +756,12 @@ onMounted(async () => {
   font-size: 11px;
   color: #e53e3e;
   margin-top: 2px;
+}
+.form-bottom-error {
+  font-size: 12px;
+  color: #e53e3e;
+  margin-top: -8px;
+  margin-bottom: 8px;
 }
 .select-wrap {
   display: flex;
