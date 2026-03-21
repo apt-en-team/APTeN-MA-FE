@@ -270,10 +270,10 @@ onMounted(() => {
           </div>
           <div v-if="reservationStore.facilitySummaryList.length > 0" class="facility-list">
             <div
-                v-for="(facility) in reservationStore.facilitySummaryList"
-                :key="facility.name"
-                class="facility-item card-clickable"
-                @click="router.push(`/admin/reservations/facility-status/${facility.typeId}`)"
+              v-for="(facility) in reservationStore.facilitySummaryList"
+              :key="facility.name"
+              class="facility-item card-clickable"
+              @click="router.push(`/admin/reservations/facility-status/${facility.typeId}`)"
             >
               <div class="facility-bar" :class="'bar-' + facility.barColor"></div>
               <div class="facility-left">
@@ -324,6 +324,7 @@ onMounted(() => {
                 <th>구분</th>
                 <th>차량번호</th>
                 <th>유형</th>
+                <th>세대</th>
                 <th>시각</th>
               </tr>
               </thead>
@@ -338,6 +339,7 @@ onMounted(() => {
                 <td>
                   <span :class="['tag-type', record.typeClass]">{{ record.type }}</span>
                 </td>
+                <td class="unit-cell">{{ record.unit }}</td>
                 <td class="time-cell">{{ record.time }}</td>
               </tr>
               </tbody>
@@ -486,7 +488,7 @@ onMounted(() => {
   border-radius: 15px;
   border: 1px solid #e9ecf1;
   padding: 20px;
-  height: 370px;
+  height: 340px;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -769,10 +771,6 @@ onMounted(() => {
   color: #687282;
 }
 
-.plate-cell {
-
-}
-
 .unit-cell {
   color: #687282;
 }
@@ -850,7 +848,7 @@ onMounted(() => {
 .board-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
   flex-shrink: 0;
   margin-left: 12px;
 }
@@ -859,20 +857,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
+  font-size: 18px;
   color: #C08B2D;
   font-weight: 600;
 }
 
 .board-comments svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
 }
 
-.board-date {
-  font-size: 11px;
-  color: #92959D;
-}
+.board-date { font-size: 11px; color: #92959D; }
 
 .progress-bar {
   width: 100%;
