@@ -91,6 +91,7 @@ const getMaxPage = async () => {
 
     state.maxPage = reservationStore.myReservationMaxPage || 0
     state.totalFiltered = reservationStore.myReservationTotalCount || 0
+    state.totalAll = reservationStore.myTotalCount || 0
 
   } catch (error) {
     console.error('최대 페이지 조회 실패:', error)

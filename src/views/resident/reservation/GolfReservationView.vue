@@ -292,7 +292,7 @@ const handleReserve = async () => {
   } catch (error) {
     console.error('골프 예약 실패', error)
 
-    state.resultModal.type = 'error'
+    state.resultModal.type = 'danger'
     state.resultModal.title = '예약에 실패했습니다'
     state.resultModal.subtitle = state.facility.name || '골프연습장'
     state.resultModal.desc = error.response?.data?.resultMessage || '잠시 후 다시 시도해주세요.'

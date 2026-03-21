@@ -129,7 +129,7 @@ export const useReservationStore = defineStore('reservation', {
         const list = res.data.resultData || []
 
         this.myReservationList = list
-        if(this.myTotalCount == 0) {
+        if(list.length > this.myTotalCount) {
         this.myTotalCount = list.length || 0 }
       } catch (e) {
         console.error('내 예약 목록 조회 실패', e)
