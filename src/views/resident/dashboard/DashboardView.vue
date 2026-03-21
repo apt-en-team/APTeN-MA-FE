@@ -9,10 +9,12 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 import {getMyVisitorVehicles} from '@/api/visitorVehicle.js'
 import {useParkingStore} from '@/stores/modules/parking.js'
+import { useReservationStore } from '@/stores/modules/reservation.js'
 
 const auth = useAuthStore()
 const router = useRouter()
 const parkingStore = useParkingStore()
+const reservationStore = useReservationStore()
 
 // PENDING 여부
 const isPending = computed(() => auth.user?.status === 'PENDING')
@@ -32,8 +34,11 @@ onMounted(async () => {
     const noticeRes = await axios.get('/boards', {params: {category: 'NOTICE', page: 1, size: 3}})
     notices.value = noticeRes.data.content ?? []
 
-    const reservationRes = await axios.get('/reservations/my')
-    reservations.value = reservationRes.data ?? []
+    await reservationStore.fetchMyReservationCount({ page: 1, size: 999, tab: 'UPCOMING',})
+    await reservationStore.fetchMyReservationList({ page: 1, size: 999, tab: '', })
+    reservations.value = reservationStore.myReservationList
+    stats.value.reservations = reservationStore.myUpcomingCount
+    console.log('전체 예약 카운트:', reservationStore.myTotalCount)
 
     const visitorRes = await getMyVisitorVehicles({page: 1, size: 1})
     stats.value.visitorVehicles = visitorRes.data?.todayCount ?? 0
@@ -44,6 +49,22 @@ onMounted(async () => {
   } catch (e) {
     console.warn('대시보드 로딩 오류:', e)
   }
+})
+
+const reservationPreviewList = computed(() => {
+  return (reservations.value || []).map(item => ({
+    reservationId: item.reservationId,
+    facility: item.facilityName,
+    date: item.reservationDate,
+    time: `${String(item.startTime).slice(0, 5)} ~ ${String(item.endTime).slice(0, 5)}`,
+    status: item.status === 'PENDING' ? '승인대기' : item.status === 'COMPLETED' ? '이용완료' : item.status === 'CONFIRMED' ? '예약완료' : '취소완료',
+    statusColor:
+      item.status === 'PENDING'
+        ? 'orange'
+        : item.status === 'COMPLETED'
+          ? 'gray'
+          : item.status === 'CONFIRMED' ? 'blue' : 'red',
+  }))
 })
 
 const today = computed(() => {
@@ -182,7 +203,7 @@ function navTo(path) {
         <div class="stat-value" :class="{ empty: stats.reservations === 0 }">
           {{ stats.reservations }} <span class="stat-unit">건</span>
         </div>
-        <div class="stat-desc">{{ stats.reservations === 0 ? '예약 내역이 없습니다' : '이번 주 예약' }}</div>
+        <div class="stat-desc">{{ stats.reservations === 0 ? '예약 내역이 없습니다' : '진행 중 예약' }}</div>
         <div class="stat-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4973E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
@@ -224,7 +245,7 @@ function navTo(path) {
       <!-- 최근 공지사항 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📢최근 공지사항</span>
+          <span class="card-title">최근 공지사항</span>
           <span class="card-more" @click="navTo('/resident/board/notice')">전체보기 →</span>
         </div>
         <div class="card-body">
@@ -250,7 +271,7 @@ function navTo(path) {
       <!-- 내 예약 현황 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">📅내 예약 현황</span>
+          <span class="card-title">내 예약 현황</span>
           <span class="card-more" @click="navTo('/resident/my-reservation')">전체보기 →</span>
         </div>
         <div class="card-body">
@@ -260,8 +281,8 @@ function navTo(path) {
             </svg>
             <p>예약 내역이 없습니다.</p>
           </div>
-          <div v-for="res in reservations" :key="res.reservationId" class="reservation-item"
-               @click="navTo(`/resident/reservations/${res.reservationId}`)">
+          <div v-for="(res, index) in reservationPreviewList.slice(0, 3)" :key="res.reservationId" class="reservation-item"
+               @click="navTo('/resident/my-reservation')">
             <div class="res-left">
               <span class="res-badge" :class="`res-badge--${res.statusColor}`">{{ res.status }}</span>
               <div>
@@ -590,6 +611,7 @@ function navTo(path) {
 .res-badge--blue   { background: #EEF0FD; color: #4973E5; }
 .res-badge--orange { background: #FFF4E5; color: #F59E0B; }
 .res-badge--gray   { background: #F3F4F6; color: #9CA3AF; }
+.res-badge--red     { background: #FFECEC; color: #EF4444; }
 
 .res-facility {
   font-size: 13px;
@@ -603,26 +625,4 @@ function navTo(path) {
   margin-top: 2px;
 }
 
-.res-desc {
-  font-size: 11px;
-  color: #bbb;
-  margin-top: 2px;
-}
-
-.btn-cancel {
-  padding: 5px 14px;
-  border: 1px solid #E0E3EB;
-  border-radius: 6px;
-  background: #fff;
-  font-size: 12px;
-  color: #666;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-cancel:hover {
-  background: #FFF0F0;
-  color: #EF4444;
-  border-color: #EF4444;
-}
 </style>

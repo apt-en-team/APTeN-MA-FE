@@ -38,17 +38,13 @@ export default {
   cancelReservation: (reservationId) =>
     axios.delete(`/api/reservations/${reservationId}`),
 
-  /** 운영 중인 시설 목록 조회 */
-  getFacilities: () =>
-    axios.get('/api/facilities'),
-
-  /** 시설 타입 목록 조회 */
-  getFacilityTypes: () =>
-    axios.get('/api/facilities/types'),
-
   /** 최대 페이지 수 조회 */
   getMaxPage: (params) =>
     axios.get('/api/admin/reservations/count', { params }),
+    
+  /** 최대 페이지 수 조회 */
+  getMyMaxPage: (params) =>
+    axios.get('/api/reservations/count', { params }),
 
   /** GX 대기 건수 조회 */
   getGxPendingCount: () =>
@@ -89,5 +85,13 @@ export default {
   /** 대시보드 오늘 시설 예약 현황 */
   getDashboardFacilitySummary: () =>
   axios.get('/api/admin/reservations/dashboard-facility-summary'),
+
+  //독서실 좌석 상태 조회
+  getStudyRoomSeatStatus: (params) =>
+    axios.get('/api/reservations/study-room/seats', { params }),
+
+  //골프 타석 상태 조회
+  getGolfSeatStatus: (params) =>
+    axios.get('/api/reservations/golf/seats', { params }),
 
 }

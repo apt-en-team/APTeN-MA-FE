@@ -3,7 +3,7 @@ import reservationAPI from '@/api/reservation'
 
 export const useReservationStore = defineStore('reservation', {
   state: () => ({
-    // 대시보드 상단 카드용
+    // 관리자 대시보드 상단 카드용
     gxPendingCount: 0,
     residentPendingCount: 0,
 
@@ -14,8 +14,15 @@ export const useReservationStore = defineStore('reservation', {
     monthTotal: 0,
     totalCount: 0,
 
-    // 대시보드 오늘 시설 예약 현황용
+    // 관리자 대시보드 오늘 시설 예약 현황용
     facilitySummaryList: [],
+
+    //입주민용 대시보드
+    myUpcomingCount: 0,
+    myTotalCount: 0,
+    myReservationList: [],
+    myReservationMaxPage: 0,
+    myReservationTotalCount: 0,
   }),
 
   getters: {
@@ -85,5 +92,52 @@ export const useReservationStore = defineStore('reservation', {
         this.fetchDashboardFacilitySummary(),
       ])
     },
+
+    //내 예약 건수 조회
+    async fetchMyReservationCount(params) {
+      try {
+        const res = await reservationAPI.getMyMaxPage(params)
+        const data = res.data.resultData || {}
+
+        //탭 기준 분기
+        if (params.tab === 'UPCOMING') {
+          this.myUpcomingCount = data.totalCount || 0
+        } else if (params.tab === 'PAST') {
+          this.myPastCount = data.totalCount || 0
+        }
+
+        this.myReservationMaxPage = data.maxPage || 0
+        this.myReservationTotalCount = data.totalCount || 0
+      } catch (e) {
+        console.error('내 예약 건수 조회 실패', e)
+
+        if (params.tab === 'UPCOMING') {
+          this.myUpcomingCount = 0
+        } else if (params.tab === 'PAST') {
+          this.myPastCount = 0
+        }
+
+        this.myReservationMaxPage = 0
+        this.myReservationTotalCount = 0
+      }
+    },
+
+    //내 예약 목록 조회
+    async fetchMyReservationList(params) {
+      try {
+        const res = await reservationAPI.getMyReservations(params)
+        const list = res.data.resultData || []
+
+        this.myReservationList = list
+        if(this.myTotalCount == 0) {
+        this.myTotalCount = list.length || 0 }
+      } catch (e) {
+        console.error('내 예약 목록 조회 실패', e)
+        this.myUpcomingList = []
+        this.myReservationList = []
+      }
+    },
+
+    
   },
 })

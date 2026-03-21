@@ -205,7 +205,7 @@ const isCancellable = (s) => s === 'CONFIRMED' || s === 'PENDING'
           <span class="label">좌석 번호</span>
           <span class="value">{{ state.reservation.seatNo }}번</span>
         </div>
-        <div v-if="state.reservation.currentCount != null" class="detail-item">
+        <div v-if="state.reservation.status == 'CONFIRMED' || state.reservation.status == 'PENDING'" class="detail-item">
           <span class="label">현재 예약 인원</span>
           <span class="value">
             {{ (state.reservation.currentCount || 0) + (state.reservation.pendingCount || 0) }} / {{ state.reservation.maxCapacity }}명
@@ -286,7 +286,7 @@ const isCancellable = (s) => s === 'CONFIRMED' || s === 'PENDING'
 .confirm-notice { color: #888; font-size: 12px; margin-top: 8px !important; }
 .btn-primary { padding: 9px 20px; border-radius: 8px; background: #1E2533; border: none; color: #fff; font-size: 14px; cursor: pointer; }
 .btn-secondary { padding: 9px 20px; border-radius: 8px; background: #f5f5f5; border: none; color: #333; font-size: 14px; cursor: pointer; }
-.btn-danger { padding: 9px 20px; border-radius: 8px; background: #fff; border: 1px solid #ff4d4f; color: #ff4d4f; font-size: 14px; cursor: pointer; }
+.btn-danger { padding: 9px 20px; border-radius: 8px; background: #ff4d4f; border: 1px solid #ff4d4f; color: #fff; font-size: 14px; cursor: pointer; }
 .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
 .error-msg {
   color: #ff4d4f;
