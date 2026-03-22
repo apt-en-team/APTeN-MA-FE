@@ -1,13 +1,14 @@
 <script setup>
-import { onMounted, reactive, ref } from "vue";
-import facilityAPI from "@/api/facility.js";
+import { onMounted, reactive, ref, computed } from "vue";
+import { useFacilityStore } from "@/stores/modules/facility";
 import BaseModal from "@/components/common/BeseModel.vue";
 import FilterBar from "@/components/layout/FilterBar.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import ActionResultModal from "@/components/common/ActionResultModal.vue";
 
-const state = reactive({ list: [], searchQuery: "" });
+const facilityStore = useFacilityStore();
 
+const searchQuery = ref("");
 const formError = ref("");
 
 const registerModal = reactive({ show: false, loading: false });
@@ -16,7 +17,6 @@ const registerForm = reactive({ name: "", description: "" });
 const editModal = reactive({ show: false, loading: false, type: null });
 const editForm = reactive({ name: "", description: "" });
 
-/** 삭제 모달 - 2단계 */
 const deleteModal = reactive({
   show: false,
   stage: "confirm",
@@ -27,21 +27,16 @@ const deleteModal = reactive({
   resultSubtitle: "",
 });
 
-const filteredList = () =>
-  state.list.filter((t) => !state.searchQuery || t.name.includes(state.searchQuery));
+// ── 필터 (스토어 types 직접 참조) ─────────────────────────────
+const filteredList = computed(() =>
+  facilityStore.types.filter(
+    (t) => !searchQuery.value || t.name.includes(searchQuery.value)
+  )
+);
 
 const formatDate = (val) => (val ? val.slice(0, 10).replace(/-/g, ".") : "-");
 
-const fetchTypes = async () => {
-  try {
-    const { data } = await facilityAPI.getTypes();
-    state.list = data.resultData ?? [];
-  } catch (e) {
-    console.error("타입 목록 조회 실패", e);
-  }
-};
-
-/** 등록 모달 */
+// ── 등록 ──────────────────────────────────────────────────────
 const openRegister = () => {
   registerForm.name = "";
   registerForm.description = "";
@@ -61,9 +56,8 @@ const handleRegister = async () => {
   formError.value = "";
   registerModal.loading = true;
   try {
-    await facilityAPI.createType({ ...registerForm });
+    await facilityStore.createType({ ...registerForm }); // ← 스토어 action
     closeRegister();
-    await fetchTypes();
   } catch (e) {
     formError.value = e.response?.data?.message ?? "등록에 실패했습니다.";
   } finally {
@@ -71,7 +65,7 @@ const handleRegister = async () => {
   }
 };
 
-/** 수정 모달 */
+// ── 수정 ──────────────────────────────────────────────────────
 const openEdit = (t) => {
   editForm.name = t.name;
   editForm.description = t.description ?? "";
@@ -94,9 +88,8 @@ const handleEdit = async () => {
   formError.value = "";
   editModal.loading = true;
   try {
-    await facilityAPI.updateType(editModal.type.typeId, { ...editForm });
+    await facilityStore.updateType(editModal.type.typeId, { ...editForm }); // ← 스토어 action
     closeEdit();
-    await fetchTypes();
   } catch (e) {
     formError.value = e.response?.data?.message ?? "수정에 실패했습니다.";
   } finally {
@@ -104,7 +97,7 @@ const handleEdit = async () => {
   }
 };
 
-/** 1단계: 삭제 확인 */
+// ── 삭제 ──────────────────────────────────────────────────────
 const openDelete = (t) => {
   deleteModal.type = t;
   deleteModal.loading = false;
@@ -122,17 +115,14 @@ const closeDeleteResult = () => {
   deleteModal.stage = "confirm";
 };
 
-/** 2단계: 삭제 API → result 전환 */
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
-    await facilityAPI.deleteType(deleteModal.type.typeId);
-    await fetchTypes();
+    await facilityStore.deleteType(deleteModal.type.typeId); // ← 스토어 action
     deleteModal.resultType = "success";
     deleteModal.resultTitle = "타입이 삭제되었습니다.";
     deleteModal.resultSubtitle = `${deleteModal.type.name} 타입이 삭제되었습니다.`;
   } catch (e) {
-    console.error("타입 삭제 실패", e);
     deleteModal.resultType = "danger";
     deleteModal.resultTitle = "삭제에 실패했습니다.";
     deleteModal.resultSubtitle = "해당 타입의 시설이 있으면 삭제할 수 없습니다.";
@@ -143,10 +133,13 @@ const handleDelete = async () => {
 };
 
 const resetFilters = () => {
-  state.searchQuery = "";
+  searchQuery.value = "";
 };
 
-onMounted(() => fetchTypes());
+onMounted(async () => {
+  // 타입 목록이 비어있을 때만 fetch
+  if (!facilityStore.types.length) await facilityStore.fetchTypes();
+});
 </script>
 
 <template>
@@ -186,7 +179,7 @@ onMounted(() => fetchTypes());
           </tr>
         </thead>
         <tbody>
-          <tr v-for="t in filteredList()" :key="t.typeId">
+          <tr v-for="t in filteredList" :key="t.typeId">
             <td class="td-id">#{{ t.typeId }}</td>
             <td class="td-name">{{ t.name }}</td>
             <td class="td-desc">{{ t.description || "-" }}</td>
@@ -196,7 +189,7 @@ onMounted(() => fetchTypes());
               <button class="btn-delete" @click="openDelete(t)">삭제</button>
             </td>
           </tr>
-          <tr v-if="filteredList().length === 0">
+          <tr v-if="filteredList.length === 0">
             <td colspan="5" class="empty">등록된 시설 타입이 없습니다.</td>
           </tr>
         </tbody>

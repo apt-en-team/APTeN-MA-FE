@@ -1,8 +1,8 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch, inject } from "vue";
 import { useRoute } from "vue-router";
-import vehicleAPI from "@/api/vehicle.js";
 import { useVehicleStore } from "@/stores/modules/vehicle.js";
+import vehicleAPI from "@/api/vehicle.js";
 
 import StatsCards from "@/components/admin/StatsCards.vue";
 import FilterBar from "@/components/layout/FilterBar.vue";
@@ -16,26 +16,31 @@ const route = useRoute();
 const vehicleStore = useVehicleStore();
 const registerOpenModal = inject("registerOpenModal");
 
-// 페이지 상태
-const state = reactive({
-  list: [],
+// ── UI 상태만 ─────────────────────────────────────────────────
+const filter = reactive({
   searchQuery: "",
   filterStatus: "",
   filterHousehold: "",
   filterType: "",
   filterDong: "",
-  dongs: [],
-  size: 10,
   currentPage: 1,
-  maxPage: 0,
-  totalFiltered: 0,
-  totalAll: 0,
+  size: 10,
 });
 
-// 상세 모달 상태
+// 현재 필터 파라미터 (fetchVehicles에 전달)
+const currentParams = computed(() => ({
+  search: filter.searchQuery || null,
+  status: filter.filterStatus || null,
+  householdId: filter.filterHousehold || null,
+  carType: filter.filterType || null,
+  dong: filter.filterDong || null,
+  page: filter.currentPage,
+  size: filter.size,
+}));
+
+// ── 모달 상태 ─────────────────────────────────────────────────
 const detailModal = reactive({ show: false, vehicle: null });
 
-// 승인 모달 상태
 const approveModal = reactive({
   show: false,
   stage: "confirm",
@@ -45,8 +50,6 @@ const approveModal = reactive({
   resultTitle: "",
   resultSubtitle: "",
 });
-
-// 거부 모달 상태
 const rejectModal = reactive({
   show: false,
   stage: "confirm",
@@ -58,8 +61,6 @@ const rejectModal = reactive({
   resultTitle: "",
   resultSubtitle: "",
 });
-
-// 삭제 모달 상태
 const deleteModal = reactive({
   show: false,
   stage: "confirm",
@@ -69,11 +70,7 @@ const deleteModal = reactive({
   resultTitle: "",
   resultSubtitle: "",
 });
-
-// 등록 모달 상태
 const registerModal = reactive({ show: false, loading: false });
-
-// 등록 폼
 const registerForm = reactive({
   dong: "",
   householdId: null,
@@ -82,8 +79,6 @@ const registerForm = reactive({
   carModel: "",
   carType: "",
 });
-
-// 등록 폼 에러
 const errors = reactive({
   dong: "",
   householdId: "",
@@ -93,29 +88,26 @@ const errors = reactive({
   carType: "",
   general: "",
 });
-
-// 하단 에러 요약 - 첫 번째 에러만 표시
-const firstError = computed(() => {
-  if (errors.dong) return errors.dong;
-  if (errors.householdId) return errors.householdId;
-  if (errors.userId) return errors.userId;
-  if (errors.licensePlate) return errors.licensePlate;
-  if (errors.carModel) return errors.carModel;
-  if (errors.carType) return errors.carType;
-  if (errors.general) return errors.general;
-  return "";
-});
-
-// 등록 모달 드롭다운 데이터
 const registerDongs = ref([]);
 const registerHouseholds = ref([]);
 const registerResidents = ref([]);
 const vehicleCount = ref(0);
 
-// 거부 사유 목록
 const rejectReasons = ["중복 차량", "세대 한도 초과", "정보 불일치", "직접 입력"];
 
-// 테이블 컬럼 정의
+const firstError = computed(
+  () =>
+    errors.dong ||
+    errors.householdId ||
+    errors.userId ||
+    errors.licensePlate ||
+    errors.carModel ||
+    errors.carType ||
+    errors.general ||
+    ""
+);
+
+// ── 테이블 컬럼 ───────────────────────────────────────────────
 const columns = [
   { label: "ID", key: "vehicleId" },
   { label: "차량번호", key: "licensePlate" },
@@ -127,14 +119,13 @@ const columns = [
   { label: "등록일", key: "createdAt" },
 ];
 
-// 상단 통계 카드
+// ── 통계 카드 ─────────────────────────────────────────────────
 const statsCards = computed(() => [
   {
     label: "전체 등록 차량",
     value: vehicleStore.total,
     unit: "대",
     desc: "승인 완료 기준",
-    status: "",
   },
   {
     label: "승인 대기",
@@ -142,96 +133,34 @@ const statsCards = computed(() => [
     unit: "대",
     desc: "즉시 처리 필요",
     descClass: "urgent",
-    status: "PENDING",
   },
-  {
-    label: "승인 완료",
-    value: vehicleStore.approved,
-    unit: "대",
-    desc: "정상 등록",
-    status: "APPROVED",
-  },
-  {
-    label: "거부",
-    value: vehicleStore.rejected,
-    unit: "대",
-    desc: "재신청 가능",
-    status: "REJECTED",
-  },
+  { label: "승인 완료", value: vehicleStore.approved, unit: "대", desc: "정상 등록" },
+  { label: "거부", value: vehicleStore.rejected, unit: "대", desc: "재신청 가능" },
 ]);
 
-// 승인 상태 라벨
+// ── 헬퍼 ──────────────────────────────────────────────────────
 const statusLabel = (s) =>
   ({ APPROVED: "승인", PENDING: "대기", REJECTED: "거부" }[s] ?? s);
-// 승인 상태 클래스
 const statusClass = (s) =>
   ({ APPROVED: "approved", PENDING: "pending", REJECTED: "rejected" }[s] ?? "");
-// 날짜 포맷
 const formatDate = (val) => (val ? val.replace("T", " ").substring(0, 16) : "-");
+const householdLabel = (h) => (h ? `${h.dong ?? ""} ${h.ho ?? ""}`.trim() || "-" : "-");
 
-// 세대 라벨 (동 + 호)
-const householdLabel = (household) => {
-  if (!household) return "-";
-  return `${household.dong ?? ""} ${household.ho ?? ""}`.trim() || "-";
-};
-
-// 승인/거부 일시
-const getApprovalDate = (vehicle) => {
-  if (vehicle?.approvedAt) return formatDate(vehicle.approvedAt);
-  if (vehicle?.status === "REJECTED" && vehicle?.deletedAt)
-    return formatDate(vehicle.deletedAt);
-  if (vehicle?.updatedAt && vehicle?.status !== "PENDING")
-    return formatDate(vehicle.updatedAt);
+const getApprovalDate = (v) => {
+  if (v?.approvedAt) return formatDate(v.approvedAt);
+  if (v?.status === "REJECTED" && v?.deletedAt) return formatDate(v.deletedAt);
+  if (v?.updatedAt && v?.status !== "PENDING") return formatDate(v.updatedAt);
   return "-";
 };
 
-// 대기 차량 우선 정렬
-const sortByPendingFirst = (list) =>
-  [...list].sort((a, b) => {
-    if (a.status === "PENDING" && b.status !== "PENDING") return -1;
-    if (a.status !== "PENDING" && b.status === "PENDING") return 1;
-    return 0;
-  });
+// ── fetch ─────────────────────────────────────────────────────
+const fetchVehicles = () => vehicleStore.fetchVehicles(currentParams.value);
 
-// 차량 목록 조회
-const fetchVehicles = async () => {
-  try {
-    const { data } = await vehicleAPI.getAllVehicles({
-      search: state.searchQuery || null,
-      status: state.filterStatus || null,
-      householdId: state.filterHousehold || null,
-      carType: state.filterType || null,
-      dong: state.filterDong || null,
-      page: state.currentPage - 1,
-      size: state.size,
-    });
-    const result = data.resultData;
-    state.list = sortByPendingFirst(result.content ?? []);
-    state.maxPage = result.totalPages ?? 0;
-    state.totalFiltered = result.content?.length ?? 0;
-    state.totalAll = vehicleStore.total ?? 0;
-  } catch (e) {
-    console.error("차량 목록 조회 실패", e);
-  }
-};
-
-// 통계 조회
-const fetchStats = () => vehicleStore.fetchStats();
-
-// 필터용 동 목록 조회
-const fetchDongs = async () => {
-  try {
-    const { data } = await vehicleAPI.getDongs();
-    state.dongs = data.resultData ?? [];
-  } catch (e) {
-    console.error("동 목록 조회 실패", e);
-  }
-};
-
-// 상세 모달 열기
+// ── 상세 모달 ─────────────────────────────────────────────────
 const openDetailModal = async (vehicle) => {
   detailModal.vehicle = vehicle;
   detailModal.show = true;
+  vehicleCount.value = 0;
   if (vehicle?.household?.dong) {
     try {
       const { data } = await vehicleAPI.getAllVehicles({
@@ -242,50 +171,45 @@ const openDetailModal = async (vehicle) => {
       vehicleCount.value =
         data.resultData?.content?.filter((v) => v.household?.ho === vehicle.household.ho)
           .length ?? 0;
-    } catch (e) {
+    } catch {
       vehicleCount.value = 0;
     }
-  } else {
-    vehicleCount.value = 0;
   }
 };
-// 상세 모달 닫기
 const closeDetailModal = () => {
   detailModal.show = false;
   detailModal.vehicle = null;
 };
 
-// 승인 모달 열기
-const openApproveModal = (vehicle) => {
-  approveModal.vehicle = vehicle;
+// ── 승인 ──────────────────────────────────────────────────────
+const openApproveModal = (v) => {
+  approveModal.vehicle = v;
   approveModal.loading = false;
   approveModal.stage = "confirm";
   approveModal.show = true;
 };
-// 승인 확인 닫기
 const closeApproveConfirm = () => {
   approveModal.show = false;
   approveModal.vehicle = null;
   approveModal.stage = "confirm";
 };
-// 승인 결과 닫기
 const closeApproveResult = () => {
   approveModal.show = false;
   approveModal.vehicle = null;
   approveModal.stage = "confirm";
 };
 
-// 승인 처리
 const handleApprove = async () => {
   approveModal.loading = true;
   try {
-    await vehicleAPI.approveVehicle(approveModal.vehicle.vehicleId);
-    await Promise.all([fetchVehicles(), fetchStats()]);
+    await vehicleStore.approveVehicle(
+      approveModal.vehicle.vehicleId,
+      currentParams.value
+    );
     approveModal.resultType = "success";
     approveModal.resultTitle = "승인이 완료되었습니다.";
     approveModal.resultSubtitle = `${approveModal.vehicle.licensePlate} 차량이 승인되었습니다.`;
-  } catch (e) {
-    console.error("승인 실패", e);
+  } catch {
     approveModal.resultType = "danger";
     approveModal.resultTitle = "승인에 실패했습니다.";
     approveModal.resultSubtitle = "잠시 후 다시 시도해주세요.";
@@ -295,39 +219,34 @@ const handleApprove = async () => {
   }
 };
 
-// 거부 모달 열기
-const openRejectModal = (vehicle) => {
-  rejectModal.vehicle = vehicle;
+// ── 거부 ──────────────────────────────────────────────────────
+const openRejectModal = (v) => {
+  rejectModal.vehicle = v;
   rejectModal.loading = false;
   rejectModal.reason = "";
   rejectModal.memo = "";
   rejectModal.stage = "confirm";
   rejectModal.show = true;
 };
-// 거부 확인 닫기
 const closeRejectConfirm = () => {
   rejectModal.show = false;
   rejectModal.vehicle = null;
   rejectModal.stage = "confirm";
 };
-// 거부 결과 닫기
 const closeRejectResult = () => {
   rejectModal.show = false;
   rejectModal.vehicle = null;
   rejectModal.stage = "confirm";
 };
 
-// 거부 처리
 const handleReject = async () => {
   rejectModal.loading = true;
   try {
-    await vehicleAPI.rejectVehicle(rejectModal.vehicle.vehicleId);
-    await Promise.all([fetchVehicles(), fetchStats()]);
+    await vehicleStore.rejectVehicle(rejectModal.vehicle.vehicleId, currentParams.value);
     rejectModal.resultType = "success";
     rejectModal.resultTitle = "거부 처리되었습니다.";
     rejectModal.resultSubtitle = `${rejectModal.vehicle.licensePlate} 차량이 거부되었습니다.`;
-  } catch (e) {
-    console.error("거부 실패", e);
+  } catch {
     rejectModal.resultType = "danger";
     rejectModal.resultTitle = "거부 처리에 실패했습니다.";
     rejectModal.resultSubtitle = "잠시 후 다시 시도해주세요.";
@@ -337,38 +256,33 @@ const handleReject = async () => {
   }
 };
 
-// 삭제 모달 열기
-const openDeleteModal = (vehicle) => {
-  deleteModal.vehicle = vehicle;
+// ── 삭제 ──────────────────────────────────────────────────────
+const openDeleteModal = (v) => {
+  deleteModal.vehicle = v;
   deleteModal.loading = false;
   deleteModal.stage = "confirm";
   deleteModal.show = true;
 };
-// 삭제 확인 닫기
 const closeDeleteConfirm = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
-// 삭제 결과 닫기
 const closeDeleteResult = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
 
-// 삭제 처리
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
-    await vehicleAPI.deleteVehicle(deleteModal.vehicle.vehicleId);
+    await vehicleStore.deleteVehicle(deleteModal.vehicle.vehicleId, currentParams.value);
     closeDetailModal();
-    await Promise.all([fetchVehicles(), fetchStats()]);
     deleteModal.resultType = "success";
     deleteModal.resultTitle = "차량이 삭제되었습니다.";
     deleteModal.resultSubtitle = `${deleteModal.vehicle.licensePlate} 차량이 삭제되었습니다.`;
-  } catch (e) {
-    console.error("삭제 실패", e);
+  } catch {
     deleteModal.resultType = "danger";
     deleteModal.resultTitle = "삭제에 실패했습니다.";
     deleteModal.resultSubtitle = "잠시 후 다시 시도해주세요.";
@@ -378,7 +292,7 @@ const handleDelete = async () => {
   }
 };
 
-// 등록 모달 열기 - 동 목록 조회 포함
+// ── 등록 모달 ─────────────────────────────────────────────────
 const openRegisterModal = async () => {
   Object.assign(registerForm, {
     dong: "",
@@ -408,12 +322,10 @@ const openRegisterModal = async () => {
   }
   registerModal.show = true;
 };
-// 등록 모달 닫기
 const closeRegisterModal = () => {
   registerModal.show = false;
 };
 
-// 동 변경 시 호수 목록 재조회
 const onDongChange = async () => {
   registerForm.householdId = null;
   registerForm.userId = null;
@@ -433,7 +345,6 @@ const onDongChange = async () => {
   }
 };
 
-// 호수 변경 시 입주민 및 차량 수 조회
 const onHouseholdChange = async () => {
   registerForm.userId = null;
   vehicleCount.value = 0;
@@ -454,7 +365,6 @@ const onHouseholdChange = async () => {
   }
 };
 
-// 차량 등록 처리 - 유효성 검사 후 API 호출
 const handleRegister = async () => {
   Object.assign(errors, {
     dong: "",
@@ -493,7 +403,7 @@ const handleRegister = async () => {
     errors.general = "세대당 최대 2대까지 등록 가능합니다.";
     return;
   }
-  // 차량번호 중복 체크
+
   try {
     const { data } = await vehicleAPI.getAllVehicles({
       search: registerForm.licensePlate,
@@ -511,6 +421,7 @@ const handleRegister = async () => {
   } catch (e) {
     console.error("중복 체크 실패:", e);
   }
+
   registerModal.loading = true;
   try {
     await vehicleAPI.adminRegisterVehicle({
@@ -521,19 +432,18 @@ const handleRegister = async () => {
       status: "APPROVED",
     });
     closeRegisterModal();
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await Promise.all([fetchVehicles(), fetchStats()]);
+    await new Promise((r) => setTimeout(r, 500));
+    await Promise.all([fetchVehicles(), vehicleStore.fetchStats()]);
   } catch (e) {
-    const errorMsg = e.response?.data?.resultMessage ?? "등록에 실패했습니다.";
-    if (errorMsg.includes("차량") || errorMsg.includes("번호"))
-      errors.licensePlate = errorMsg;
-    else errors.general = errorMsg;
+    const msg = e.response?.data?.resultMessage ?? "등록에 실패했습니다.";
+    if (msg.includes("차량") || msg.includes("번호")) errors.licensePlate = msg;
+    else errors.general = msg;
   } finally {
     registerModal.loading = false;
   }
 };
 
-// 차량번호 입력 즉시 중복 체크 - 디바운스 400ms
+// 차량번호 실시간 중복 체크
 let licensePlateTimer = null;
 watch(
   () => registerForm.licensePlate,
@@ -558,14 +468,13 @@ watch(
         errors.licensePlate = existing
           ? "이미 등록된 차량입니다. (승인 또는 대기 중)"
           : "";
-      } catch (e) {
-        // 중복 체크 실패 시 에러 표시 안 함
+      } catch {
+        /* 중복 체크 실패 시 에러 표시 안 함 */
       }
     }, 400);
   }
 );
 
-// URL 쿼리로 등록 모달 자동 오픈
 watch(
   () => route.query.register,
   (val) => {
@@ -573,37 +482,36 @@ watch(
   }
 );
 
-// 검색 실행
+// ── 검색/필터/페이지 ──────────────────────────────────────────
 const doSearch = () => {
-  state.currentPage = 1;
+  filter.currentPage = 1;
   fetchVehicles();
 };
-// 검색 디바운스
 let searchTimer = null;
 const onSearch = () => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => doSearch(), 300);
+  searchTimer = setTimeout(doSearch, 300);
 };
-// 필터 초기화
 const resetFilters = () => {
-  state.searchQuery = "";
-  state.filterStatus = "";
-  state.filterHousehold = "";
-  state.filterType = "";
-  state.filterDong = "";
-  state.currentPage = 1;
+  Object.assign(filter, {
+    searchQuery: "",
+    filterStatus: "",
+    filterHousehold: "",
+    filterType: "",
+    filterDong: "",
+    currentPage: 1,
+  });
   fetchVehicles();
 };
-// 페이지 이동
 const goToPage = (page) => {
-  state.currentPage = page;
+  filter.currentPage = page;
   fetchVehicles();
 };
 
 onMounted(() => {
   fetchVehicles();
-  fetchStats();
-  fetchDongs();
+  vehicleStore.fetchStats();
+  vehicleStore.fetchDongs(); // ← 스토어 action
   if (registerOpenModal) registerOpenModal(openRegisterModal);
 });
 </script>
@@ -639,25 +547,25 @@ onMounted(() => {
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
-            v-model="state.searchQuery"
+            v-model="filter.searchQuery"
             class="search-input"
             placeholder="차량번호, 차종, 세대 검색"
             @input="onSearch"
           />
         </div>
-        <select v-model="state.filterStatus" class="filter-select" @change="doSearch">
+        <select v-model="filter.filterStatus" class="filter-select" @change="doSearch">
           <option value="">승인 상태</option>
           <option value="APPROVED">승인</option>
           <option value="PENDING">대기</option>
           <option value="REJECTED">거부</option>
         </select>
-        <select v-model="state.filterDong" class="filter-select" @change="doSearch">
+        <select v-model="filter.filterDong" class="filter-select" @change="doSearch">
           <option value="">세대 선택</option>
-          <option v-for="dong in state.dongs" :key="dong" :value="dong">
+          <option v-for="dong in vehicleStore.dongs" :key="dong" :value="dong">
             {{ dong }}
           </option>
         </select>
-        <select v-model="state.filterType" class="filter-select" @change="doSearch">
+        <select v-model="filter.filterType" class="filter-select" @change="doSearch">
           <option value="">차종</option>
           <option value="경차">경차</option>
           <option value="승용차">승용차</option>
@@ -667,7 +575,11 @@ onMounted(() => {
       </FilterBar>
 
       <!-- 차량 목록 테이블 -->
-      <AdminTable :columns="columns" :rows="state.list" @row-click="openDetailModal">
+      <AdminTable
+        :columns="columns"
+        :rows="vehicleStore.list"
+        @row-click="openDetailModal"
+      >
         <template #cell-vehicleId="{ row }"
           ><span class="td-cell td-id">#{{ row.vehicleId }}</span></template
         >
@@ -712,10 +624,10 @@ onMounted(() => {
 
       <!-- 페이지네이션 -->
       <Pagination
-        :currentPage="state.currentPage"
-        :maxPage="state.maxPage"
-        :totalAll="state.totalAll"
-        :totalFiltered="state.totalFiltered"
+        :currentPage="filter.currentPage"
+        :maxPage="vehicleStore.maxPage"
+        :totalAll="vehicleStore.total"
+        :totalFiltered="vehicleStore.totalFiltered"
         unit="대"
         @change="goToPage"
       />
