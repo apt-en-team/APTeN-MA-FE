@@ -2,40 +2,38 @@
 import { onMounted, reactive, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useFacilityStore } from "@/stores/modules/facility";
-import facilityAPI from "@/api/facility.js";
+import { useReservationStore } from "@/stores/modules/reservation.js";
 
 import StatsCards from "@/components/admin/StatsCards.vue";
 import FilterBar from "@/components/layout/FilterBar.vue";
 import BaseModal from "@/components/common/BeseModel.vue";
 import Pagination from "@/components/layout/Pagination.vue";
-import { useReservationStore } from "@/stores/modules/reservation.js";
 
 const router = useRouter();
 const facilityStore = useFacilityStore();
-
 const reservationStore = useReservationStore();
 
 const state = reactive({
-  list: [],
   filterStatus: "",
   filterSlot: "",
   searchQuery: "",
   currentPage: 1,
-  pageSize: 9,
+  pageSize: 8,
 });
 
-// 전체 시설 현재 이용 중 인원 합산
+const detailModal = reactive({ show: false, facility: null });
+
+// ── 통계 카드 ────────────────────────────────────────────────
 const totalInUse = computed(() =>
   reservationStore.facilitySummaryList.reduce((sum, f) => sum + (f.current ?? 0), 0)
 );
 
-// 상단 통계 카드
 const statsCards = computed(() => [
   {
     label: "전체 시설",
     value: facilityStore.total,
     unit: "개",
-    desc: `운영 중 ${facilityStore.total - facilityStore.inactive}개`,
+    desc: `운영 중 ${facilityStore.activeCount}개`,
   },
   {
     label: "오늘 예약",
@@ -58,58 +56,57 @@ const statsCards = computed(() => [
   },
 ]);
 
-// 모달 상태
-const detailModal = reactive({ show: false, facility: null });
-
-// 운영 상태
+// ── 운영 상태 ─────────────────────────────────────────────────
 const statusLabel = (f) => (f?.isActive ? "운영 중" : "중단");
 const statusClass = (f) => (f?.isActive ? "active" : "inactive");
 
-// HH:MM:SS → HH:MM
+// ── 시간 포맷 ─────────────────────────────────────────────────
 const formatTime = (t) => (t ? t.slice(0, 5) : "-");
 
-// 총 타임 수 계산 (골프용)
-const getTotalSlots = (f) => {
-  if (!f.openTime || !f.closeTime) return 0;
-  const open = f.openTime.split(":").map(Number);
-  const close = f.closeTime.split(":").map(Number);
-  const totalMinutes = close[0] * 60 + close[1] - (open[0] * 60 + open[1]);
-  return Math.floor(totalMinutes / f.slotDuration);
+// ── 가격 포맷 ─────────────────────────────────────────────────
+const formatPrice = (p) => (!p || p === 0 ? "무료" : Number(p).toLocaleString() + "원");
+
+// ── GX 요일 운영 설정 ─────────────────────────────────────────
+const GX_SCHEDULE = {
+  "GX-필라테스(오전)": [1, 3, 5],
+  "GX-필라테스(오후)": [1, 3, 5],
+  "GX-그룹PT(오전)": [2, 4],
+  "GX-그룹PT(오후)": [2, 4],
+};
+const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+const isGxOperatingToday = (f) => {
+  const days = GX_SCHEDULE[f.name];
+  if (!days) return true;
+  return days.includes(new Date().getDay());
 };
 
-// 예약 비율 (0~100) — 일반 시설용
+const getGxScheduleText = (f) => {
+  const days = GX_SCHEDULE[f.name];
+  if (!days) return "";
+  return days.map((d) => DAY_LABELS[d]).join("·") + "요일";
+};
+
+const getTodayDayLabel = () => DAY_LABELS[new Date().getDay()];
+
+// ── 골프 타임 계산 ────────────────────────────────────────────
+const getTotalSlots = (f) => {
+  if (!f.openTime || !f.closeTime) return 0;
+  const [oh, om] = f.openTime.split(":").map(Number);
+  const [ch, cm] = f.closeTime.split(":").map(Number);
+  return Math.floor((ch * 60 + cm - (oh * 60 + om)) / f.slotDuration);
+};
+
+// ── 예약 비율 (일반 시설) ─────────────────────────────────────
 const getReservedRatio = (f) => {
-  if (!f.isActive) return 0;
-  if (f.typeId === 3) {
-    const total = getTotalSlots(f);
-    return total > 0
-      ? Math.min(Math.round(((f.todayReserved ?? 0) / total) * 100), 100)
-      : 0;
-  }
-  if (!f.maxCapacity) return 0;
+  if (!f.isActive || !f.maxCapacity) return 0;
   return Math.min(Math.round(((f.todayReserved ?? 0) / f.maxCapacity) * 100), 100);
 };
 
-// 예약 비율에 따른 색상
-const getBarColor = (f) => {
-  const ratio = f.typeId === 3 ? getGolfPersonRatio(f) : getReservedRatio(f);
-  if (ratio >= 80) return "#E53E3E";
-  if (ratio >= 40) return "#ED8936";
-  return "#48BB78";
-};
-
-const getRemainingColor = (f) => {
-  const ratio = f.typeId === 3 ? getGolfPersonRatio(f) : getReservedRatio(f);
-  if (ratio >= 80) return "#FED7D7";
-  if (ratio >= 50) return "#FEEBC8";
-  return "#C6F6D5";
-};
-
-// 골프: 통계바 비율 — 오늘 예약 인원 합계 / (총 타임 × maxCapacity)
+// ── 예약 비율 (골프) ──────────────────────────────────────────
 const getGolfPersonRatio = (f) => {
   if (!f.isActive) return 0;
-  const totalSlots = getTotalSlots(f);
-  const totalSeats = totalSlots * (f.maxCapacity ?? 0);
+  const totalSeats = getTotalSlots(f) * (f.maxCapacity ?? 0);
   if (totalSeats === 0) return 0;
   return Math.min(
     Math.round(((f.todayReservedPersons ?? f.todayReserved ?? 0) / totalSeats) * 100),
@@ -117,28 +114,53 @@ const getGolfPersonRatio = (f) => {
   );
 };
 
-// 골프: 현재 운영 타임의 예약 수 / 잔여 수
-const getCurrentSlotReserved = (f) => {
-  if (!f.openTime || !f.closeTime) return { reserved: 0, remaining: f.maxCapacity ?? 0 };
-  const open = f.openTime.split(":").map(Number);
-  const close = f.closeTime.split(":").map(Number);
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const openMinutes = open[0] * 60 + open[1];
-  const closeMins = close[0] * 60 + close[1];
-  if (nowMinutes < openMinutes || nowMinutes >= closeMins)
-    return { reserved: 0, remaining: f.maxCapacity ?? 0 };
-  const totalSlots = getTotalSlots(f);
-  const perSlot =
-    f.currentSlotReserved ??
-    (totalSlots > 0 ? Math.round((f.todayReserved ?? 0) / totalSlots) : 0);
-  const remaining = Math.max((f.maxCapacity ?? 0) - perSlot, 0);
-  return { reserved: perSlot, remaining };
+// ── 바 색상 ───────────────────────────────────────────────────
+const getBarColor = (f, ratio) => {
+  if (ratio >= 80) return "#E53E3E";
+  if (ratio >= 40) return "#ED8936";
+  return "#48BB78";
 };
 
-// 필터링
-const filteredList = computed(() => {
-  return state.list.filter((f) => {
+const getRemainingColor = (f, ratio) => {
+  if (ratio >= 80) return "#FED7D7";
+  if (ratio >= 50) return "#FEEBC8";
+  return "#C6F6D5";
+};
+
+// ── 골프 현재 타임 ────────────────────────────────────────────
+const getCurrentSlotText = (f) => {
+  if (!f.openTime || !f.closeTime) return "-";
+  const [oh, om] = f.openTime.split(":").map(Number);
+  const [ch, cm] = f.closeTime.split(":").map(Number);
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const openMin = oh * 60 + om;
+  const closeMin = ch * 60 + cm;
+  if (nowMin < openMin) return "미운영";
+  if (nowMin >= closeMin) return "마감";
+  const idx = Math.floor((nowMin - openMin) / f.slotDuration) + 1;
+  return idx > getTotalSlots(f) ? "마감" : idx + "타임";
+};
+
+const getCurrentSlotReserved = (f) => {
+  if (!f.openTime || !f.closeTime) return { reserved: 0, remaining: f.maxCapacity ?? 0 };
+  const [oh, om] = f.openTime.split(":").map(Number);
+  const [ch, cm] = f.closeTime.split(":").map(Number);
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const openMin = oh * 60 + om;
+  const closeMin = ch * 60 + cm;
+  if (nowMin < openMin || nowMin >= closeMin)
+    return { reserved: 0, remaining: f.maxCapacity ?? 0 };
+  const total = getTotalSlots(f);
+  const perSlot =
+    f.currentSlotReserved ?? (total > 0 ? Math.round((f.todayReserved ?? 0) / total) : 0);
+  return { reserved: perSlot, remaining: Math.max((f.maxCapacity ?? 0) - perSlot, 0) };
+};
+
+// ── 필터링 ────────────────────────────────────────────────────
+const filteredList = computed(() =>
+  facilityStore.list.filter((f) => {
     const matchStatus =
       !state.filterStatus ||
       (state.filterStatus === "active" && f.isActive) ||
@@ -149,10 +171,10 @@ const filteredList = computed(() => {
       f.name.includes(state.searchQuery) ||
       f.typeName?.includes(state.searchQuery);
     return matchStatus && matchSlot && matchSearch;
-  });
-});
+  })
+);
 
-// 페이지네이션
+// ── 페이지네이션 ──────────────────────────────────────────────
 const pagedList = computed(() => {
   const start = (state.currentPage - 1) * state.pageSize;
   return filteredList.value.slice(start, start + state.pageSize);
@@ -162,38 +184,15 @@ const maxPage = computed(
   () => Math.ceil(filteredList.value.length / state.pageSize) || 1
 );
 
-// 시설 목록 + 통계 동시 조회
-const fetchFacilities = async () => {
-  try {
-    const [facilitiesRes] = await Promise.all([
-      facilityAPI.getFacilities(),
-      reservationStore.fetchDashboardStats(),
-    ]);
-    state.list = facilitiesRes.data.resultData ?? [];
-    facilityStore.total = state.list.length;
-    facilityStore.inactive = state.list.filter((f) => !f.isActive).length;
-  } catch (e) {
-    console.error("시설 목록 조회 실패", e);
-  }
+// ── 데이터 fetch ──────────────────────────────────────────────
+const fetchAll = async () => {
+  await Promise.all([
+    facilityStore.fetchFacilities(),
+    reservationStore.fetchDashboardStats(),
+  ]);
 };
 
-// 현재 시간 기준 현재 타임 (골프용)
-const getCurrentSlotText = (f) => {
-  if (!f.openTime || !f.closeTime) return "-";
-  const open = f.openTime.split(":").map(Number);
-  const close = f.closeTime.split(":").map(Number);
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const openMinutes = open[0] * 60 + open[1];
-  const closeMinutes = close[0] * 60 + close[1];
-  if (nowMinutes < openMinutes) return "미운영";
-  if (nowMinutes >= closeMinutes) return "마감";
-  const slotIndex = Math.floor((nowMinutes - openMinutes) / f.slotDuration) + 1;
-  const totalSlots = getTotalSlots(f);
-  return slotIndex > totalSlots ? "마감" : slotIndex + "타임";
-};
-
-// 모달
+// ── 모달 ──────────────────────────────────────────────────────
 const openDetail = (f) => {
   detailModal.facility = f;
   detailModal.show = true;
@@ -207,7 +206,7 @@ const goEdit = (id) => {
   router.push(`/admin/facilities/${id}/edit`);
 };
 
-// 필터 초기화
+// ── 필터 초기화 ───────────────────────────────────────────────
 const resetFilters = () => {
   state.filterStatus = "";
   state.filterSlot = "";
@@ -228,8 +227,8 @@ const onSearch = () => {
 };
 
 onMounted(() => {
-  fetchFacilities();
-  setInterval(fetchFacilities, 30000);
+  fetchAll();
+  setInterval(fetchAll, 30000);
 });
 </script>
 
@@ -317,7 +316,6 @@ onMounted(() => {
           <div class="card-body">
             <!-- ─── 골프연습장 (typeId === 3) ─── -->
             <template v-if="f.typeId === 3">
-              <!-- 줄 1: 최대 인원 / 예약 단위 -->
               <div class="card-info-row">
                 <div class="card-info">
                   <span class="info-label">최대 인원</span>
@@ -328,14 +326,12 @@ onMounted(() => {
                   <span class="info-value">{{ f.slotDuration }}분</span>
                 </div>
               </div>
-
-              <!-- 줄 2: 운영 시간 + 오늘 예약 (같은 줄) -->
               <div class="card-info-row">
                 <div class="card-info">
                   <span class="info-label">운영 시간</span>
-                  <span class="info-value">
-                    {{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}
-                  </span>
+                  <span class="info-value"
+                    >{{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}</span
+                  >
                 </div>
                 <div class="card-info">
                   <span class="info-label">오늘 예약</span>
@@ -348,31 +344,34 @@ onMounted(() => {
                   </span>
                 </div>
               </div>
-
-              <!-- 통계 바: 오늘 예약 인원 / 전체 좌석(총 타임 × maxCapacity) 기준 -->
               <div class="stacked-bar-wrap">
                 <div class="stacked-bar">
                   <div
                     class="bar-segment bar-reserved"
                     :style="{
                       width: f.isActive ? getGolfPersonRatio(f) + '%' : '0%',
-                      background: getBarColor(f),
+                      background: getBarColor(f, getGolfPersonRatio(f)),
                     }"
                   ></div>
                   <div
                     class="bar-segment bar-remaining"
                     :style="{
                       width: f.isActive ? 100 - getGolfPersonRatio(f) + '%' : '100%',
-                      background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                      background: f.isActive
+                        ? getRemainingColor(f, getGolfPersonRatio(f))
+                        : '#E2E8F0',
                     }"
                   ></div>
                 </div>
                 <div class="stacked-bar-legend">
-                  <!-- 예약완료: 인원 / 전체좌석 % -->
                   <span class="legend-item">
                     <span
                       class="legend-dot"
-                      :style="{ background: f.isActive ? getBarColor(f) : '#A0AEC0' }"
+                      :style="{
+                        background: f.isActive
+                          ? getBarColor(f, getGolfPersonRatio(f))
+                          : '#A0AEC0',
+                      }"
                     ></span>
                     예약완료
                     {{
@@ -386,12 +385,13 @@ onMounted(() => {
                         : "0%"
                     }}
                   </span>
-                  <!-- 잔여 - 현재 운영타임: 예약 N / 잔여 N -->
                   <span class="legend-item">
                     <span
                       class="legend-dot"
                       :style="{
-                        background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                        background: f.isActive
+                          ? getRemainingColor(f, getGolfPersonRatio(f))
+                          : '#E2E8F0',
                       }"
                     ></span>
                     {{ getCurrentSlotText(f) }} · 예약
@@ -402,7 +402,115 @@ onMounted(() => {
               </div>
             </template>
 
-            <!-- ─── 일반 시설 (기존 그대로) ─── -->
+            <!-- ─── GX 시설 (typeId === 4) ─── -->
+            <template v-else-if="f.typeId === 4">
+              <div class="card-info-row">
+                <div class="card-info">
+                  <span class="info-label">정원</span>
+                  <span class="info-value">{{ f.maxCapacity }}명</span>
+                </div>
+                <div class="card-info">
+                  <span class="info-label">월 수강료</span>
+                  <span class="info-value">{{ formatPrice(f.price) }}</span>
+                </div>
+              </div>
+              <div class="card-info-row">
+                <div class="card-info">
+                  <span class="info-label">운영 시간</span>
+                  <span class="info-value"
+                    >{{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}</span
+                  >
+                </div>
+                <div class="card-info">
+                  <span class="info-label">운영 요일</span>
+                  <span class="info-value">{{ getGxScheduleText(f) }}</span>
+                </div>
+              </div>
+
+              <!-- 오늘 운영 여부 배지 -->
+              <div class="gx-today-wrap">
+                <span
+                  :class="[
+                    'gx-day-badge',
+                    !f.isActive
+                      ? 'stopped'
+                      : isGxOperatingToday(f)
+                      ? 'operating'
+                      : 'closed',
+                  ]"
+                >
+                  {{
+                    !f.isActive
+                      ? "운영 중단"
+                      : isGxOperatingToday(f)
+                      ? "오늘 운영"
+                      : `오늘 미운영 (${getTodayDayLabel()}요일)`
+                  }}
+                </span>
+              </div>
+
+              <!-- 통계 바: 오늘 예약 / 정원 기준 -->
+              <div class="stacked-bar-wrap">
+                <div class="stacked-bar">
+                  <div
+                    class="bar-segment bar-reserved"
+                    :style="{
+                      width:
+                        f.isActive && isGxOperatingToday(f)
+                          ? getReservedRatio(f) + '%'
+                          : '0%',
+                      background: getBarColor(f, getReservedRatio(f)),
+                    }"
+                  ></div>
+                  <div
+                    class="bar-segment bar-remaining"
+                    :style="{
+                      width:
+                        f.isActive && isGxOperatingToday(f)
+                          ? 100 - getReservedRatio(f) + '%'
+                          : '100%',
+                      background:
+                        f.isActive && isGxOperatingToday(f)
+                          ? getRemainingColor(f, getReservedRatio(f))
+                          : '#E2E8F0',
+                    }"
+                  ></div>
+                </div>
+                <div class="stacked-bar-legend">
+                  <span class="legend-item">
+                    <span
+                      class="legend-dot"
+                      :style="{
+                        background:
+                          f.isActive && isGxOperatingToday(f)
+                            ? getBarColor(f, getReservedRatio(f))
+                            : '#A0AEC0',
+                      }"
+                    ></span>
+                    오늘 예약
+                    {{ f.isActive && isGxOperatingToday(f) ? f.todayReserved ?? 0 : 0 }} /
+                    {{ f.maxCapacity }}명
+                  </span>
+                  <span class="legend-item">
+                    <span
+                      class="legend-dot"
+                      :style="{
+                        background:
+                          f.isActive && isGxOperatingToday(f)
+                            ? getRemainingColor(f, getReservedRatio(f))
+                            : '#E2E8F0',
+                      }"
+                    ></span>
+                    잔여
+                    {{
+                      f.isActive && isGxOperatingToday(f) ? 100 - getReservedRatio(f) : 0
+                    }}%
+                  </span>
+                </div>
+              </div>
+            </template>
+
+            <!-- ─── 일반 시설 ─── -->
             <template v-else>
               <div class="card-info-row">
                 <div class="card-info">
@@ -417,9 +525,9 @@ onMounted(() => {
               <div class="card-info-row">
                 <div class="card-info">
                   <span class="info-label">운영 시간</span>
-                  <span class="info-value">
-                    {{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}
-                  </span>
+                  <span class="info-value"
+                    >{{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}</span
+                  >
                 </div>
                 <div class="card-info">
                   <span class="info-label">오늘 예약</span>
@@ -438,14 +546,16 @@ onMounted(() => {
                     class="bar-segment bar-reserved"
                     :style="{
                       width: f.isActive ? getReservedRatio(f) + '%' : '0%',
-                      background: getBarColor(f),
+                      background: getBarColor(f, getReservedRatio(f)),
                     }"
                   ></div>
                   <div
                     class="bar-segment bar-remaining"
                     :style="{
                       width: f.isActive ? 100 - getReservedRatio(f) + '%' : '100%',
-                      background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                      background: f.isActive
+                        ? getRemainingColor(f, getReservedRatio(f))
+                        : '#E2E8F0',
                     }"
                   ></div>
                 </div>
@@ -453,7 +563,11 @@ onMounted(() => {
                   <span class="legend-item">
                     <span
                       class="legend-dot"
-                      :style="{ background: f.isActive ? getBarColor(f) : '#A0AEC0' }"
+                      :style="{
+                        background: f.isActive
+                          ? getBarColor(f, getReservedRatio(f))
+                          : '#A0AEC0',
+                      }"
                     ></span>
                     예약 완료 {{ f.isActive ? getReservedRatio(f) : 0 }}%
                   </span>
@@ -461,7 +575,9 @@ onMounted(() => {
                     <span
                       class="legend-dot"
                       :style="{
-                        background: f.isActive ? getRemainingColor(f) : '#E2E8F0',
+                        background: f.isActive
+                          ? getRemainingColor(f, getReservedRatio(f))
+                          : '#E2E8F0',
                       }"
                     ></span>
                     잔여 {{ f.isActive ? 100 - getReservedRatio(f) : 0 }}%
@@ -536,9 +652,9 @@ onMounted(() => {
         </div>
         <div class="detail-cell">
           <span class="detail-label">등록일</span>
-          <span class="detail-value">
-            {{ detailModal.facility?.createdAt?.slice(0, 10) ?? "-" }}
-          </span>
+          <span class="detail-value">{{
+            detailModal.facility?.createdAt?.slice(0, 10) ?? "-"
+          }}</span>
         </div>
       </div>
       <template #footer>
@@ -571,7 +687,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 검색/필터 */
 .search-wrap {
   display: flex;
   align-items: center;
@@ -612,10 +727,9 @@ onMounted(() => {
   font-family: "Noto Sans KR", sans-serif;
 }
 
-/* 시설 그리드 */
 .facility-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   padding: 20px;
 }
@@ -646,7 +760,6 @@ onMounted(() => {
   font-size: 13px;
 }
 
-/* 카드 헤더 */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -694,7 +807,6 @@ onMounted(() => {
   color: #4a5568;
 }
 
-/* 카드 바디 */
 .card-body {
   display: flex;
   flex-direction: column;
@@ -719,7 +831,32 @@ onMounted(() => {
   color: #1a202c;
 }
 
-/* Stacked Bar */
+/* GX 오늘 운영 배지 */
+.gx-today-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gx-day-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.gx-day-badge.operating {
+  background: #ebf5ee;
+  color: #4d8b5a;
+}
+.gx-day-badge.closed {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+.gx-day-badge.stopped {
+  background: #e0e0e0;
+  color: #4a5568;
+}
+
 .stacked-bar-wrap {
   display: flex;
   flex-direction: column;
@@ -766,7 +903,6 @@ onMounted(() => {
   transition: background 0.4s ease;
 }
 
-/* 모달 */
 .detail-hero {
   margin-bottom: 14px;
 }

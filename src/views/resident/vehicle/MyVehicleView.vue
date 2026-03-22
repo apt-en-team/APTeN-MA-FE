@@ -1,12 +1,13 @@
 <script setup>
 import { onMounted, reactive, watch, computed } from "vue";
-import vehicleAPI from "@/api/vehicle.js";
+import { useVehicleStore } from "@/stores/modules/vehicle.js";
 import BaseModal from "@/components/common/BeseModel.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import ActionResultModal from "@/components/common/ActionResultModal.vue";
 
-const state = reactive({ list: [], logs: [] });
+const vehicleStore = useVehicleStore();
 
+// ── 이미지맵 ──────────────────────────────────────────────────
 const carImageMap = {
   경차: new URL("@/assets/images/Compact car.png", import.meta.url).href,
   승용차: new URL("@/assets/images/Sedan.png", import.meta.url).href,
@@ -15,9 +16,9 @@ const carImageMap = {
 };
 const getCarImage = (carType) => carImageMap[carType] ?? null;
 
+// ── 모달 상태 ─────────────────────────────────────────────────
 const registerModal = reactive({ show: false, loading: false });
 const editModal = reactive({ show: false, vehicle: null, loading: false });
-
 const deleteModal = reactive({
   show: false,
   stage: "confirm",
@@ -33,31 +34,24 @@ const editForm = reactive({ licensePlate: "", carModel: "", carType: "" });
 const registerError = reactive({ licensePlate: "", carModel: "", carType: "" });
 const editError = reactive({ licensePlate: "", carModel: "", carType: "" });
 
-// 등록 모달 하단 에러 요약
-const firstRegisterError = computed(() => {
-  if (registerError.licensePlate) return registerError.licensePlate;
-  if (registerError.carModel) return registerError.carModel;
-  if (registerError.carType) return registerError.carType;
-  return "";
-});
+const firstRegisterError = computed(
+  () =>
+    registerError.licensePlate || registerError.carModel || registerError.carType || ""
+);
+const firstEditError = computed(
+  () => editError.licensePlate || editError.carModel || editError.carType || ""
+);
 
-// 수정 모달 하단 에러 요약
-const firstEditError = computed(() => {
-  if (editError.licensePlate) return editError.licensePlate;
-  if (editError.carModel) return editError.carModel;
-  if (editError.carType) return editError.carType;
-  return "";
-});
-
+// ── 헬퍼 ──────────────────────────────────────────────────────
 const statusLabel = (s) =>
   ({ APPROVED: "완료", PENDING: "대기", REJECTED: "거부" }[s] ?? s);
 const statusClass = (s) =>
   ({ APPROVED: "approved", PENDING: "pending", REJECTED: "rejected" }[s] ?? "");
 const formatDate = (val) => (val ? val.slice(0, 10).replace(/-/g, ".") : "-");
 
-// 입출차 기록 시간 포맷 - vehicleId 타입 무관하게 비교
+// 입출차 최근 기록 (스토어 logs 참조)
 const formatLogTime = (vehicleId) => {
-  const logs = state.logs
+  const logs = vehicleStore.logs
     .filter((l) => String(l.vehicleId) === String(vehicleId))
     .sort((a, b) => new Date(b.loggedAt) - new Date(a.loggedAt));
   if (!logs.length) return "-";
@@ -76,49 +70,19 @@ const formatLogTime = (vehicleId) => {
   return `${type} : ${yyyy}.${mm}.${dd}(${day}) ${ampm} ${hour}시 ${min}분`;
 };
 
-// 차량 목록 조회
-const fetchVehicles = async () => {
-  try {
-    const { data } = await vehicleAPI.getMyVehicles();
-    state.list = data.resultData ?? [];
-  } catch (e) {
-    console.error("차량 목록 조회 실패", e);
-  }
-};
-
-// 입출차 기록 조회
-const fetchLogs = async () => {
-  try {
-    const { data } = await vehicleAPI.getMyVehicleLogs();
-    state.logs = data.resultData ?? [];
-  } catch (e) {
-    console.error("입출차 기록 조회 실패", e);
-  }
-};
-
-// 등록 모달 열기
+// ── 등록 ──────────────────────────────────────────────────────
 const openRegister = () => {
-  registerForm.licensePlate = "";
-  registerForm.carModel = "";
-  registerForm.carType = "";
-  registerError.licensePlate = "";
-  registerError.carModel = "";
-  registerError.carType = "";
+  Object.assign(registerForm, { licensePlate: "", carModel: "", carType: "" });
+  Object.assign(registerError, { licensePlate: "", carModel: "", carType: "" });
   registerModal.show = true;
 };
-// 등록 모달 닫기
 const closeRegister = () => {
   registerModal.show = false;
-  registerError.licensePlate = "";
-  registerError.carModel = "";
-  registerError.carType = "";
+  Object.assign(registerError, { licensePlate: "", carModel: "", carType: "" });
 };
 
-// 등록 처리
 const handleRegister = async () => {
-  registerError.licensePlate = "";
-  registerError.carModel = "";
-  registerError.carType = "";
+  Object.assign(registerError, { licensePlate: "", carModel: "", carType: "" });
   if (!registerForm.licensePlate?.trim()) {
     registerError.licensePlate = "차량 번호를 입력해주세요.";
     return;
@@ -128,52 +92,43 @@ const handleRegister = async () => {
     return;
   }
   if (!registerForm.carType) {
-    registerError.carType = "차량를 선택해주세요.";
+    registerError.carType = "차종을 선택해주세요.";
     return;
   }
   registerModal.loading = true;
   try {
-    await vehicleAPI.registerVehicle({ ...registerForm });
+    await vehicleStore.registerVehicle({ ...registerForm }); // ← 스토어 action
     closeRegister();
-    await fetchVehicles();
   } catch (e) {
-    if (e.response?.status === 400) {
+    if (e.response?.status === 400)
       registerError.licensePlate = e.response?.data?.message ?? "등록에 실패했습니다.";
-    } else {
-      console.error("차량 등록 실패", e);
-    }
+    else console.error("차량 등록 실패", e);
   } finally {
     registerModal.loading = false;
   }
 };
 
-// 수정 모달 열기
+// ── 수정 ──────────────────────────────────────────────────────
 const openEdit = (v) => {
-  editForm.licensePlate = v.licensePlate;
-  editForm.carModel = v.carModel;
-  editForm.carType = v.carType ?? "";
-  editError.licensePlate = "";
-  editError.carModel = "";
-  editError.carType = "";
+  Object.assign(editForm, {
+    licensePlate: v.licensePlate,
+    carModel: v.carModel,
+    carType: v.carType ?? "",
+  });
+  Object.assign(editError, { licensePlate: "", carModel: "", carType: "" });
   editModal.vehicle = v;
   editModal.loading = false;
   editModal.show = true;
 };
-// 수정 모달 닫기
 const closeEdit = () => {
   editModal.show = false;
   editModal.vehicle = null;
-  editError.licensePlate = "";
-  editError.carModel = "";
-  editError.carType = "";
   editForm.carType = "";
+  Object.assign(editError, { licensePlate: "", carModel: "", carType: "" });
 };
 
-// 수정 처리
 const handleEdit = async () => {
-  editError.licensePlate = "";
-  editError.carModel = "";
-  editError.carType = "";
+  Object.assign(editError, { licensePlate: "", carModel: "", carType: "" });
   if (!editForm.licensePlate?.trim()) {
     editError.licensePlate = "차량 번호를 입력해주세요.";
     return;
@@ -188,51 +143,45 @@ const handleEdit = async () => {
   }
   editModal.loading = true;
   try {
-    await vehicleAPI.updateVehicle(editModal.vehicle.vehicleId, {
+    await vehicleStore.updateVehicle(editModal.vehicle.vehicleId, {
+      // ← 스토어 action
       licensePlate: editForm.licensePlate,
       carModel: editForm.carModel,
       carType: editForm.carType,
     });
     closeEdit();
-    await fetchVehicles();
   } catch (e) {
-    if (e.response?.status === 400) {
+    if (e.response?.status === 400)
       editError.licensePlate =
         e.response?.data?.message ?? "이미 등록된 차량 번호입니다.";
-    } else {
-      console.error("차량 수정 실패", e);
-    }
+    else console.error("차량 수정 실패", e);
   } finally {
     editModal.loading = false;
   }
 };
 
-// 삭제 모달 열기
+// ── 삭제 ──────────────────────────────────────────────────────
 const openDelete = (v) => {
   deleteModal.vehicle = v;
   deleteModal.loading = false;
   deleteModal.stage = "confirm";
   deleteModal.show = true;
 };
-// 삭제 확인 닫기
 const closeDeleteConfirm = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
-// 삭제 결과 닫기
 const closeDeleteResult = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
 
-// 삭제 처리
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
-    await vehicleAPI.deleteVehicle(deleteModal.vehicle.vehicleId);
-    await fetchVehicles();
+    await vehicleStore.deleteMyVehicle(deleteModal.vehicle.vehicleId); // ← 스토어 action
     deleteModal.resultType = "success";
     deleteModal.resultTitle = "차량이 삭제되었습니다.";
     deleteModal.resultSubtitle = `${deleteModal.vehicle.licensePlate} 차량 등록이 취소되었습니다.`;
@@ -247,7 +196,7 @@ const handleDelete = async () => {
   }
 };
 
-// 등록 - 차량번호 실시간 중복 체크
+// ── 실시간 중복 체크 (로컬 목록 기준) ────────────────────────
 watch(
   () => registerForm.licensePlate,
   (val) => {
@@ -256,7 +205,8 @@ watch(
       return;
     }
     const clean = val.replace(/\s/g, "");
-    registerError.licensePlate = state.list.some(
+    registerError.licensePlate = vehicleStore.myList.some(
+      // ← 스토어 참조
       (v) => v.licensePlate.replace(/\s/g, "") === clean
     )
       ? "이미 등록된 차량 번호입니다."
@@ -264,7 +214,6 @@ watch(
   }
 );
 
-// 수정 - 차량번호 실시간 중복 체크
 watch(
   () => editForm.licensePlate,
   (val) => {
@@ -278,7 +227,8 @@ watch(
       editError.licensePlate = "";
       return;
     }
-    editError.licensePlate = state.list.some(
+    editError.licensePlate = vehicleStore.myList.some(
+      // ← 스토어 참조
       (v) =>
         v.licensePlate.replace(/\s/g, "") === clean &&
         v.vehicleId !== editModal.vehicle?.vehicleId
@@ -289,15 +239,19 @@ watch(
 );
 
 onMounted(async () => {
-  await fetchVehicles();
-  await fetchLogs();
+  await vehicleStore.fetchMyVehicles(); // ← 스토어 action
+  await vehicleStore.fetchLogs(); // ← 스토어 action
 });
 </script>
 
 <template>
   <div class="my-vehicle-view">
     <div class="vehicle-list">
-      <div v-for="(v, idx) in state.list" :key="v.vehicleId" class="vehicle-card">
+      <div
+        v-for="(v, idx) in vehicleStore.myList"
+        :key="v.vehicleId"
+        class="vehicle-card"
+      >
         <div class="vehicle-image">
           <img
             v-if="getCarImage(v.carType)"
@@ -364,7 +318,11 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div v-if="state.list.length < 2" class="vehicle-add" @click="openRegister">
+      <div
+        v-if="vehicleStore.myList.length < 2"
+        class="vehicle-add"
+        @click="openRegister"
+      >
         <div class="add-icon">+</div>
         <span class="add-label">내 차량 등록하기</span>
       </div>

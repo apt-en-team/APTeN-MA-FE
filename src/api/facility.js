@@ -23,6 +23,7 @@ export default {
   },
 
    // API-048 | 시설 목록 조회 (타입 필터)
+  //이것도 내가 수정한거임
   getFacilities({ typeId = null, page = 1, size = 100 } = {}) {
   return axios.get('/facilities', {
     params: {
