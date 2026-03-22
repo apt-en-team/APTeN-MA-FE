@@ -1,54 +1,51 @@
 <script setup>
-import {onMounted, ref} from 'vue'
-import {useRouter} from 'vue-router'
-import {useAuthStore} from '@/stores/modules/auth.js'
-import Modal from '@/components/Modal.vue'
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/modules/auth.js";
+import Modal from "@/components/Modal.vue";
 
-const router = useRouter()
-const auth = useAuthStore()
+const router = useRouter();
+const auth = useAuthStore();
 
 // 회원 탈퇴 확인 모달 표시 여부
-const showDeactivateConfirm = ref(false)
+const showDeactivateConfirm = ref(false);
 // 에러 메시지
-const errorMsg = ref('')
+const errorMsg = ref("");
 
 // 컴포넌트 마운트 시 내 정보 조회
 onMounted(async () => {
-  await auth.fetchMe()
-})
+  await auth.fetchMe();
+});
 
 // 로그아웃 후 로그인 페이지로 이동
 async function handleLogout() {
-  await auth.logout()
-  router.push('/login')
+  await auth.logout();
+  router.push("/login");
 }
 
 // 회원 탈퇴 처리 후 로그인 페이지로 이동
 async function handleDeactivate() {
   try {
-    await auth.deactivate()
-    router.push('/login')
+    await auth.deactivate();
+    router.push("/login");
   } catch (e) {
-    errorMsg.value = '탈퇴 처리에 실패했습니다'
+    errorMsg.value = "탈퇴 처리에 실패했습니다";
   }
 }
 </script>
 
 <template>
   <div class="mypage">
-
     <div class="content-wrapper">
-
       <!-- 왼쪽 패널 -->
       <div class="left-panel">
-
         <!-- 프로필 -->
 
         <div class="avatar-wrap">
           <div class="avatar"></div>
           <div class="online-dot"></div>
         </div>
-        <p class="user-name">{{ auth.user?.name || '-' }}</p>
+        <p class="user-name">{{ auth.user?.name || "-" }}</p>
         <p class="user-household">{{ auth.user?.dong }} {{ auth.user?.ho }}</p>
         <div class="line"></div>
         <!-- 세대 정보 -->
@@ -60,8 +57,8 @@ async function handleDeactivate() {
           <div class="info-item">
             <span class="info-label">동/호수</span>
             <span class="info-value">{{
-                auth.user?.dong && auth.user?.ho ? `${auth.user.dong} ${auth.user.ho}` : '-'
-              }}</span>
+              auth.user?.dong && auth.user?.ho ? `${auth.user.dong} ${auth.user.ho}` : "-"
+            }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">입주일</span>
@@ -76,42 +73,40 @@ async function handleDeactivate() {
             <span class="info-value">-</span>
           </div>
         </div>
-
-
       </div>
 
       <!-- 오른쪽 패널 -->
       <div class="right-panel">
-
         <!-- 빠른 메뉴 -->
         <div class="card">
           <div class="card-header">
             <span class="card-header-icon">⚡</span>
-            <h3>빠른 메뉴</h3>a
+            <h3>빠른 메뉴</h3>
+            a
           </div>
           <div class="quick-grid">
             <router-link to="/resident/my-vehicle" class="quick-item">
-              <div class="quick-icon" style="background:#EBF5FF;">🚗</div>
+              <div class="quick-icon" style="background: #ebf5ff">🚗</div>
               <span>내 차량 등록</span>
             </router-link>
             <router-link to="/resident/visitor-vehicles" class="quick-item">
-              <div class="quick-icon" style="background:#FFF8E8;">📋</div>
+              <div class="quick-icon" style="background: #fff8e8">📋</div>
               <span>방문 등록</span>
             </router-link>
             <router-link to="/resident/board/my-posts" class="quick-item">
-              <div class="quick-icon" style="background:#F0F0FF;">👤</div>
+              <div class="quick-icon" style="background: #f0f0ff">👤</div>
               <span>내가 쓴 글</span>
             </router-link>
             <router-link to="/resident/reservation" class="quick-item">
-              <div class="quick-icon" style="background:#EDFAF4;">🏋️</div>
+              <div class="quick-icon" style="background: #edfaf4">🏋️</div>
               <span>시설 예약</span>
             </router-link>
             <router-link to="/resident/board/form" class="quick-item">
-              <div class="quick-icon" style="background:#F5EEFF;">✏️</div>
+              <div class="quick-icon" style="background: #f5eeff">✏️</div>
               <span>글 작성</span>
             </router-link>
             <router-link to="/resident/board/notice" class="quick-item">
-              <div class="quick-icon" style="background:#FFF0EC;">🔔</div>
+              <div class="quick-icon" style="background: #fff0ec">🔔</div>
               <span>공지사항</span>
             </router-link>
           </div>
@@ -122,11 +117,15 @@ async function handleDeactivate() {
           <div class="card-header">
             <span class="card-header-icon">📅</span>
             <h3>내 예약 현황</h3>
-            <router-link to="/resident/my-reservation" class="more-link">예약하기 →</router-link>
+            <router-link to="/resident/my-reservation" class="more-link"
+              >예약하기 →</router-link
+            >
           </div>
           <div class="reservation-empty">
             <p>예약 내역이 없습니다</p>
-            <router-link to="/resident/reservation" class="btn-reserve">예약하러 가기</router-link>
+            <router-link to="/resident/reservation" class="btn-reserve"
+              >예약하러 가기</router-link
+            >
           </div>
         </div>
       </div>
@@ -134,24 +133,27 @@ async function handleDeactivate() {
     <!-- 하단 버튼 -->
     <div class="bottom-buttons">
       <button class="btn-logout" @click="handleLogout">↪ 로그아웃</button>
-      <button class="btn-deactivate" @click="showDeactivateConfirm = true">⊗ 회원 탈퇴</button>
+      <button class="btn-deactivate" @click="showDeactivateConfirm = true">
+        ⊗ 회원 탈퇴
+      </button>
     </div>
 
     <!-- 탈퇴 확인 모달 -->
     <Modal
-        v-if="showDeactivateConfirm"
-        title="회원 탈퇴"
-        subtitle="탈퇴 후에는 복구가 불가능합니다."
-        @close="showDeactivateConfirm = false"
+      v-if="showDeactivateConfirm"
+      title="회원 탈퇴"
+      subtitle="탈퇴 후에는 복구가 불가능합니다."
+      @close="showDeactivateConfirm = false"
     >
       <p class="modal-desc">정말 탈퇴하시겠습니까?</p>
       <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
       <template #footer>
-        <button class="btn-modal-cancel" @click="showDeactivateConfirm = false">취소</button>
+        <button class="btn-modal-cancel" @click="showDeactivateConfirm = false">
+          취소
+        </button>
         <button class="btn-modal-delete" @click="handleDeactivate">탈퇴하기</button>
       </template>
     </Modal>
-
   </div>
 </template>
 
@@ -194,7 +196,7 @@ async function handleDeactivate() {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #E0E3EA;
+  background: #e0e3ea;
 }
 
 .online-dot {
@@ -203,7 +205,7 @@ async function handleDeactivate() {
   right: 3px;
   width: 13px;
   height: 13px;
-  background: #2EAD5C;
+  background: #2ead5c;
   border-radius: 50%;
   border: 2px solid #fff;
 }
@@ -211,7 +213,7 @@ async function handleDeactivate() {
 .user-name {
   font-size: 16px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: #1a1a2e;
   margin: 0 0 4px;
 }
 
@@ -231,7 +233,7 @@ async function handleDeactivate() {
 .line {
   width: 100%;
   height: 1px;
-  background: #E0E3EB;
+  background: #e0e3eb;
   margin: 16px 0;
 }
 
@@ -245,7 +247,7 @@ async function handleDeactivate() {
 .edit-link {
   margin-left: auto;
   font-size: 12px;
-  color: #4973E5;
+  color: #4973e5;
   text-decoration: none;
   font-weight: 600;
 }
@@ -306,14 +308,14 @@ async function handleDeactivate() {
 .card-header h3 {
   font-size: 15px;
   font-weight: 700;
-  color: #1A1A2E;
+  color: #1a1a2e;
   margin: 0;
 }
 
 .more-link {
   margin-left: auto;
   font-size: 12px;
-  color: #4973E5;
+  color: #4973e5;
   text-decoration: none;
   font-weight: 600;
 }
@@ -335,17 +337,17 @@ async function handleDeactivate() {
   gap: 8px;
   padding: 18px 10px;
   border-radius: 12px;
-  background: #F8F9FC;
+  background: #f8f9fc;
   text-decoration: none;
   color: #333;
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid #F0F1F5;
+  border: 1px solid #f0f1f5;
   transition: background 0.15s, transform 0.15s;
 }
 
 .quick-item:hover {
-  background: #EEF1FF;
+  background: #eef1ff;
   transform: translateY(-2px);
 }
 
@@ -375,8 +377,8 @@ async function handleDeactivate() {
 
 .btn-reserve {
   padding: 8px 20px;
-  background: #F0F2FF;
-  color: #4973E5;
+  background: #f0f2ff;
+  color: #4973e5;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -384,7 +386,7 @@ async function handleDeactivate() {
 }
 
 .btn-reserve:hover {
-  background: #E0E5FF;
+  background: #e0e5ff;
 }
 
 .bottom-buttons {
@@ -393,7 +395,8 @@ async function handleDeactivate() {
   gap: 10px;
 }
 
-.btn-logout, .btn-deactivate {
+.btn-logout,
+.btn-deactivate {
   padding: 10px 20px;
   border-radius: 10px;
   font-size: 13px;
@@ -403,24 +406,24 @@ async function handleDeactivate() {
 
 .btn-logout {
   background: #fff;
-  border: 1px solid #E0E3EB;
+  border: 1px solid #e0e3eb;
   color: #555;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .btn-logout:hover {
-  background: #F5F6FA;
+  background: #f5f6fa;
 }
 
 .btn-deactivate {
   background: #fff;
-  border: 1px solid #FFCDD2;
-  color: #E05555;
+  border: 1px solid #ffcdd2;
+  color: #e05555;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .btn-deactivate:hover {
-  background: #FFF5F5;
+  background: #fff5f5;
 }
 
 /* 모달 내부 */
@@ -431,7 +434,7 @@ async function handleDeactivate() {
 }
 
 .error-msg {
-  color: #E05555;
+  color: #e05555;
   font-size: 13px;
   margin-top: 8px;
 }
@@ -439,7 +442,7 @@ async function handleDeactivate() {
 .btn-modal-cancel {
   flex: 1;
   padding: 10px;
-  border: 1px solid #E0E3EB;
+  border: 1px solid #e0e3eb;
   border-radius: 8px;
   background: #fff;
   color: #555;
@@ -451,7 +454,7 @@ async function handleDeactivate() {
 .btn-modal-delete {
   flex: 1;
   padding: 10px;
-  background: #E05555;
+  background: #e05555;
   color: #fff;
   border: none;
   border-radius: 8px;
