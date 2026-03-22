@@ -784,7 +784,7 @@ onMounted(() => {
 .card-name {
   font-size: 15px;
   font-weight: 700;
-  color: ;
+
 }
 .card-id {
   font-size: 11px;

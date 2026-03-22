@@ -395,7 +395,7 @@ function navTo(path) {
 .greeting {
   font-size: 22px;
   font-weight: 700;
-  color: ;
+
   margin: 0;
 }
 .sub-info {
@@ -509,7 +509,7 @@ function navTo(path) {
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: ;
+
 }
 .stat-value.empty {
   color: #d1d5db;
@@ -564,7 +564,7 @@ function navTo(path) {
 .card-title {
   font-size: 14px;
   font-weight: 600;
-  color: ;
+
 }
 .card-more {
   font-size: 12px;
@@ -624,7 +624,7 @@ function navTo(path) {
 .notice-title {
   font-size: 13px;
   font-weight: 500;
-  color: ;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -690,7 +690,7 @@ function navTo(path) {
 .res-facility {
   font-size: 13px;
   font-weight: 600;
-  color: ;
+
 }
 .res-date {
   font-size: 12px;

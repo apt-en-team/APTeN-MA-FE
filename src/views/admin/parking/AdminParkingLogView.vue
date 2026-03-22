@@ -378,9 +378,6 @@ onMounted(() => {
             <span class="detail-label">등록 차량 여부</span>
             <span :class="['badge-type', typeClass(state.selectedRow.vehicleType)]">
        {{ state.selectedRow.vehicleType ?? '미등록' }}
-       <template v-if="state.selectedRow.vehicleId"> ({{ state.selectedRow.vehicleId }})</template>
-       <template
-           v-else-if="!state.selectedRow.vehicleId && !state.selectedRow.visitorVehicleId && !state.selectedRow.fixedVisitorVehicleId"> (0)</template>
       </span>
           </div>
           <div class="detail-item"><span class="detail-label">비고</span><span

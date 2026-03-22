@@ -3,8 +3,8 @@ import {reactive, computed, onMounted} from 'vue'
 import {getAdminParkingStatus, updateParkingLot} from '@/api/parking.js'
 import VueApexCharts from 'vue3-apexcharts'
 import StatsCards from '@/components/admin/StatsCards.vue'
-// 수정 모달 → BaseModal (제목+내용+푸터 슬롯 있는 범용 모달)
 import BaseModal from '@/components/common/BeseModel.vue'
+import ActionResultModal from '@/components/common/ActionResultModal.vue'
 
 // ── 상태 ──────────────────────────────────────────────────────
 const state = reactive({
@@ -22,6 +22,9 @@ const state = reactive({
   editForm: {id: null, name: '', totalSpaces: '', note: ''},
   submitting: false,
   submitError: '',
+
+  // 수정 완료 모달
+  showSuccessModal: false,
 })
 
 // ── 주차 사용률 계산 ──────────────────────────────────────────
@@ -123,8 +126,6 @@ const chartOptions = computed(() => ({
 }))
 
 // ── API 조회 ──────────────────────────────────────────────────
-
-// 주차 현황 조회 (GET /parking/status)
 const fetchStatus = async () => {
   try {
     const res = await getAdminParkingStatus()
@@ -144,8 +145,6 @@ const fetchStatus = async () => {
 }
 
 // ── 수정 모달 ─────────────────────────────────────────────────
-
-// 주차장 수정 모달 열기
 const openEditModal = () => {
   state.editForm.name = 'APTEN 아파트 통합 주차장'
   state.editForm.totalSpaces = state.totalSpaces
@@ -159,14 +158,13 @@ const closeEditModal = () => {
   state.submitError = ''
 }
 
-// 주차장 수정 제출 (PUT /api/admin/parking/lots/{id})
 const submitEdit = async () => {
   if (!state.editForm.name.trim()) {
-    state.submitError = '주차장 이름을 입력해주세요.';
+    state.submitError = '주차장 이름을 입력해주세요.'
     return
   }
   if (!state.editForm.totalSpaces) {
-    state.submitError = '전체 주차면 수를 입력해주세요.';
+    state.submitError = '전체 주차면 수를 입력해주세요.'
     return
   }
   state.submitting = true
@@ -179,6 +177,7 @@ const submitEdit = async () => {
     })
     await fetchStatus()
     closeEditModal()
+    state.showSuccessModal = true
   } catch (e) {
     state.submitError = '수정에 실패했습니다.'
     console.error(e)
@@ -193,10 +192,8 @@ onMounted(fetchStatus)
 <template>
   <div class="parking-dashboard">
 
-    <!-- 상단 통계 카드 4개 -->
     <StatsCards :stats="statsData"/>
 
-    <!-- 하단 좌우 2분할 -->
     <div class="dashboard-grid">
 
       <!-- 왼쪽: 주차장 상세 + 차량 유형별 현황 -->
@@ -290,7 +287,6 @@ onMounted(fetchStatus)
           <label class="form-label">주차장 이름<span class="required">*</span></label>
           <input class="form-input" type="text" placeholder="예: 지하 1층" v-model="state.editForm.name"/>
         </div>
-        <!-- current_count는 parking_log 집계로 계산하므로 수동 입력 불가 -->
         <div class="form-group">
           <label class="form-label">전체 주차면<span class="required">*</span></label>
           <input class="form-input" type="number" min="0" placeholder="예: 120" v-model="state.editForm.totalSpaces"/>
@@ -309,6 +305,18 @@ onMounted(fetchStatus)
         </button>
       </template>
     </BaseModal>
+
+    <!-- 수정 완료 모달: ActionResultModal (관리자 → theme="admin") -->
+    <ActionResultModal
+        v-if="state.showSuccessModal"
+        type="success"
+        title="수정 완료"
+        subtitle="주차장 정보가 수정되었습니다"
+        confirm-text="확인"
+        theme="admin"
+        @close="state.showSuccessModal = false"
+    />
+
   </div>
 </template>
 

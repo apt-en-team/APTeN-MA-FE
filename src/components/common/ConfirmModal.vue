@@ -29,20 +29,20 @@ defineEmits(["confirm", "cancel"])
       <div
           class="confirm-icon"
           :style="{
-          background: theme === 'resident' ? '#FFFBEB' : 'rgba(192, 139, 45, 0.14)'
+          background: theme === 'resident' ? '#FFF5F5' : '#FFF5F5'
         }"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path
               d="M12 8V12"
-              :stroke="theme === 'resident' ? '#ED8936' : '#C08B2D'"
+              :stroke="theme === 'resident' ? '#E53E3E' : '#E53E3E'"
               stroke-width="2.2"
               stroke-linecap="round"
           />
           <circle cx="12" cy="16" r="1"
-                  :fill="theme === 'resident' ? '#ED8936' : '#C08B2D'"/>
+                  :fill="theme === 'resident' ? '#E53E3E' : '#E53E3E'"/>
           <circle cx="12" cy="12" r="9"
-                  :stroke="theme === 'resident' ? '#ED8936' : '#C08B2D'"
+                  :stroke="theme === 'resident' ? '#E53E3E' : '#E53E3E'"
                   stroke-width="2"/>
         </svg>
       </div>
@@ -212,12 +212,12 @@ defineEmits(["confirm", "cancel"])
 }
 
 .btn-confirm--success {
-  background: #4d8b5a;
+  background: #1E2A3E;
   color: #fff;
 }
 
 .btn-confirm--success:hover:not(:disabled) {
-  background: #3a6e46;
+  background: #151f2e;
 }
 
 .btn-confirm--primary {

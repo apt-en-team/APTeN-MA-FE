@@ -29,10 +29,10 @@ const deleteModal = reactive({
   resultSubtitle: "",
 });
 
-const registerForm = reactive({ licensePlate: "", carModel: "", carType: "" });
-const editForm = reactive({ licensePlate: "", carModel: "", carType: "" });
-const registerError = reactive({ licensePlate: "", carModel: "", carType: "" });
-const editError = reactive({ licensePlate: "", carModel: "", carType: "" });
+const registerForm = reactive({licensePlate: "", carModel: "", carType: ""});
+const editForm = reactive({licensePlate: "", carModel: "", carType: ""});
+const registerError = reactive({licensePlate: "", carModel: "", carType: ""});
+const editError = reactive({licensePlate: "", carModel: "", carType: ""});
 
 const firstRegisterError = computed(
   () =>
@@ -166,17 +166,20 @@ const openDelete = (v) => {
   deleteModal.stage = "confirm";
   deleteModal.show = true;
 };
+// 삭제 확인 닫기
 const closeDeleteConfirm = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
+// 삭제 결과 닫기
 const closeDeleteResult = () => {
   deleteModal.show = false;
   deleteModal.vehicle = null;
   deleteModal.stage = "confirm";
 };
 
+// 삭제 처리
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
@@ -212,6 +215,7 @@ watch(
   }
 );
 
+// 수정 - 차량번호 실시간 중복 체크
 watch(
   () => editForm.licensePlate,
   (val) => {
@@ -311,7 +315,6 @@ onMounted(async () => {
               <span v-else class="meta-value">-</span>
             </div>
           </div>
-
           <div class="vehicle-actions">
             <button
               class="btn-edit"
@@ -326,11 +329,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div
-        v-if="vehicleStore.myList.length < 2"
-        class="vehicle-add"
-        @click="openRegister"
-      >
+      <div v-if="state.list.length < 2" class="vehicle-add" @click="openRegister">
         <div class="add-icon">+</div>
         <span class="add-label">내 차량 등록하기</span>
       </div>
@@ -338,6 +337,7 @@ onMounted(async () => {
 
     <!-- 차량 등록 모달 -->
     <BaseModal v-if="registerModal.show" title="차량 등록" @close="closeRegister">
+      <!-- 차량 번호 -->
       <div class="form-group">
         <label class="form-label">차량 번호 <span class="required">*</span></label>
         <input
@@ -347,6 +347,7 @@ onMounted(async () => {
           placeholder="예: 12가 3456"
         />
       </div>
+      <!-- 차 모델 -->
       <div class="form-group">
         <label class="form-label">차 모델 <span class="required">*</span></label>
         <input
@@ -356,6 +357,7 @@ onMounted(async () => {
           placeholder="예: 현대 소나타"
         />
       </div>
+      <!-- 차종 -->
       <div class="form-group">
         <label class="form-label">차종 <span class="required">*</span></label>
         <select
@@ -370,6 +372,7 @@ onMounted(async () => {
           <option value="승합차">승합차</option>
         </select>
       </div>
+      <!-- 하단 에러메시지 -->
       <div v-if="firstRegisterError" class="form-bottom-error">
         {{ firstRegisterError }}
       </div>
@@ -392,6 +395,7 @@ onMounted(async () => {
       subtitle="수정할 차량 정보를 입력해주세요"
       @close="closeEdit"
     >
+      <!-- 차주명 -->
       <div class="form-group">
         <label class="form-label">차주명 <span class="required">*</span></label>
         <div class="select-wrap">
@@ -408,6 +412,8 @@ onMounted(async () => {
           </svg>
         </div>
       </div>
+
+      <!-- 차량번호 - 풀 너비 -->
       <div class="form-group">
         <label class="form-label">차량번호 <span class="required">*</span></label>
         <input
@@ -417,6 +423,8 @@ onMounted(async () => {
           placeholder="예: 12가 3456"
         />
       </div>
+
+      <!-- 차 모델 + 차종 한 줄 -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">차 모델 <span class="required">*</span></label>
@@ -442,7 +450,12 @@ onMounted(async () => {
           </select>
         </div>
       </div>
-      <div v-if="firstEditError" class="form-bottom-error">{{ firstEditError }}</div>
+
+      <!-- 하단 에러메시지 -->
+      <div v-if="firstEditError" class="form-bottom-error">
+        {{ firstEditError }}
+      </div>
+
       <p class="form-hint">* 표시는 필수 입력 항목입니다.</p>
       <template #footer>
         <button class="btn-cancel" @click="closeEdit">취소</button>
@@ -531,7 +544,6 @@ onMounted(async () => {
 .vehicle-title {
   font-size: 16px;
   font-weight: 600;
-  color: ;
 }
 .vehicle-meta {
   display: grid;
@@ -549,15 +561,10 @@ onMounted(async () => {
 }
 .meta-value {
   font-size: 18px;
-  color: ;
 }
 .meta-value.bold {
   font-weight: 700;
   font-size: 20px;
-}
-.meta-log {
-  font-size: 18px;
-  color: #333333;
 }
 .status-badge {
   display: inline-block;
@@ -578,6 +585,10 @@ onMounted(async () => {
 .status-badge.rejected {
   background: #fee2e2;
   color: #e53e3e;
+}
+.vehicle-time {
+  font-size: 11px;
+  color: #a0aec0;
 }
 .vehicle-actions {
   display: flex;

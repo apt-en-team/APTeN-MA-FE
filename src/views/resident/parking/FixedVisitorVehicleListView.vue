@@ -209,6 +209,7 @@ onMounted(() => fetchList())
         :action-label="selectedItem?.visitorName || '-'"
         confirm-text="삭제"
         confirm-type="danger"
+        theme="resident"
         :loading="deleteModal.loading"
         @confirm="confirmDelete"
         @cancel="deleteModal.show = false"
