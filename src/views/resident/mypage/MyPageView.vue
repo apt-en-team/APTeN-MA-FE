@@ -1,29 +1,29 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/modules/auth.js";
 import Modal from "@/components/Modal.vue";
+import { useReservationStore } from "@/stores/modules/reservation.js";
 
 const router = useRouter();
 const auth = useAuthStore();
+const reservationStore = useReservationStore();
 
-// 회원 탈퇴 확인 모달 표시 여부
 const showDeactivateConfirm = ref(false);
-// 에러 메시지
 const errorMsg = ref("");
 
-// 컴포넌트 마운트 시 내 정보 조회
+const reservations = computed(() => reservationStore.myReservationList || []);
+
 onMounted(async () => {
   await auth.fetchMe();
+  await reservationStore.fetchMyReservationList({ page: 1, size: 3, tab: "" });
 });
 
-// 로그아웃 후 로그인 페이지로 이동
 async function handleLogout() {
   await auth.logout();
   router.push("/login");
 }
 
-// 회원 탈퇴 처리 후 로그인 페이지로 이동
 async function handleDeactivate() {
   try {
     await auth.deactivate();
@@ -37,10 +37,7 @@ async function handleDeactivate() {
 <template>
   <div class="mypage">
     <div class="content-wrapper">
-      <!-- 왼쪽 패널 -->
       <div class="left-panel">
-        <!-- 프로필 -->
-
         <div class="avatar-wrap">
           <div class="avatar"></div>
           <div class="online-dot"></div>
@@ -48,7 +45,6 @@ async function handleDeactivate() {
         <p class="user-name">{{ auth.user?.name || "-" }}</p>
         <p class="user-household">{{ auth.user?.dong }} {{ auth.user?.ho }}</p>
         <div class="line"></div>
-        <!-- 세대 정보 -->
         <div class="section-title-row">
           <span class="title-text">🏠 세대 정보</span>
           <router-link to="/resident/mypage/edit" class="edit-link">수정 →</router-link>
@@ -75,14 +71,11 @@ async function handleDeactivate() {
         </div>
       </div>
 
-      <!-- 오른쪽 패널 -->
       <div class="right-panel">
-        <!-- 빠른 메뉴 -->
         <div class="card">
           <div class="card-header">
             <span class="card-header-icon">⚡</span>
             <h3>빠른 메뉴</h3>
-            a
           </div>
           <div class="quick-grid">
             <router-link to="/resident/my-vehicle" class="quick-item">
@@ -97,7 +90,7 @@ async function handleDeactivate() {
               <div class="quick-icon" style="background: #f0f0ff">👤</div>
               <span>내가 쓴 글</span>
             </router-link>
-            <router-link to="/resident/reservation" class="quick-item">
+            <router-link to="/resident/facility" class="quick-item">
               <div class="quick-icon" style="background: #edfaf4">🏋️</div>
               <span>시설 예약</span>
             </router-link>
@@ -112,7 +105,6 @@ async function handleDeactivate() {
           </div>
         </div>
 
-        <!-- 내 예약 현황 -->
         <div class="card">
           <div class="card-header">
             <span class="card-header-icon">📅</span>
@@ -121,16 +113,37 @@ async function handleDeactivate() {
               >예약하기 →</router-link
             >
           </div>
-          <div class="reservation-empty">
+
+          <div v-if="reservations.length > 0" class="reservation-list">
+            <div
+              v-for="r in reservations"
+              :key="r.reservationId"
+              class="reservation-item"
+              @click="router.push('/resident/my-reservation')"
+            >
+              <div class="day">
+                {{ String(new Date(r.reservationDate).getDate()).padStart(2, "0") }}
+              </div>
+              <div class="res-info">
+                <div class="res-name">{{ r.facilityName }}</div>
+                <div class="res-time">
+                  {{ r.reservationDate }} · {{ r.startTime?.slice(0, 5) }} ~
+                  {{ r.endTime?.slice(0, 5) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="reservation-empty">
             <p>예약 내역이 없습니다</p>
-            <router-link to="/resident/reservation" class="btn-reserve"
+            <router-link to="/resident/facility" class="btn-reserve"
               >예약하러 가기</router-link
             >
           </div>
         </div>
       </div>
     </div>
-    <!-- 하단 버튼 -->
+
     <div class="bottom-buttons">
       <button class="btn-logout" @click="handleLogout">↪ 로그아웃</button>
       <button class="btn-deactivate" @click="showDeactivateConfirm = true">
@@ -138,7 +151,6 @@ async function handleDeactivate() {
       </button>
     </div>
 
-    <!-- 탈퇴 확인 모달 -->
     <Modal
       v-if="showDeactivateConfirm"
       title="회원 탈퇴"
@@ -164,14 +176,11 @@ async function handleDeactivate() {
   gap: 24px;
   padding: 0px;
 }
-
 .content-wrapper {
   display: flex;
   gap: 32px;
   align-items: flex-start;
 }
-
-/* 왼쪽 */
 .left-panel {
   width: 220px;
   flex-shrink: 0;
@@ -184,21 +193,18 @@ async function handleDeactivate() {
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-
 .avatar-wrap {
   position: relative;
   width: 72px;
   height: 72px;
   margin: 0 auto 12px;
 }
-
 .avatar {
   width: 72px;
   height: 72px;
   border-radius: 50%;
   background: #e0e3ea;
 }
-
 .online-dot {
   position: absolute;
   bottom: 3px;
@@ -209,41 +215,35 @@ async function handleDeactivate() {
   border-radius: 50%;
   border: 2px solid #fff;
 }
-
 .user-name {
   font-size: 16px;
   font-weight: 700;
   color: #1a1a2e;
   margin: 0 0 4px;
 }
-
 .user-household {
   font-size: 13px;
   color: #999;
   margin: 0;
 }
-
 .section-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 16px;
 }
-
 .line {
   width: 100%;
   height: 1px;
   background: #e0e3eb;
   margin: 16px 0;
 }
-
 .title-text {
   font-size: 14px;
   font-weight: 700;
   text-align: left;
   color: #333;
 }
-
 .edit-link {
   margin-left: auto;
   font-size: 12px;
@@ -251,67 +251,55 @@ async function handleDeactivate() {
   text-decoration: none;
   font-weight: 600;
 }
-
 .edit-link:hover {
   text-decoration: underline;
 }
-
 .info-list {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-
 .info-item {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-
 .info-label {
   font-size: 11px;
   color: #aaa;
 }
-
 .info-value {
   font-size: 13px;
   font-weight: 600;
   color: #333;
 }
-
-/* 오른쪽 */
 .right-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
-
 .card {
   background: #fff;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-
 .card-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 18px;
 }
-
 .card-header-icon {
   font-size: 16px;
 }
-
 .card-header h3 {
   font-size: 15px;
   font-weight: 700;
   color: #1a1a2e;
   margin: 0;
 }
-
 .more-link {
   margin-left: auto;
   font-size: 12px;
@@ -319,17 +307,14 @@ async function handleDeactivate() {
   text-decoration: none;
   font-weight: 600;
 }
-
 .more-link:hover {
   text-decoration: underline;
 }
-
 .quick-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
-
 .quick-item {
   display: flex;
   flex-direction: column;
@@ -345,12 +330,10 @@ async function handleDeactivate() {
   border: 1px solid #f0f1f5;
   transition: background 0.15s, transform 0.15s;
 }
-
 .quick-item:hover {
   background: #eef1ff;
   transform: translateY(-2px);
 }
-
 .quick-icon {
   width: 42px;
   height: 42px;
@@ -360,7 +343,51 @@ async function handleDeactivate() {
   justify-content: center;
   font-size: 20px;
 }
-
+.reservation-list {
+  display: flex;
+  flex-direction: column;
+}
+.reservation-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f6f8;
+}
+.reservation-item:last-child {
+  border-bottom: none;
+}
+.reservation-item:hover {
+  opacity: 0.8;
+}
+.day {
+  width: 40px;
+  height: 40px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a55;
+  flex-shrink: 0;
+}
+.res-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.res-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a202c;
+}
+.res-time {
+  font-size: 11px;
+  color: #a0aec0;
+}
 .reservation-empty {
   display: flex;
   flex-direction: column;
@@ -368,13 +395,11 @@ async function handleDeactivate() {
   padding: 28px 0;
   gap: 12px;
 }
-
 .reservation-empty p {
   font-size: 14px;
   color: #bbb;
   margin: 0;
 }
-
 .btn-reserve {
   padding: 8px 20px;
   background: #f0f2ff;
@@ -384,17 +409,14 @@ async function handleDeactivate() {
   font-weight: 600;
   text-decoration: none;
 }
-
 .btn-reserve:hover {
   background: #e0e5ff;
 }
-
 .bottom-buttons {
   display: flex;
   justify-content: center;
   gap: 10px;
 }
-
 .btn-logout,
 .btn-deactivate {
   padding: 10px 20px;
@@ -403,42 +425,34 @@ async function handleDeactivate() {
   font-weight: 600;
   cursor: pointer;
 }
-
 .btn-logout {
   background: #fff;
   border: 1px solid #e0e3eb;
   color: #555;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
-
 .btn-logout:hover {
   background: #f5f6fa;
 }
-
 .btn-deactivate {
   background: #fff;
   border: 1px solid #ffcdd2;
   color: #e05555;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
-
 .btn-deactivate:hover {
   background: #fff5f5;
 }
-
-/* 모달 내부 */
 .modal-desc {
   font-size: 14px;
   color: #555;
   margin: 0;
 }
-
 .error-msg {
   color: #e05555;
   font-size: 13px;
   margin-top: 8px;
 }
-
 .btn-modal-cancel {
   flex: 1;
   padding: 10px;
@@ -450,7 +464,6 @@ async function handleDeactivate() {
   font-weight: 600;
   cursor: pointer;
 }
-
 .btn-modal-delete {
   flex: 1;
   padding: 10px;
@@ -462,7 +475,6 @@ async function handleDeactivate() {
   font-weight: 600;
   cursor: pointer;
 }
-
 .btn-modal-delete:hover {
   background: #c94444;
 }

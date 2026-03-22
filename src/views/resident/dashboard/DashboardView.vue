@@ -18,7 +18,6 @@ const parkingStore = useParkingStore();
 const reservationStore = useReservationStore();
 const vehicleStore = useVehicleStore();
 
-// PENDING 여부
 const isPending = computed(() => auth.user?.status === "PENDING");
 
 const stats = ref({
@@ -155,7 +154,6 @@ function formatDate(dateStr) {
   return dateStr.split("T")[0];
 }
 
-// PENDING이면 접근 제한 페이지로, 아니면 해당 경로로 이동
 function navTo(path) {
   if (isPending.value) {
     router.push("/resident/pending");
@@ -167,17 +165,14 @@ function navTo(path) {
 
 <template>
   <div class="dashboard">
-    <!-- 헤더 -->
     <div class="dash-header">
       <div>
         <h1 class="greeting">안녕하세요, {{ auth.user?.name || "김가은" }}님</h1>
         <p class="sub-info">{{ today }} · {{ dong }} {{ ho }}</p>
       </div>
-      <!-- PENDING 안내 배지 -->
       <div v-if="isPending" class="pending-badge">⏳ 관리자 승인 대기 중</div>
     </div>
 
-    <!-- 배너 -->
     <Swiper
       :modules="modules"
       :autoplay="{ delay: 3000, disableOnInteraction: false }"
@@ -201,9 +196,7 @@ function navTo(path) {
       </SwiperSlide>
     </Swiper>
 
-    <!-- 미니 카드 -->
     <div class="stat-grid">
-      <!-- 내 차량 -->
       <div class="stat-card" @click="navTo('/resident/my-vehicle')">
         <div class="stat-label">내 차량</div>
         <div class="stat-value" :class="{ empty: stats.vehicles === 0 }">
@@ -233,7 +226,6 @@ function navTo(path) {
         </div>
       </div>
 
-      <!-- 예약 현황 -->
       <div class="stat-card" @click="navTo('/resident/my-reservation')">
         <div class="stat-label">예약 현황</div>
         <div class="stat-value" :class="{ empty: stats.reservations === 0 }">
@@ -260,7 +252,6 @@ function navTo(path) {
         </div>
       </div>
 
-      <!-- 방문차량 -->
       <div class="stat-card" @click="navTo('/resident/visitor-vehicles/list')">
         <div class="stat-label">방문 차량</div>
         <div class="stat-value" :class="{ empty: stats.visitorVehicles === 0 }">
@@ -287,7 +278,6 @@ function navTo(path) {
         </div>
       </div>
 
-      <!-- 주차 현황 -->
       <div class="stat-card" @click="navTo('/resident/parking/status')">
         <div class="stat-label">주차 현황</div>
         <div class="stat-value" :class="{ empty: stats.parkingRate === 0 }">
@@ -300,9 +290,7 @@ function navTo(path) {
       </div>
     </div>
 
-    <!-- 하단 컬럼 두 개 -->
     <div class="bottom-grid">
-      <!-- 최근 공지사항 -->
       <div class="card">
         <div class="card-header">
           <span class="card-title">최근 공지사항</span>
@@ -349,7 +337,6 @@ function navTo(path) {
         </div>
       </div>
 
-      <!-- 내 예약 현황 -->
       <div class="card">
         <div class="card-header">
           <span class="card-title">내 예약 현황</span>
@@ -405,20 +392,17 @@ function navTo(path) {
   justify-content: space-between;
   align-items: flex-start;
 }
-
 .greeting {
   font-size: 22px;
   font-weight: 700;
   color: #333333;
   margin: 0;
 }
-
 .sub-info {
   font-size: 13px;
   color: #999;
   margin-top: 4px;
 }
-
 .pending-badge {
   display: inline-flex;
   align-items: center;
@@ -431,25 +415,21 @@ function navTo(path) {
   font-size: 13px;
   font-weight: 600;
 }
-
 .dashboard {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
-
 .banner-swiper {
   width: 100%;
   height: 160px;
   border-radius: 16px;
   overflow: hidden;
 }
-
 .swiper-slide {
   width: 100%;
   height: 160px;
 }
-
 .banner {
   width: 100%;
   height: 160px;
@@ -457,7 +437,6 @@ function navTo(path) {
   background-position: center;
   position: relative;
 }
-
 .banner-chip {
   margin-top: 10px;
   font-size: 11px;
@@ -466,7 +445,6 @@ function navTo(path) {
   border-radius: 20px;
   width: fit-content;
 }
-
 .badge-red {
   background: #ff6b6b;
   color: #fff;
@@ -479,7 +457,6 @@ function navTo(path) {
   background: #ffd700;
   color: #333;
 }
-
 .banner-overlay {
   position: absolute;
   inset: 0;
@@ -489,7 +466,6 @@ function navTo(path) {
   flex-direction: column;
   justify-content: center;
 }
-
 .banner-badge {
   font-size: 11px;
   font-weight: 700;
@@ -497,26 +473,22 @@ function navTo(path) {
   letter-spacing: 2px;
   margin-bottom: 8px;
 }
-
 .banner-title {
   font-size: 22px;
   font-weight: 700;
   color: #fff;
   margin: 0 0 6px;
 }
-
 .banner-desc {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.75);
   margin: 0;
 }
-
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
-
 .stat-card {
   background: #fff;
   border-radius: 14px;
@@ -526,46 +498,38 @@ function navTo(path) {
   position: relative;
   transition: box-shadow 0.2s;
 }
-
 .stat-card:hover {
   box-shadow: 0 4px 16px rgba(73, 115, 229, 0.1);
 }
-
 .stat-label {
   font-size: 12px;
   color: #999;
   margin-bottom: 8px;
 }
-
 .stat-value {
   font-size: 28px;
   font-weight: 700;
   color: #333333;
 }
-
 .stat-value.empty {
   color: #d1d5db;
 }
-
 .stat-unit {
   font-size: 14px;
   font-weight: 400;
   color: #999;
 }
-
 .stat-desc {
   font-size: 11px;
   color: #bbb;
   margin-top: 4px;
 }
-
 .stat-icon {
   position: absolute;
   right: 20px;
   bottom: 20px;
   opacity: 0.5;
 }
-
 .parking-bar {
   height: 6px;
   background: #eceef3;
@@ -573,27 +537,23 @@ function navTo(path) {
   margin-top: 10px;
   overflow: hidden;
 }
-
 .parking-fill {
   height: 100%;
   background: #4973e5;
   border-radius: 99px;
   transition: width 0.5s ease;
 }
-
 .bottom-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
-
 .card {
   background: #fff;
   border-radius: 14px;
   border: 1px solid #eceef3;
   overflow: hidden;
 }
-
 .card-header {
   padding: 16px 20px;
   border-bottom: 1px solid #f3f4f8;
@@ -601,27 +561,22 @@ function navTo(path) {
   justify-content: space-between;
   align-items: center;
 }
-
 .card-title {
   font-size: 14px;
   font-weight: 600;
   color: #333333;
 }
-
 .card-more {
   font-size: 12px;
   color: #999;
   cursor: pointer;
 }
-
 .card-more:hover {
   color: #4973e5;
 }
-
 .card-body {
   padding: 8px 0;
 }
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -630,34 +585,29 @@ function navTo(path) {
   padding: 36px 20px;
   gap: 12px;
 }
-
 .empty-state p {
   font-size: 13px;
   color: #c0c4ce;
   margin: 0;
 }
-
 .notice-item {
   padding: 12px 20px;
   border-bottom: 1px solid #f7f8fa;
   cursor: pointer;
   transition: background 0.15s;
 }
-
 .notice-item:hover {
   background: #f7f8fc;
 }
 .notice-item:last-child {
   border-bottom: none;
 }
-
 .notice-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
-
 .notice-badge {
   font-size: 10px;
   font-weight: 600;
@@ -666,13 +616,11 @@ function navTo(path) {
   padding: 2px 7px;
   border-radius: 4px;
 }
-
 .notice-dot {
   color: #ccc;
   font-size: 16px;
   line-height: 1;
 }
-
 .notice-title {
   font-size: 13px;
   font-weight: 500;
@@ -682,7 +630,6 @@ function navTo(path) {
   text-overflow: ellipsis;
   max-width: 280px;
 }
-
 .notice-content {
   font-size: 12px;
   color: #999;
@@ -691,13 +638,11 @@ function navTo(path) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .notice-meta {
   font-size: 11px;
   color: #bbb;
   margin: 0;
 }
-
 .reservation-item {
   padding: 14px 20px;
   border-bottom: 1px solid #f7f8fa;
@@ -707,20 +652,17 @@ function navTo(path) {
   cursor: pointer;
   transition: background 0.15s;
 }
-
 .reservation-item:hover {
   background: #f7f8fc;
 }
 .reservation-item:last-child {
   border-bottom: none;
 }
-
 .res-left {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
-
 .res-badge {
   font-size: 10px;
   font-weight: 600;
@@ -729,7 +671,6 @@ function navTo(path) {
   white-space: nowrap;
   margin-top: 2px;
 }
-
 .res-badge--blue {
   background: #eef0fd;
   color: #4973e5;
@@ -746,13 +687,11 @@ function navTo(path) {
   background: #ffecec;
   color: #ef4444;
 }
-
 .res-facility {
   font-size: 13px;
   font-weight: 600;
   color: #333333;
 }
-
 .res-date {
   font-size: 12px;
   color: #888;
