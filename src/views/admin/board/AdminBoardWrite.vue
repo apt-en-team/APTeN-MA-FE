@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/modules/auth'
 import { useBoardStore } from '@/stores/modules/board'
 import BoardEditor from '@/components/board/BoardEditor.vue'
+import { uploadBoardFile } from '@/api/board'
+import ActionResultModal from '@/components/common/ActionResultModal.vue'
 
 const router     = useRouter()
 const auth       = useAuthStore()
@@ -13,24 +15,50 @@ const category = ref('NOTICE')
 const title    = ref('')
 const content  = ref('')
 
+const alertModal = ref({ visible: false, title: '', message: '' })
+
+function showAlert(title, message) {
+  alertModal.value = { visible: true, title, message }
+}
+
 const today = new Date().toLocaleDateString('ko-KR', {
   year: 'numeric', month: '2-digit', day: '2-digit'
-}).replace(/\. /g, '.').replace('.', '')
+}).replace(/\. /g, '.').replace(/\.$/, '')
 
 async function handleSubmit() {
-  if (!title.value.trim())   return alert('제목을 입력해주세요.')
-  if (!content.value.trim()) return alert('내용을 입력해주세요.')
+  if (!title.value.trim())   return showAlert('알림', '제목을 입력해주세요.')
+  if (!content.value.trim()) return showAlert('알림', '내용을 입력해주세요.')
   try {
     await boardStore.createPost({ category: category.value, title: title.value, content: content.value })
     router.push('/admin/board')
   } catch {
-    alert('등록 중 오류가 발생했습니다.')
+    showAlert('오류', '등록 중 오류가 발생했습니다.')
   }
 }
 
 function handleCancel() {
   router.push('/admin/board')
 }
+
+// 파일 업로드 핸들러
+function handleFileUpload() {
+  const input = document.createElement('input')
+  input.setAttribute('type', 'file')
+  input.setAttribute('accept', '.pdf,.doc,.docx,.xls,.xlsx,.hwp,.hwpx,.ppt,.pptx')
+  input.click()
+  input.onchange = async () => {
+    const file = input.files?.[0]
+    if (!file) return
+    try {
+      const res = await uploadBoardFile(file)
+      const { fileUrl, fileName } = res.data
+      content.value += `<a href="http://localhost:8080${fileUrl}">${fileName}</a>`
+    } catch (e) {
+      showAlert('오류', '파일 업로드에 실패했습니다.')
+    }
+  }
+}
+
 </script>
 
 <template>
@@ -64,7 +92,7 @@ function handleCancel() {
 
           <!-- 하단 버튼 -->
           <div class="form-actions">
-            <button class="btn-draft">임시 저장</button>
+            <!-- <button class="btn-draft">임시 저장</button> -->
             <div class="form-actions-right">
               <button class="btn-cancel" @click="handleCancel">취소</button>
               <button class="btn-submit" @click="handleSubmit">등록하기</button>
@@ -104,20 +132,18 @@ function handleCancel() {
           <p class="sidebar-value">{{ today }}</p>
         </div>
 
-        <!-- 첨부 파일 -->
-        <div class="sidebar-card">
-          <p class="sidebar-title">첨부 파일</p>
-          <div class="upload-box">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#687282" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
-            </svg>
-            <p class="upload-text">클릭하여 파일 업로드</p>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
+
+  <ActionResultModal
+    v-if="alertModal.visible"
+    :title="alertModal.title"
+    :desc="alertModal.message"
+    type="warning"
+    @close="alertModal = { visible: false, title: '', message: '' }"
+  />
+
 </template>
 
 <style scoped>
@@ -166,18 +192,19 @@ function handleCancel() {
 
 /* 하단 버튼 */
 .form-actions {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: flex-end; align-items: center;
   padding-top: 8px; border-top: 1px solid #F0F2F6;
 }
 .form-actions-right { display: flex; gap: 8px; }
-.btn-draft {
+/* 임시저장 */
+/* .btn-draft {
   padding: 10px 20px; border-radius: 8px;
   border: 1px solid #E2E8F0; background: #fff;
   font-size: 13px; color: #687282;
   cursor: pointer; transition: background 0.15s;
 
 }
-.btn-draft:hover { background: #F5F6F8; }
+.btn-draft:hover { background: #F5F6F8; } */
 .btn-cancel {
   padding: 10px 20px; border-radius: 8px;
   border: 1px solid #E2E8F0; background: #fff;
@@ -231,14 +258,4 @@ function handleCancel() {
   flex-shrink: 0;
 }
 .status-text { font-size: 13px; font-weight: 600; color: #1A202C; }
-
-/* 첨부 파일 */
-.upload-box {
-  border: 1.5px dashed #E2E8F0; border-radius: 8px;
-  padding: 28px; display: flex; flex-direction: column;
-  align-items: center; gap: 8px; cursor: pointer;
-  transition: border-color 0.15s;
-}
-.upload-box:hover { border-color: #2B3A55; }
-.upload-text { font-size: 12px; color: #687282; }
 </style>

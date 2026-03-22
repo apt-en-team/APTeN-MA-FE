@@ -8,7 +8,7 @@ import Pagination from "@/components/layout/Pagination.vue";
 const router = useRouter();
 const facilityStore = useFacilityStore();
 
-// ── 이미지맵 (뷰에서 직접 관리) ──────────────────────────────
+// 이미지맵
 const facilityImageMap = {
   "독서실(남)": new URL("@/assets/images/readingroom.png", import.meta.url).href,
   "독서실(여)": new URL("@/assets/images/readingroom.png", import.meta.url).href,

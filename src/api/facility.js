@@ -7,6 +7,14 @@ export default {
     return axios.get('/admin/facility-types')
   },
 
+    /** 시설 타입 카테고리별 조회 */
+  getFacilityTypesCategory: () =>
+    axios.get('/facilities/type/category'),
+
+  /** 운영 중인 시설 타입 목록 조회 */
+  getFacilityTypes: () =>
+    axios.get('/facilities/all'),
+
   // API-045 | 시설 타입 등록
   createType(data) {
     return axios.post('/admin/facility-types', data)
@@ -22,8 +30,8 @@ export default {
     return axios.delete(`/admin/facility-types/${id}`)
   },
 
-   // API-048 | 시설 목록 조회 (타입 필터)
-  //이것도 내가 수정한거임
+
+  // API-048 | 시설 목록 조회 (타입 필터)
   getFacilities({ typeId = null, page = 1, size = 100 } = {}) {
   return axios.get('/facilities', {
     params: {

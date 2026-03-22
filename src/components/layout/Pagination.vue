@@ -7,7 +7,8 @@ const props = defineProps({
   maxPage: Number, // 전체 페이지 수
   totalAll: Number, // 전체 건수 (예: 세대 총합)
   totalFiltered: Number,  // 필터된 건수
-  unit: {type: String, default: '건'} // 건수 단위
+  unit: {type: String, default: '건'}, // 건수 단위
+  activeColor: { type: String, default: '#2B3A55' } //관리자 버튼색 기본값  입주민색 변경가능
 })
 
 const emit = defineEmits(['change'])
@@ -39,11 +40,16 @@ const displayedPages = computed(() => {
     <div class="pagination">
       <button class="page-btn" :disabled="currentPage === 1" @click="emit('change', 1)">&lt;&lt;</button>
       <button class="page-btn" :disabled="currentPage === 1" @click="emit('change', currentPage - 1)">&lt;</button>
-      <span
+      <button
           v-for="p in displayedPages" :key="p"
           class="page-btn" :class="{ active: p === currentPage }"
+          :style=" p === currentPage ? {
+                background: activeColor,
+                borderColor: activeColor,
+                color: '#fff'
+              }: {} "
           @click="emit('change', p)"
-      >{{ p }}</span>
+      >{{ p }}</button>
       <button class="page-btn" :disabled="currentPage === maxPage || maxPage === 0"
               @click="emit('change', currentPage + 1)">&gt;
       </button>
@@ -97,9 +103,7 @@ const displayedPages = computed(() => {
 }
 
 .page-btn.active {
-  background: #2B3A55;
   color: #fff;
-  border-color: #2B3A55;
 }
 
 .page-btn:disabled {

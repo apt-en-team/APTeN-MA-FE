@@ -49,12 +49,12 @@ const statusClass = (s) =>
   ({ APPROVED: "approved", PENDING: "pending", REJECTED: "rejected" }[s] ?? "");
 const formatDate = (val) => (val ? val.slice(0, 10).replace(/-/g, ".") : "-");
 
-// 입출차 최근 기록 (스토어 logs 참조)
+// ── 입출차 최근 기록 ──────────────────────────────────────────
 const formatLogTime = (vehicleId) => {
   const logs = vehicleStore.logs
     .filter((l) => String(l.vehicleId) === String(vehicleId))
     .sort((a, b) => new Date(b.loggedAt) - new Date(a.loggedAt));
-  if (!logs.length) return "-";
+  if (!logs.length) return null;
   const log = logs[0];
   const d = new Date(log.loggedAt);
   const yyyy = d.getFullYear();
@@ -67,7 +67,7 @@ const formatLogTime = (vehicleId) => {
   const ampm = hh < 12 ? "오전" : "오후";
   const hour = hh % 12 || 12;
   const type = log.entryType === "IN" ? "입차" : "출차";
-  return `${type} : ${yyyy}.${mm}.${dd}(${day}) ${ampm} ${hour}시 ${min}분`;
+  return { type, text: `${yyyy}.${mm}.${dd}(${day}) ${ampm} ${hour}시 ${min}분` };
 };
 
 // ── 등록 ──────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ const handleRegister = async () => {
   }
   registerModal.loading = true;
   try {
-    await vehicleStore.registerVehicle({ ...registerForm }); // ← 스토어 action
+    await vehicleStore.registerVehicle({ ...registerForm });
     closeRegister();
   } catch (e) {
     if (e.response?.status === 400)
@@ -144,7 +144,6 @@ const handleEdit = async () => {
   editModal.loading = true;
   try {
     await vehicleStore.updateVehicle(editModal.vehicle.vehicleId, {
-      // ← 스토어 action
       licensePlate: editForm.licensePlate,
       carModel: editForm.carModel,
       carType: editForm.carType,
@@ -181,7 +180,7 @@ const closeDeleteResult = () => {
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
-    await vehicleStore.deleteMyVehicle(deleteModal.vehicle.vehicleId); // ← 스토어 action
+    await vehicleStore.deleteMyVehicle(deleteModal.vehicle.vehicleId);
     deleteModal.resultType = "success";
     deleteModal.resultTitle = "차량이 삭제되었습니다.";
     deleteModal.resultSubtitle = `${deleteModal.vehicle.licensePlate} 차량 등록이 취소되었습니다.`;
@@ -196,7 +195,7 @@ const handleDelete = async () => {
   }
 };
 
-// ── 실시간 중복 체크 (로컬 목록 기준) ────────────────────────
+// ── 실시간 중복 체크 ──────────────────────────────────────────
 watch(
   () => registerForm.licensePlate,
   (val) => {
@@ -206,7 +205,6 @@ watch(
     }
     const clean = val.replace(/\s/g, "");
     registerError.licensePlate = vehicleStore.myList.some(
-      // ← 스토어 참조
       (v) => v.licensePlate.replace(/\s/g, "") === clean
     )
       ? "이미 등록된 차량 번호입니다."
@@ -228,7 +226,6 @@ watch(
       return;
     }
     editError.licensePlate = vehicleStore.myList.some(
-      // ← 스토어 참조
       (v) =>
         v.licensePlate.replace(/\s/g, "") === clean &&
         v.vehicleId !== editModal.vehicle?.vehicleId
@@ -239,8 +236,8 @@ watch(
 );
 
 onMounted(async () => {
-  await vehicleStore.fetchMyVehicles(); // ← 스토어 action
-  await vehicleStore.fetchLogs(); // ← 스토어 action
+  await vehicleStore.fetchMyVehicles();
+  await vehicleStore.fetchLogs();
 });
 </script>
 
@@ -278,32 +275,43 @@ onMounted(async () => {
         <div class="vehicle-info">
           <div class="vehicle-title">내 차량 {{ idx + 1 }}</div>
           <div class="vehicle-meta">
+            <!-- 줄 1: 차주 / 등록 상태 -->
             <div class="meta-group">
-              <span class="meta-label">차주</span
-              ><span class="meta-value">{{ v.userName ?? "-" }}</span>
+              <span class="meta-label">차주</span>
+              <span class="meta-value">{{ v.userName ?? "-" }}</span>
             </div>
             <div class="meta-group">
-              <span class="meta-label">등록 상태</span
-              ><span :class="['status-badge', statusClass(v.status)]">{{
+              <span class="meta-label">등록 상태</span>
+              <span :class="['status-badge', statusClass(v.status)]">{{
                 statusLabel(v.status)
               }}</span>
             </div>
+            <!-- 줄 2: 차량 번호 / 등록일 -->
             <div class="meta-group">
-              <span class="meta-label">차량 번호</span
-              ><span class="meta-value bold">{{ v.licensePlate }}</span>
+              <span class="meta-label">차량 번호</span>
+              <span class="meta-value bold">{{ v.licensePlate }}</span>
             </div>
             <div class="meta-group">
-              <span class="meta-label">등록일</span
-              ><span class="meta-value">{{ formatDate(v.createdAt) }}</span>
+              <span class="meta-label">등록일</span>
+              <span class="meta-value">{{ formatDate(v.createdAt) }}</span>
+            </div>
+            <!-- 줄 3: 차 모델 / 입출차 기록 -->
+            <div class="meta-group">
+              <span class="meta-label">차 모델</span>
+              <span class="meta-value">{{ v.carModel ?? "-" }}</span>
             </div>
             <div class="meta-group">
-              <span class="meta-label">차 모델</span
-              ><span class="meta-value">{{ v.carModel ?? "-" }}</span>
+              <span class="meta-label">입출차 기록 시간</span>
+              <template v-if="formatLogTime(v.vehicleId)">
+                <span class="meta-value meta-log">
+                  {{ formatLogTime(v.vehicleId).type }} :
+                  {{ formatLogTime(v.vehicleId).text }}
+                </span>
+              </template>
+              <span v-else class="meta-value">-</span>
             </div>
           </div>
-          <div class="vehicle-time">
-            입출차 기록 시간 / {{ formatLogTime(v.vehicleId) }}
-          </div>
+
           <div class="vehicle-actions">
             <button
               class="btn-edit"
@@ -330,7 +338,6 @@ onMounted(async () => {
 
     <!-- 차량 등록 모달 -->
     <BaseModal v-if="registerModal.show" title="차량 등록" @close="closeRegister">
-      <!-- 차량 번호 -->
       <div class="form-group">
         <label class="form-label">차량 번호 <span class="required">*</span></label>
         <input
@@ -340,7 +347,6 @@ onMounted(async () => {
           placeholder="예: 12가 3456"
         />
       </div>
-      <!-- 차 모델 -->
       <div class="form-group">
         <label class="form-label">차 모델 <span class="required">*</span></label>
         <input
@@ -350,7 +356,6 @@ onMounted(async () => {
           placeholder="예: 현대 소나타"
         />
       </div>
-      <!-- 차종 -->
       <div class="form-group">
         <label class="form-label">차종 <span class="required">*</span></label>
         <select
@@ -365,7 +370,6 @@ onMounted(async () => {
           <option value="승합차">승합차</option>
         </select>
       </div>
-      <!-- 하단 에러메시지 -->
       <div v-if="firstRegisterError" class="form-bottom-error">
         {{ firstRegisterError }}
       </div>
@@ -388,7 +392,6 @@ onMounted(async () => {
       subtitle="수정할 차량 정보를 입력해주세요"
       @close="closeEdit"
     >
-      <!-- 차주명 -->
       <div class="form-group">
         <label class="form-label">차주명 <span class="required">*</span></label>
         <div class="select-wrap">
@@ -405,8 +408,6 @@ onMounted(async () => {
           </svg>
         </div>
       </div>
-
-      <!-- 차량번호 - 풀 너비 -->
       <div class="form-group">
         <label class="form-label">차량번호 <span class="required">*</span></label>
         <input
@@ -416,8 +417,6 @@ onMounted(async () => {
           placeholder="예: 12가 3456"
         />
       </div>
-
-      <!-- 차 모델 + 차종 한 줄 -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">차 모델 <span class="required">*</span></label>
@@ -443,12 +442,7 @@ onMounted(async () => {
           </select>
         </div>
       </div>
-
-      <!-- 하단 에러메시지 -->
-      <div v-if="firstEditError" class="form-bottom-error">
-        {{ firstEditError }}
-      </div>
-
+      <div v-if="firstEditError" class="form-bottom-error">{{ firstEditError }}</div>
       <p class="form-hint">* 표시는 필수 입력 항목입니다.</p>
       <template #footer>
         <button class="btn-cancel" @click="closeEdit">취소</button>
@@ -561,6 +555,10 @@ onMounted(async () => {
   font-weight: 700;
   font-size: 20px;
 }
+.meta-log {
+  font-size: 18px;
+  color: #333333;
+}
 .status-badge {
   display: inline-block;
   padding: 2px 10px;
@@ -580,10 +578,6 @@ onMounted(async () => {
 .status-badge.rejected {
   background: #fee2e2;
   color: #e53e3e;
-}
-.vehicle-time {
-  font-size: 11px;
-  color: #a0aec0;
 }
 .vehicle-actions {
   display: flex;
@@ -709,11 +703,6 @@ onMounted(async () => {
 }
 .input-error {
   border-color: #e53e3e !important;
-}
-.field-error {
-  font-size: 11px;
-  color: #e53e3e;
-  margin-top: 2px;
 }
 .form-bottom-error {
   font-size: 12px;

@@ -14,7 +14,6 @@ const loading = ref(true);
 const formatTime = (time) => (time ? String(time).slice(0, 5) : "-");
 
 const fetchFacility = async () => {
-  // 스토어 캐시 우선 → 없으면 API 호출
   const result = await facilityStore.fetchFacilityDetail(route.params.id);
   if (result) Object.assign(facility, result);
   loading.value = false;
@@ -33,7 +32,6 @@ onMounted(() => fetchFacility());
 
 <template>
   <FacilityLayout>
-    <!-- 브레드크럼 -->
     <div class="breadcrumb">
       <span class="breadcrumb-title">{{ facility.name }} 예약하기</span>
       <span class="breadcrumb-sep"> / </span>
@@ -42,15 +40,11 @@ onMounted(() => fetchFacility());
       }}</span>
     </div>
 
-    <!-- 로딩 -->
     <div v-if="loading" class="loading-msg">불러오는 중...</div>
 
     <template v-else>
-      <!-- 안내사항 카드 -->
       <div class="detail-card">
         <h3 class="card-title">안내사항</h3>
-
-        <!-- 기본 정보 테이블 -->
         <table class="info-table">
           <tbody>
             <tr>
@@ -86,18 +80,14 @@ onMounted(() => fetchFacility());
           </tbody>
         </table>
 
-        <!-- 구분선 -->
         <div class="divider"></div>
 
-        <!-- 설명 -->
-        <!-- 설명 -->
         <div class="desc-section">
           <p class="desc-text">※ 하루 1인 1회 예약입니다.</p>
           <h4 class="desc-title" style="margin-top: 16px">시설 설명 및 주의 안내</h4>
           <p class="desc-text">{{ facility.description }}</p>
         </div>
 
-        <!-- 버튼 -->
         <div class="card-footer">
           <button class="btn-back" @click="goBack">이전</button>
           <button
@@ -119,8 +109,6 @@ onMounted(() => fetchFacility());
   margin: 0;
   padding: 0;
 }
-
-/* 브레드크럼 */
 .breadcrumb {
   display: flex;
   align-items: center;
@@ -140,16 +128,12 @@ onMounted(() => fetchFacility());
   font-size: 16px;
   color: #a0aec0;
 }
-
-/* 로딩 */
 .loading-msg {
   text-align: center;
   padding: 60px;
   color: #a0aec0;
   font-size: 14px;
 }
-
-/* 상세 카드 */
 .detail-card {
   background: #fff;
   border-radius: 12px;
@@ -162,8 +146,6 @@ onMounted(() => fetchFacility());
   color: #1a202c;
   margin-bottom: 20px;
 }
-
-/* 정보 테이블 */
 .info-table {
   width: 100%;
   border-collapse: collapse;
@@ -189,8 +171,6 @@ onMounted(() => fetchFacility());
   color: #1a202c;
   font-weight: 500;
 }
-
-/* 상태 뱃지 */
 .status-badge {
   display: inline-block;
   padding: 3px 12px;
@@ -206,15 +186,11 @@ onMounted(() => fetchFacility());
   background: #e0e0e0;
   color: #757575;
 }
-
-/* 구분선 */
 .divider {
   height: 1px;
   background: #e2e8f0;
   margin: 24px 0;
 }
-
-/* 설명 */
 .desc-section {
   margin-bottom: 8px;
 }
@@ -229,8 +205,6 @@ onMounted(() => fetchFacility());
   color: #333333;
   line-height: 1.8;
 }
-
-/* 버튼 */
 .card-footer {
   display: flex;
   justify-content: center;
