@@ -1,15 +1,14 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { getPostList } from '@/api/board.js'
+import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import { getPostList } from "@/api/board.js";
 //소영
-import { useReservationStore } from '@/stores/modules/reservation.js'
+import { useReservationStore } from "@/stores/modules/reservation.js";
 
-const router = useRouter()
-const reservationStore = useReservationStore()
+const router = useRouter();
+const reservationStore = useReservationStore();
 
-const notices = ref([])
-
+const notices = ref([]);
 
 /** 공지 조회 */
 const fetchNotices = async () => {
@@ -27,15 +26,15 @@ const fetchMyReservations = async () => {
     await reservationStore.fetchMyReservationList({
       page: 1,
       size: 3,
-      tab: 'UPCOMING',
-    })
+      tab: "UPCOMING",
+    });
   } catch (e) {
-    console.error('예약 조회 실패', e)
+    console.error("예약 조회 실패", e);
   }
 };
 
 //내 예약 리스트
-const reservations = computed(() => reservationStore.myReservationList || [])
+const reservations = computed(() => reservationStore.myReservationList || []);
 
 /** 페이지 이동 */
 const notice = () => router.push("/resident/board/notice");
@@ -179,6 +178,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  isolation: auto;
+  margin-top: 48px;
 }
 .box {
   background: #fff;

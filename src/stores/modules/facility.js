@@ -1,41 +1,33 @@
 import { defineStore } from 'pinia'
 import facilityAPI from '@/api/facility.js'
 
-// ── 타입 ID 상수 (뷰·스토어 공용) ───────────────────────────────
-export const FACILITY_TYPE_IDS = [1, 2, 3]   // 편의 시설
-export const GX_TYPE_ID        = 4            // GX강습
+export const FACILITY_TYPE_IDS = [1, 2, 3]
+export const GX_TYPE_ID        = 4
 
 export const useFacilityStore = defineStore('facility', {
   state: () => ({
-    // ── 관리자용 ──────────────────────────────
-    list:     [],  // 전체 시설 목록 (관리자)
+    // 관리자용 
+    list:     [],
     total:    0,
     inactive: 0,
 
-    // ── 사용자용 ──────────────────────────────
-    facilityList: [],   // 편의 시설 탭 목록
-    gxList:       [],   // GX 탭 목록
-    detailCache:  {},   // { [facilityId]: facilityObject }
+    // 사용자용
+    facilityList: [],
+    gxList:       [],
 
-    // ── 공용 ──────────────────────────────────
+    // 공용 
     types: [],
   }),
 
   getters: {
-    // 관리자
     activeCount:  (state) => state.total - state.inactive,
     byType:       (state) => (typeId) => state.list.filter(f => f.typeId === typeId),
     findById:     (state) => (id)     => state.list.find(f => f.facilityId === id) ?? null,
-
-    // 사용자 단건 (캐시)
-    getCached:    (state) => (id) => state.detailCache[id] ?? null,
-
-    // 타입
     findTypeById: (state) => (id) => state.types.find(t => t.typeId === id) ?? null,
+    // getCached 제거
   },
 
   actions: {
-    // ── 관리자: 전체 목록 ──────────────────────────────────────
     async fetchFacilities() {
       try {
         const { data } = await facilityAPI.getFacilities()
@@ -48,7 +40,6 @@ export const useFacilityStore = defineStore('facility', {
       }
     },
 
-    // ── 사용자: 편의 시설 탭 ──────────────────────────────────
     async fetchFacilityList() {
       try {
         const results = await Promise.all(
@@ -62,7 +53,6 @@ export const useFacilityStore = defineStore('facility', {
       }
     },
 
-    // ── 사용자: GX 탭 ─────────────────────────────────────────
     async fetchGxList() {
       try {
         const { data } = await facilityAPI.getFacilities({
@@ -74,21 +64,7 @@ export const useFacilityStore = defineStore('facility', {
       }
     },
 
-    // ── 사용자: 단건 조회 (캐시 우선) ─────────────────────────
-    async fetchFacilityDetail(id) {
-      if (this.detailCache[id]) return this.detailCache[id]
-      try {
-        const { data } = await facilityAPI.getFacility(id)
-        const facility = data.resultData
-        this.detailCache[id] = facility
-        return facility
-      } catch (e) {
-        console.error('시설 상세 조회 실패', e)
-        return null
-      }
-    },
 
-    // ── 타입 CRUD ─────────────────────────────────────────────
     async fetchTypes() {
       try {
         const { data } = await facilityAPI.getTypes()
