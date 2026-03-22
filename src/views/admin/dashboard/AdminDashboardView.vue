@@ -5,7 +5,7 @@ import {useHouseholdStore} from '@/stores/modules/household.js'
 import {useParkingStore} from '@/stores/modules/parking.js'
 import axios from '@/api/axios.js'
 import StatsCards from '@/components/admin/StatsCards.vue'
-import {useReservationStore} from '@/stores/modules/reservation.js'
+import { useReservationStore } from '@/stores/modules/reservation.js'
 import {getAdminVisitorVehicles} from '@/api/visitorVehicle.js'
 
 const router = useRouter()
@@ -51,8 +51,8 @@ const fetchDashboardData = async () => {
       householdStore.fetchResidentPendingCount(), // 입주민 승인 대기 건수
     ])
 
-    // 최근 입출차 기록 (최신 6건)
-    const logsRes = await axios.get('/parking/logs', {params: {page: 1, size: 6}})
+    // 최근 입출차 기록 (최신 5건)
+    const logsRes = await axios.get('/parking/logs', {params: {page: 1, size: 5}})
     const logsData = logsRes.data?.resultData ?? logsRes.data
     dashboardState.records = (logsData.content ?? []).map(r => ({
       plate: r.licensePlate,
@@ -74,18 +74,9 @@ const fetchDashboardData = async () => {
       date: v.visitDate ?? v.createdAt ?? '-',
     }))
 
-    // 최근 게시판 활동 (최신 4건)
-    const boardRes = await axios.get('/boards', {params: {page: 1, size: 4}})
-    const boardData = boardRes.data?.resultData
-    dashboardState.posts = (boardData?.content ?? []).map(p => ({
-      id: p.boardId,
-      tag: p.category === 'NOTICE' ? '공지' : '자유',
-      tagClass: p.category === 'NOTICE' ? 'tag-notice' : 'tag-free',
-      title: p.title,
-      author: p.authorName ?? '-',
-      date: p.createdAt?.split('T')[0] ?? '-',
-      comments: p.commentCount ?? null,
-    }))
+    // 패널 데이터 - API 연결 후 교체
+    // dashboardState.visitors = []
+    // dashboardState.posts = []
 
   } catch (e) {
     console.error('대시보드 데이터 오류:', e)
@@ -120,7 +111,7 @@ const reserveDiffLabel = computed(() => {
 const dashboardStats = computed(() => [
   {
     label: '승인 대기',
-    value: (householdStore.$state.residentPendingCount || 0) + (reservationStore.gxPendingCount || 0),
+    value: (householdStore.residentPendingCount || 0) + (reservationStore.gxPendingCount || 0),
     unit: '건',
     desc: '전체 승인 대기',
     descClass: 'highlight-orange',
@@ -506,7 +497,7 @@ onMounted(() => {
 .panel-title {
   font-size: 18px;
   font-weight: 700;
-
+  color: ;
 }
 
 .panel-more {
@@ -583,7 +574,7 @@ onMounted(() => {
 .visitor-plate {
   font-size: 14px;
   font-weight: 700;
-
+  color: ;
 }
 
 .visitor-detail {
@@ -641,22 +632,12 @@ onMounted(() => {
 }
 
 .facility-right {
-  width: 220px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  width: 220px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px;
 }
 
-.facility-name-row {
-  display: flex;
-  align-items: center;
-  gap: 40px;
-}
-
-.facility-name-row .progress-bar {
-  flex: 1;
-}
+.facility-name-row { display: flex; align-items: center; gap: 40px; }
+.facility-name-row .progress-bar { flex: 1; }
 
 .facility-name-row .progress-bar {
   flex: 1;
@@ -665,7 +646,7 @@ onMounted(() => {
 .facility-name {
   font-size: 14px;
   font-weight: 600;
-
+  color: ;
 }
 
 .facility-time {

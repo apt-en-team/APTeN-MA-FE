@@ -241,11 +241,12 @@ function getAvatarColor(name) {
   />
 
   <ActionResultModal
-    v-if="alertModal.visible"
-    :title="alertModal.title"
-    :desc="alertModal.message"
-    type="warning"
-    @close="alertModal = { visible: false, title: '', message: '' }"
+      v-if="alertModal.visible"
+      :title="alertModal.title"
+      :desc="alertModal.message"
+      type="warning"
+      theme="resident"
+      @close="alertModal.value = { visible: false, title: '', message: '' }"
   />
 
 </template>
