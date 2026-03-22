@@ -59,24 +59,26 @@ const gxMaxPage = computed(
 
 const fetchFacilities = async (tab) => {
   try {
-    if (tab === "facility") {
-      const results = await Promise.all(
-        FACILITY_TYPE_IDS.map((id) =>
-          facilityAPI.getFacilities({
-            typeId: id,
-            page: 1,
-            size: 100,
-          })
+    if (tab === 'facility') {
+      //이거 내가 수정한거임
+          const results = await Promise.all(
+          FACILITY_TYPE_IDS.map(id =>
+            facilityAPI.getFacilities({
+              typeId: id,
+              page: 1,
+              size: 100
+            })
+          )
         )
-      );
-      state.facilities = results.flatMap((r) => r.data.resultData ?? []);
+      state.facilities = results.flatMap(r => r.data.resultData ?? [])
     } else {
-      const { data } = await facilityAPI.getFacilities({
+      //이거 내가 수정한거임
+        const { data } = await facilityAPI.getFacilities({
         typeId: 4,
         page: 1,
-        size: 100,
-      });
-      state.facilities = data.resultData?.content ?? data.resultData ?? [];
+        size: 100
+      })
+      state.facilities = data.resultData?.content ?? data.resultData ?? []
     }
   } catch (e) {
     console.error("시설 목록 조회 실패", e);

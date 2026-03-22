@@ -85,7 +85,6 @@ const handleApprove = async () => {
     resultModal.actor = '관리사무소'
     resultModal.show = true
 
-    emit('approved')
   } catch (error) {
     state.errorMsg = error.response?.data?.resultMessage || '승인 처리 중 오류가 발생했습니다.'
   } finally {
@@ -95,6 +94,7 @@ const handleApprove = async () => {
 
 const handleCloseResultModal = () => {
   resultModal.show = false
+  emit('approved')
   emit('close')
 }
 </script>
