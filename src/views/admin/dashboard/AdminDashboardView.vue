@@ -51,8 +51,8 @@ const fetchDashboardData = async () => {
       householdStore.fetchResidentPendingCount(), // 입주민 승인 대기 건수
     ])
 
-    // 최근 입출차 기록 (최신 5건)
-    const logsRes = await axios.get('/parking/logs', {params: {page: 1, size: 5}})
+    // 최근 입출차 기록 (최신 6건)
+    const logsRes = await axios.get('/parking/logs', {params: {page: 1, size: 6}})
     const logsData = logsRes.data?.resultData ?? logsRes.data
     dashboardState.records = (logsData.content ?? []).map(r => ({
       plate: r.licensePlate,
@@ -74,9 +74,18 @@ const fetchDashboardData = async () => {
       date: v.visitDate ?? v.createdAt ?? '-',
     }))
 
-    // 패널 데이터 - API 연결 후 교체
-    // dashboardState.visitors = []
-    // dashboardState.posts = []
+    // 최근 게시판 활동 (최신 4건)
+    const boardRes = await axios.get('/boards', {params: {page: 1, size: 4}})
+    const boardData = boardRes.data?.resultData
+    dashboardState.posts = (boardData?.content ?? []).map(p => ({
+      id: p.boardId,
+      tag: p.category === 'NOTICE' ? '공지' : '자유',
+      tagClass: p.category === 'NOTICE' ? 'tag-notice' : 'tag-free',
+      title: p.title,
+      author: p.authorName ?? '-',
+      date: p.createdAt?.split('T')[0] ?? '-',
+      comments: p.commentCount ?? null,
+    }))
 
   } catch (e) {
     console.error('대시보드 데이터 오류:', e)
@@ -479,7 +488,7 @@ onMounted(() => {
   border-radius: 15px;
   border: 1px solid #e9ecf1;
   padding: 20px;
-  height: 340px;
+  height: 370px;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -833,7 +842,7 @@ onMounted(() => {
 .board-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 20px;
   flex-shrink: 0;
   margin-left: 12px;
 }
@@ -842,14 +851,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 18px;
+  font-size: 12px;
   color: #C08B2D;
   font-weight: 600;
 }
 
 .board-comments svg {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
 }
 
 .board-date { font-size: 11px; color: #92959D; }
