@@ -91,12 +91,7 @@ function resetFilters() {
 
 function onFilterChange() { currentPage.value = 1 }
 
-// ── 열람 처리 ──────────
-const readIds = ref(new Set(JSON.parse(localStorage.getItem('readNoticeIds') || '[]')))
-
 function openNotice(notice) {
-  readIds.value.add(notice.boardId)
-  localStorage.setItem('readNoticeIds', JSON.stringify([...readIds.value]))
   router.push(`/resident/board/notice/${notice.boardId}`)
 }
 </script>
@@ -159,19 +154,6 @@ function openNotice(notice) {
         {{ formatDate(row.createdAt) }}
       </template>
 
-      <!-- 열람 여부 헤더 -->
-      <template #action-header>열람 여부</template>
-
-      <!-- 관리(열람) 버튼 -->
-      <template #action="{ row }">
-        <button
-          class="btn-detail"
-          :class="{ 'btn-read': readIds.has(row.boardId) }"
-          @click.stop="openNotice(row)"
-        >
-          {{ readIds.has(row.boardId) ? '열람완료' : '열람' }}
-        </button>
-      </template>
     </AdminTable>
 
     <!-- 페이지네이션 -->
@@ -316,24 +298,5 @@ function openNotice(notice) {
   background-color: #416adb;
 }
 
-/* ── 열람 버튼 ────────── */
-.btn-detail {
-  padding: 5px 14px;
-  border: 1px solid #D1D8F0;
-  border-radius: 6px;
-  background: #fff;
-  font-size: 12px;
-  color: #4973E5;
-  cursor: pointer;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s;
-}
-.btn-detail:hover { background: #EEF3FB; border-color: #4973E5; }
-.btn-read {
-  background: #f3f4f6;
-  color: #9ca3af;
-  border-color: #e5e7eb;
-  cursor: default;
-}
+
 </style>
