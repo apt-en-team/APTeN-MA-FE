@@ -9,6 +9,9 @@ export default defineConfig({
             '@': path.resolve(__dirname, 'src')
         }
     },
+    build: {
+        outDir: '스프링 부트 프로젝트 static 폴더 절대 경로'
+    },
     server: {
         port: 5173,
         proxy: {

@@ -5,7 +5,7 @@ import {useHouseholdStore} from '@/stores/modules/household.js'
 import {useParkingStore} from '@/stores/modules/parking.js'
 import axios from '@/api/axios.js'
 import StatsCards from '@/components/admin/StatsCards.vue'
-import { useReservationStore } from '@/stores/modules/reservation.js'
+import {useReservationStore} from '@/stores/modules/reservation.js'
 import {getAdminVisitorVehicles} from '@/api/visitorVehicle.js'
 
 const router = useRouter()
@@ -120,7 +120,7 @@ const reserveDiffLabel = computed(() => {
 const dashboardStats = computed(() => [
   {
     label: '승인 대기',
-    value: (householdStore.residentPendingCount || 0) + (reservationStore.gxPendingCount || 0),
+    value: (householdStore.$state.residentPendingCount || 0) + (reservationStore.gxPendingCount || 0),
     unit: '건',
     desc: '전체 승인 대기',
     descClass: 'highlight-orange',
@@ -270,10 +270,10 @@ onMounted(() => {
           </div>
           <div v-if="reservationStore.facilitySummaryList.length > 0" class="facility-list">
             <div
-              v-for="(facility) in reservationStore.facilitySummaryList"
-              :key="facility.name"
-              class="facility-item card-clickable"
-              @click="router.push(`/admin/reservations/facility-status/${facility.typeId}`)"
+                v-for="(facility) in reservationStore.facilitySummaryList"
+                :key="facility.name"
+                class="facility-item card-clickable"
+                @click="router.push(`/admin/reservations/facility-status/${facility.typeId}`)"
             >
               <div class="facility-bar" :class="'bar-' + facility.barColor"></div>
               <div class="facility-left">
@@ -324,7 +324,6 @@ onMounted(() => {
                 <th>구분</th>
                 <th>차량번호</th>
                 <th>유형</th>
-                <th>세대</th>
                 <th>시각</th>
               </tr>
               </thead>
@@ -339,7 +338,6 @@ onMounted(() => {
                 <td>
                   <span :class="['tag-type', record.typeClass]">{{ record.type }}</span>
                 </td>
-                <td class="unit-cell">{{ record.unit }}</td>
                 <td class="time-cell">{{ record.time }}</td>
               </tr>
               </tbody>
@@ -641,12 +639,22 @@ onMounted(() => {
 }
 
 .facility-right {
-  width: 220px; flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 6px;
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.facility-name-row { display: flex; align-items: center; gap: 40px; }
-.facility-name-row .progress-bar { flex: 1; }
+.facility-name-row {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.facility-name-row .progress-bar {
+  flex: 1;
+}
 
 .facility-name-row .progress-bar {
   flex: 1;
@@ -861,7 +869,10 @@ onMounted(() => {
   height: 12px;
 }
 
-.board-date { font-size: 11px; color: #92959D; }
+.board-date {
+  font-size: 11px;
+  color: #92959D;
+}
 
 .progress-bar {
   width: 100%;
