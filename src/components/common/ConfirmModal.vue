@@ -25,25 +25,26 @@ defineEmits(["confirm", "cancel"])
   <div class="modal-overlay" @click.self="$emit('cancel')">
     <div class="modal-box">
 
-      <!-- 경고 아이콘: theme에 따라 색상 + 배경 분기 -->
+      <!-- 아이콘: confirmType에 따라 분기 -->
       <div
           class="confirm-icon"
           :style="{
-          background: theme === 'resident' ? '#FFF5F5' : '#FFF5F5'
-        }"
+      background: confirmType === 'success' ? '#F0FFF4'
+                : confirmType === 'danger' ? '#FFF5F5'
+                : '#FFF5F5'
+    }"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path
-              d="M12 8V12"
-              :stroke="theme === 'resident' ? '#E53E3E' : '#E53E3E'"
-              stroke-width="2.2"
-              stroke-linecap="round"
-          />
-          <circle cx="12" cy="16" r="1"
-                  :fill="theme === 'resident' ? '#E53E3E' : '#E53E3E'"/>
-          <circle cx="12" cy="12" r="9"
-                  :stroke="theme === 'resident' ? '#E53E3E' : '#E53E3E'"
-                  stroke-width="2"/>
+        <!-- success: 체크 아이콘 -->
+        <svg v-if="confirmType === 'success'" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="#38A169" stroke-width="2"/>
+          <path d="M7.5 12L10.5 15L16.5 9" stroke="#38A169" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+
+        <!-- danger: 경고 아이콘 -->
+        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 8V12" stroke="#E53E3E" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="12" cy="16" r="1" fill="#E53E3E"/>
+          <circle cx="12" cy="12" r="9" stroke="#E53E3E" stroke-width="2"/>
         </svg>
       </div>
 
