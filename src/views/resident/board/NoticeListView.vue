@@ -163,6 +163,7 @@ function openNotice(notice) {
       :totalAll="boardStore.notices?.length ?? 0"
       :totalFiltered="filtered.length"
       unit="개"
+      activeColor="#4973E5"
       @change="goPage"
     />
 
@@ -287,16 +288,6 @@ function openNotice(notice) {
   color: #333;
 }
 
-/* ── 페이지네이션 active 색상 override (#2B3A55 → #4973E5) ───── */
-:deep(.page-btn.active) {
-  background: #4973E5;
-  border-color: #4973E5;
-  color: #fff;
-}
-:deep(.page-btn:hover:not(:disabled)) {
-  color: #fff;
-  background-color: #416adb;
-}
 
 
 </style>
