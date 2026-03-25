@@ -444,7 +444,7 @@ onMounted(() => {
                       ? "운영 중단"
                       : isGxOperatingToday(f)
                       ? "오늘 운영"
-                      : `오늘 미운영 (${getTodayDayLabel()}요일)`
+                      : `오늘 휴일 (${getTodayDayLabel()}요일)`
                   }}
                 </span>
               </div>

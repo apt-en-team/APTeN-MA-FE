@@ -130,8 +130,15 @@ onMounted(async () => {
             </span>
           </div>
           <p class="facility-desc">
-            {{ f.description || "운영 시작 시 예약이 가능합니다." }}
+            <span v-if="f.description && f.description.includes('\n')">
+              {{ f.description.split("\n")[0] }}&nbsp;&nbsp;&nbsp;
+              <span class="desc-more">... 더보기</span>
+            </span>
+            <span v-else>
+              {{ f.description || "운영 시작 시 예약이 가능합니다." }}
+            </span>
           </p>
+
           <div class="facility-meta">
             <span class="meta-item">
               <svg
@@ -309,7 +316,13 @@ onMounted(async () => {
   font-size: 15px;
   color: #718096;
   line-height: 1.5;
-}
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+} 
+
 .facility-meta {
   display: flex;
   flex-wrap: wrap;

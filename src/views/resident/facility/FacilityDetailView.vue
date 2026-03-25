@@ -393,6 +393,7 @@ onMounted(() => {
   font-size: 13px;
   color: #333333;
   line-height: 1.8;
+  white-space: pre-line;
 }
 
 /* 버튼 */

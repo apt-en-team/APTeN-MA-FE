@@ -161,6 +161,7 @@ const openDetailModal = async (vehicle) => {
   detailModal.vehicle = vehicle;
   detailModal.show = true;
   vehicleCount.value = 0;
+
   if (vehicle?.household?.dong) {
     try {
       const { data } = await vehicleAPI.getAllVehicles({
@@ -168,12 +169,20 @@ const openDetailModal = async (vehicle) => {
         size: 999,
         status: null,
       });
-      vehicleCount.value =
-        data.resultData?.content?.filter((v) => v.household?.ho === vehicle.household.ho)
-          .length ?? 0;
-    } catch {
-      vehicleCount.value = 0;
-    }
+    const list = data?.resultData?.content || []
+
+    const approvedVehicles = list.filter((item) => {
+      return (
+        item.household?.dong === vehicle.household.dong &&
+        item.household?.ho === vehicle.household.ho &&
+        item.status === 'APPROVED'
+      )
+    })
+
+    vehicleCount.value = approvedVehicles.length
+  } catch {
+    vehicleCount.value = 0
+  }
   }
 };
 const closeDetailModal = () => {
