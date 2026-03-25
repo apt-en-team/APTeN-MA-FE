@@ -1,18 +1,14 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import facilityAPI from "@/api/facility.js";
+import { useFacilityStore } from "@/stores/modules/facility";
 import FacilityLayout from "@/components/layout/FacilityLayout.vue";
 import Pagination from "@/components/layout/Pagination.vue";
 
 const router = useRouter();
+const facilityStore = useFacilityStore();
 
-const state = reactive({
-  types: [],
-  facilities: [],
-});
-
-// 시설 이미지 추가
+// 이미지맵
 const facilityImageMap = {
   "독서실(남)": new URL("@/assets/images/readingroom.png", import.meta.url).href,
   "독서실(여)": new URL("@/assets/images/readingroom.png", import.meta.url).href,
@@ -23,83 +19,37 @@ const facilityImageMap = {
   "GX-그룹PT(오전)": new URL("@/assets/images/Group PT.png", import.meta.url).href,
   "GX-그룹PT(오후)": new URL("@/assets/images/Group PT.png", import.meta.url).href,
 };
+const getFacilityImage = (name) => facilityImageMap[name] ?? null;
 
-const getFacilityImage = (name) => {
-  return facilityImageMap[name] ?? null;
-};
-
-const FACILITY_TYPE_IDS = [1, 2, 3];
 const PAGE_SIZE = 5;
-
 const topTab = ref("facility");
 const gxSubTab = ref("전체");
 const gxPage = ref(1);
 
 const formatTime = (time) => (time ? String(time).slice(0, 5) : "-");
 
-/** GX 필터링된 전체 목록 */
 const filteredGxFacilities = computed(() => {
-  if (gxSubTab.value === "전체") return state.facilities;
-  return state.facilities.filter((f) =>
-    f.name.includes(gxSubTab.value === "오전" ? "오전" : "오후")
-  );
+  if (gxSubTab.value === "전체") return facilityStore.gxList;
+  const keyword = gxSubTab.value === "오전" ? "오전" : "오후";
+  return facilityStore.gxList.filter((f) => f.name.includes(keyword));
 });
 
-/** 화면에 표시할 목록 */
 const displayFacilities = computed(() => {
-  if (topTab.value !== "gx") return state.facilities;
+  if (topTab.value !== "gx") return facilityStore.facilityList;
   const start = (gxPage.value - 1) * PAGE_SIZE;
   return filteredGxFacilities.value.slice(start, start + PAGE_SIZE);
 });
 
-/** GX 전체 페이지 수 */
 const gxMaxPage = computed(
   () => Math.ceil(filteredGxFacilities.value.length / PAGE_SIZE) || 1
 );
-
-const fetchFacilities = async (tab) => {
-  try {
-    if (tab === 'facility') {
-      //이거 내가 수정한거임
-          const results = await Promise.all(
-          FACILITY_TYPE_IDS.map(id =>
-            facilityAPI.getFacilities({
-              typeId: id,
-              page: 1,
-              size: 100
-            })
-          )
-        )
-      state.facilities = results.flatMap(r => r.data.resultData ?? [])
-    } else {
-      //이거 내가 수정한거임
-        const { data } = await facilityAPI.getFacilities({
-        typeId: 4,
-        page: 1,
-        size: 100
-      })
-      state.facilities = data.resultData?.content ?? data.resultData ?? []
-    }
-  } catch (e) {
-    console.error("시설 목록 조회 실패", e);
-  }
-};
-
-const fetchTypes = async () => {
-  state.types = [
-    { typeId: 1, name: "독서실" },
-    { typeId: 2, name: "헬스장" },
-    { typeId: 3, name: "골프연습장" },
-    { typeId: 4, name: "GX" },
-  ];
-  await fetchFacilities("facility");
-};
 
 const switchTopTab = async (tab) => {
   topTab.value = tab;
   gxSubTab.value = "전체";
   gxPage.value = 1;
-  await fetchFacilities(tab);
+  if (tab === "facility") await facilityStore.fetchFacilityList();
+  else await facilityStore.fetchGxList();
 };
 
 const switchGxSubTab = (sub) => {
@@ -107,12 +57,11 @@ const switchGxSubTab = (sub) => {
   gxPage.value = 1;
 };
 
-const goToDetail = (f) => {
+const goToDetail = (f) =>
   router.push({ name: "FacilityDetail", params: { id: f.facilityId } });
-};
 
-onMounted(() => {
-  fetchTypes();
+onMounted(async () => {
+  if (!facilityStore.facilityList.length) await facilityStore.fetchFacilityList();
 });
 </script>
 

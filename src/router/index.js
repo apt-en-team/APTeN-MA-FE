@@ -77,7 +77,7 @@ import FacilityManageView from '@/views/admin/facility/FacilityManageView.vue'
 import AdminReservationListView from '@/views/admin/reservation/AdminReservationListView.vue'
 import AdminFacilityStatusView from '@/views/admin/reservation/AdminFacilityStatusView.vue'
 import FacilityFormView       from '@/views/admin/facility/FacilityFormView.vue'
-import FacilityTypeManageView from '@/views/admin/facility/FacilityTypeManageView.vue'
+
 
 
 const routes = [

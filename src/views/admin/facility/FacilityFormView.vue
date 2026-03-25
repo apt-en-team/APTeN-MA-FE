@@ -1,16 +1,19 @@
 <script setup>
 import { onMounted, reactive, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useFacilityStore } from "@/stores/modules/facility";
 import facilityAPI from "@/api/facility.js";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import ActionResultModal from "@/components/common/ActionResultModal.vue";
 
 const route = useRoute();
 const router = useRouter();
+const facilityStore = useFacilityStore();
 
 const isEdit = computed(() => !!route.params.id);
 
-const types = reactive([]);
+// ── types는 스토어에서 직접 참조 (로컬 배열 제거) ─────────────
+// template에서 facilityStore.types 로 사용
 
 const form = reactive({
   typeId: null,
@@ -34,7 +37,6 @@ const errors = reactive({
   server: "",
 });
 
-/** 삭제 모달 - 2단계 */
 const deleteModal = reactive({
   show: false,
   stage: "confirm",
@@ -43,15 +45,6 @@ const deleteModal = reactive({
   resultTitle: "",
   resultSubtitle: "",
 });
-
-const fetchTypes = async () => {
-  try {
-    const { data } = await facilityAPI.getTypes();
-    types.push(...(data.resultData ?? []));
-  } catch (e) {
-    console.error("타입 조회 실패", e);
-  }
-};
 
 const fetchFacility = async () => {
   try {
@@ -75,7 +68,6 @@ const fetchFacility = async () => {
 const handleSubmit = async () => {
   Object.keys(errors).forEach((k) => (errors[k] = ""));
 
-  // 프론트 사전 검증
   if (!form.typeId) {
     errors.typeId = "시설 타입을 선택해주세요.";
     return;
@@ -111,36 +103,24 @@ const handleSubmit = async () => {
     };
     if (isEdit.value) await facilityAPI.updateFacility(route.params.id, payload);
     else await facilityAPI.createFacility(payload);
+
+    // 시설 목록 갱신 후 이동
+    await facilityStore.fetchFacilities();
     router.push("/admin/facility");
   } catch (e) {
-    console.error("저장 실패", e);
-
-    // ✅ 백엔드 resultMessage 기반 에러 분기
     const message = e.response?.data?.resultMessage ?? "저장 중 오류가 발생했습니다.";
-
-    switch (message) {
-      case "시설 타입을 선택해주세요":
-        errors.typeId = message;
-        break;
-      case "시설명을 입력해주세요":
-        errors.name = message;
-        break;
-      case "최대 인원을 입력해주세요":
-        errors.maxCapacity = message;
-        break;
-      case "시설 타입을 찾을 수 없습니다":
-        errors.typeId = message;
-        break;
-      case "시설을 찾을 수 없습니다":
-        errors.server = message;
-        break;
-      default:
-        errors.server = message;
-    }
+    const map = {
+      "시설 타입을 선택해주세요": "typeId",
+      "시설명을 입력해주세요": "name",
+      "최대 인원을 입력해주세요": "maxCapacity",
+      "시설 타입을 찾을 수 없습니다": "typeId",
+      "시설을 찾을 수 없습니다": "server",
+    };
+    const key = map[message] ?? "server";
+    errors[key] = message;
   }
 };
 
-/** 1단계: 삭제 확인 모달 열기 */
 const openDeleteModal = () => {
   deleteModal.stage = "confirm";
   deleteModal.show = true;
@@ -155,18 +135,15 @@ const closeDeleteResult = () => {
   if (deleteModal.resultType === "success") router.push("/admin/facility");
 };
 
-/** 2단계: 삭제 API → result 전환 */
 const handleDelete = async () => {
   deleteModal.loading = true;
   try {
     await facilityAPI.deleteFacility(route.params.id);
+    await facilityStore.fetchFacilities(); // ← 삭제 후 스토어 갱신
     deleteModal.resultType = "success";
     deleteModal.resultTitle = "시설이 삭제되었습니다.";
     deleteModal.resultSubtitle = `${form.name} 시설이 삭제되었습니다.`;
   } catch (e) {
-    console.error("삭제 실패", e);
-
-    // ✅ 백엔드 resultMessage 기반 에러 메시지 표시
     const message = e.response?.data?.resultMessage ?? "잠시 후 다시 시도해주세요.";
     deleteModal.resultType = "danger";
     deleteModal.resultTitle = "삭제에 실패했습니다.";
@@ -178,7 +155,8 @@ const handleDelete = async () => {
 };
 
 onMounted(async () => {
-  await fetchTypes();
+  // 타입 목록이 비어있을 때만 fetch (이미 로드됐으면 재사용)
+  if (!facilityStore.types.length) await facilityStore.fetchTypes();
   if (isEdit.value) await fetchFacility();
 });
 </script>
@@ -201,7 +179,7 @@ onMounted(async () => {
             :class="{ 'input-error': errors.typeId }"
           >
             <option :value="null" disabled>타입 선택</option>
-            <option v-for="t in types" :key="t.typeId" :value="t.typeId">
+            <option v-for="t in facilityStore.types" :key="t.typeId" :value="t.typeId">
               {{ t.name }}
             </option>
           </select>
