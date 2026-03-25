@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, watch } from 'vue'
 import reservationAPI from '@/api/reservation'
+import AdminReservationDetailModal from '@/components/reservation/Adminreservationdetailmodal.vue'
 
 // 부모에서 선택한 날짜 받기
 const props = defineProps({
@@ -17,6 +18,11 @@ const emit = defineEmits(['update-summary'])
 const state = reactive({
   loading: false,
   reservationUsers: [],
+  detailModal: {
+    show: false,
+    reservationId: null,
+  },
+  
 })
 
 const statusLabel = (status) => {
@@ -103,6 +109,20 @@ watch(
   },
   { immediate: true }
 )
+
+//리스트 클릭 상세보기
+const openDetailModal = (item) => {
+  if (!item.reservationId) return
+
+  state.detailModal.reservationId = item.reservationId
+  state.detailModal.show = true
+}
+
+const closeDetailModal = () => {
+  state.detailModal.show = false
+  state.detailModal.reservationId = null
+}
+
 </script>
 
 <template>
@@ -123,7 +143,12 @@ watch(
             <td colspan="4" class="empty-row">예약 데이터가 없습니다.</td>
           </tr>
 
-          <tr v-for="item in state.reservationUsers" :key="item.reservationId">
+          <tr
+            v-for="item in state.reservationUsers"
+            :key="item.reservationId"
+            class="clickable-row"
+            @click="openDetailModal(item)"
+          >
             <td>{{ item.reservationId }}</td>
             <td>{{ item.userName }}</td>
             <td>{{ item.dong }} {{ item.ho }}</td>
@@ -136,6 +161,17 @@ watch(
         </tbody>
       </table>
     </div>
+    <AdminReservationDetailModal
+      v-if="state.detailModal.show"
+      :reservation-id="state.detailModal.reservationId"
+      @close="closeDetailModal"
+      @cancelled="
+        async () => {
+          closeDetailModal()
+          await fetchGymDetail()
+        }
+      "
+    />
   </div>
 </template>
 
@@ -212,5 +248,14 @@ watch(
 .status-badge.completed {
   background: #E2E8F0;
   color: #475569;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.clickable-row:hover {
+  background: #F8FAFC;
 }
 </style>

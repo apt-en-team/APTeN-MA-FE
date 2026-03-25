@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, watch } from 'vue'
 import reservationAPI from '@/api/reservation'
+import AdminReservationDetailModal from '@/components/reservation/Adminreservationdetailmodal.vue'
 
 // 부모에서 선택한 조회 날짜 받기
 const props = defineProps({
@@ -20,6 +21,10 @@ const state = reactive({
 
   maleRoom: [],
   femaleRoom: [],
+  detailModal: {
+    show: false,
+    reservationId: null,
+  },
 })
 
 // API 응답을 남/여 좌석 배열로 변환
@@ -32,19 +37,29 @@ const buildSeatList = (reservedList = [], totalCount = 12) => {
 
     if (found) {
       result.push({
+        reservationId: found.reservationId,
         seatNo,
         reserved: true,
         userName: found.userName,
         household: `${found.dong || ''} ${found.ho || ''}`.trim(),
         status: found.status,
+        facilityId: found.facilityId,
+        facilityName: found.facilityName,
+        startTime: found.startTime,
+        endTime: found.endTime,
       })
     } else {
       result.push({
+        reservationId: null,
         seatNo,
         reserved: false,
         userName: '',
         household: '',
         status: '',
+        facilityId: null,
+        facilityName: '',
+        startTime: '',
+        endTime: '',
       })
     }
   }
@@ -109,6 +124,22 @@ watch(
   },
   { immediate: true }
 )
+
+//좌석 클릭 함수
+const openSeatDetail = (seat) => {
+  if (!seat.reserved || !seat.reservationId) return
+
+  state.detailModal.reservationId = seat.reservationId
+  state.detailModal.show = true
+}
+
+const closeDetailModal = () => {
+  state.detailModal.show = false
+  state.detailModal.reservationId = null
+}
+
+
+
 </script>
 
 <template>
@@ -122,12 +153,13 @@ watch(
         </div>
 
         <div class="seat-grid">
-          <div
-            v-for="seat in state.maleRoom"
-            :key="`male-${seat.seatNo}`"
-            class="seat-box"
-            :class="{ reserved: seat.reserved }"
-          >
+            <div
+              v-for="seat in state.maleRoom"
+              :key="`male-${seat.seatNo}`"
+              class="seat-box"
+              :class="{ reserved: seat.reserved, clickable: seat.reserved }"
+              @click="openSeatDetail(seat)"
+            >
             <p class="seat-no">{{ seat.seatNo }}번</p>
             <template v-if="seat.reserved">
               <p class="seat-user">{{ seat.userName }}</p>
@@ -151,7 +183,8 @@ watch(
             v-for="seat in state.femaleRoom"
             :key="`female-${seat.seatNo}`"
             class="seat-box"
-            :class="{ reserved: seat.reserved }"
+            :class="{ reserved: seat.reserved, clickable: seat.reserved }"
+            @click="openSeatDetail(seat)"
           >
             <p class="seat-no">{{ seat.seatNo }}번</p>
             <template v-if="seat.reserved">
@@ -167,7 +200,18 @@ watch(
     </div>
     <div v-if="!state.loading && state.maleRoom.length === 0 && state.femaleRoom.length === 0" class="empty-text">
   예약 데이터가 없습니다.
-</div>
+    </div>
+    <AdminReservationDetailModal
+      v-if="state.detailModal.show"
+      :reservation-id="state.detailModal.reservationId"
+      @close="closeDetailModal"
+      @cancelled="
+        async () => {
+          closeDetailModal()
+          await fetchStudyRoomDetail()
+        }
+      "
+    />
   </div>
 </template>
 
@@ -260,5 +304,13 @@ watch(
   font-size: 13px;
   color: #718096;
   font-family: 'Noto Sans KR', sans-serif;
+}
+
+.seat-box.clickable {
+  cursor: pointer;
+}
+
+.seat-box.clickable:hover {
+  transform: translateY(-2px);
 }
 </style>

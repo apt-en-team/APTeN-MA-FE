@@ -2,6 +2,7 @@
 import { reactive, computed, watch } from 'vue'
 import reservationAPI from '@/api/reservation'
 import AdminGxPendingModalView from '@/components/reservation/Admingxapprovalmodal.vue'
+import AdminReservationDetailModal from '@/components/reservation/Adminreservationdetailmodal.vue'
 
 // 부모에서 선택한 월 받기
 const props = defineProps({
@@ -20,6 +21,11 @@ const state = reactive({
 
   modal: {
     open: false,
+  },
+  
+  detailModal: {
+    show: false,
+    reservationId: null,
   },
 
   programList: [],
@@ -127,6 +133,19 @@ const closePendingModal = () => {
   state.modal.open = false
 }
 
+// 상세보기 모달
+const openDetailModal = (user) => {
+  if (!user?.reservationId) return
+
+  state.detailModal.reservationId = user.reservationId
+  state.detailModal.show = true
+}
+
+const closeDetailModal = () => {
+  state.detailModal.show = false
+  state.detailModal.reservationId = null
+}
+
 // 승인 후 재조회
 const handleApproved = async () => {
   closePendingModal()
@@ -227,7 +246,12 @@ watch(
               <td colspan="4" class="empty-row">예약 데이터가 없습니다.</td>
             </tr>
 
-            <tr v-for="user in state.userList" :key="user.reservationId">
+            <tr
+              v-for="user in state.userList"
+              :key="user.reservationId"
+              class="clickable-row"
+              @click="openDetailModal(user)"
+            >
               <td>{{ user.reservationId }}</td>
               <td>{{ user.userName }}</td>
               <td>{{ user.dong }} {{ user.ho }}</td>
@@ -248,6 +272,17 @@ watch(
         :user-list="state.userList"
         @close="closePendingModal"
         @approved="handleApproved"
+      />
+      <AdminReservationDetailModal
+        v-if="state.detailModal.show"
+        :reservation-id="state.detailModal.reservationId"
+        @close="closeDetailModal"
+        @cancelled="
+          async () => {
+            closeDetailModal()
+            await fetchGxPrograms()
+          }
+        "
       />
   </div>
 </template>
@@ -473,6 +508,15 @@ watch(
 .empty-row {
   text-align: center;
   color: #94A3B8;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.clickable-row:hover {
+  background: #F8FAFC;
 }
 
 @media (max-width: 1200px) {

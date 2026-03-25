@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, computed, watch } from 'vue'
 import reservationAPI from '@/api/reservation'
+import AdminReservationDetailModal from '@/components/reservation/Adminreservationdetailmodal.vue'
 
 // 부모에서 선택한 날짜 받기
 const props = defineProps({
@@ -14,6 +15,10 @@ const props = defineProps({
 const state = reactive({
   loading: false,
   timeRows: [],
+  detailModal: {
+    show: false,
+    reservationId: null,
+  },
 })
 
 // 날짜 텍스트 포맷
@@ -53,6 +58,7 @@ const buildGolfRows = (list = []) => {
 
     if (item.seatNo) {
       grouped[key].seats[item.seatNo] = {
+        reservationId: item.reservationId,
         userName: item.userName,
         household: `${item.dong || ''} ${item.ho || ''}`.trim(),
         status: item.status,
@@ -96,6 +102,20 @@ watch(
   },
   { immediate: true }
 )
+
+//상서보기 모달 열기
+const openDetailModal = (seat) => {
+  if (!seat || !seat.reservationId) return
+
+  state.detailModal.reservationId = seat.reservationId
+  state.detailModal.show = true
+}
+
+const closeDetailModal = () => {
+  state.detailModal.show = false
+  state.detailModal.reservationId = null
+}
+
 </script>
 
 <template>
@@ -126,6 +146,8 @@ watch(
               v-for="seatNo in [1, 2, 3, 4, 5]"
               :key="`${row.time}-${seatNo}`"
               class="seat-cell"
+              :class="{ clickable: !!row.seats[seatNo] }"
+              @click="row.seats[seatNo] && openDetailModal(row.seats[seatNo])"
             >
               <template v-if="row.seats[seatNo]">
                 <div class="seat-user-box">
@@ -141,6 +163,17 @@ watch(
         </tbody>
       </table>
     </div>
+    <AdminReservationDetailModal
+      v-if="state.detailModal.show"
+      :reservation-id="state.detailModal.reservationId"
+      @close="closeDetailModal"
+      @cancelled="
+        async () => {
+          closeDetailModal()
+          await fetchGolfDetail()
+        }
+      "
+    />
   </div>
 </template>
 
@@ -244,4 +277,14 @@ watch(
   color: #94A3B8;
   padding: 24px;
 }
+
+.seat-cell.clickable {
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.seat-cell.clickable:hover {
+  background: #F8FAFC;
+}
+
 </style>
