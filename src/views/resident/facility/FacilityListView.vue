@@ -1,7 +1,7 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
-import { useRouter } from "vue-router";
-import { useFacilityStore } from "@/stores/modules/facility";
+import {onMounted, ref, computed} from "vue";
+import {useRouter} from "vue-router";
+import {useFacilityStore} from "@/stores/modules/facility";
 import FacilityLayout from "@/components/layout/FacilityLayout.vue";
 import Pagination from "@/components/layout/Pagination.vue";
 
@@ -19,8 +19,40 @@ const facilityImageMap = {
   "GX-그룹PT(오전)": new URL("@/assets/images/Group PT.png", import.meta.url).href,
   "GX-그룹PT(오후)": new URL("@/assets/images/Group PT.png", import.meta.url).href,
 };
-const getFacilityImage = (name) => facilityImageMap[name] ?? null;
+// const getFacilityImage = (name) => facilityImageMap[name] ?? null;
+const getFacilityImage = (name) => {
+  if (!name) return null
 
+  if (name.includes('독서실')) {
+    return new URL('@/assets/images/readingroom.png', import.meta.url).href
+  }
+
+  if (name.includes('헬스')) {
+    return new URL('@/assets/images/PT.png', import.meta.url).href
+  }
+
+  if (name.includes('골프')) {
+    return new URL('@/assets/images/golf.png', import.meta.url).href
+  }
+
+  if (name.includes('필라테스')) {
+    return new URL('@/assets/images/pilates.png', import.meta.url).href
+  }
+
+  if (
+      name.includes('그룹PT') ||
+      name.includes('그룹 PT') ||
+      name.includes('Group PT')
+  ) {
+    return new URL('@/assets/images/Group PT.png', import.meta.url).href
+  }
+
+  if (name.includes('GX')) {
+    return new URL('@/assets/images/pilates.png', import.meta.url).href
+  }
+
+  return null
+}
 const PAGE_SIZE = 5;
 const topTab = ref("facility");
 const gxSubTab = ref("전체");
@@ -41,7 +73,7 @@ const displayFacilities = computed(() => {
 });
 
 const gxMaxPage = computed(
-  () => Math.ceil(filteredGxFacilities.value.length / PAGE_SIZE) || 1
+    () => Math.ceil(filteredGxFacilities.value.length / PAGE_SIZE) || 1
 );
 
 const switchTopTab = async (tab) => {
@@ -58,7 +90,7 @@ const switchGxSubTab = (sub) => {
 };
 
 const goToDetail = (f) =>
-  router.push({ name: "FacilityDetail", params: { id: f.facilityId } });
+    router.push({name: "FacilityDetail", params: {id: f.facilityId}});
 
 onMounted(async () => {
   if (!facilityStore.facilityList.length) await facilityStore.fetchFacilityList();
@@ -69,14 +101,14 @@ onMounted(async () => {
   <FacilityLayout>
     <div class="top-tab-bar">
       <button
-        :class="['top-tab-btn', { active: topTab === 'facility' }]"
-        @click="switchTopTab('facility')"
+          :class="['top-tab-btn', { active: topTab === 'facility' }]"
+          @click="switchTopTab('facility')"
       >
         편의 시설
       </button>
       <button
-        :class="['top-tab-btn', { active: topTab === 'gx' }]"
-        @click="switchTopTab('gx')"
+          :class="['top-tab-btn', { active: topTab === 'gx' }]"
+          @click="switchTopTab('gx')"
       >
         GX강습
       </button>
@@ -84,10 +116,10 @@ onMounted(async () => {
 
     <div class="tab-bar" v-if="topTab === 'gx'">
       <button
-        v-for="sub in ['전체', '오전', '오후']"
-        :key="sub"
-        :class="['tab-btn', { active: gxSubTab === sub }]"
-        @click="switchGxSubTab(sub)"
+          v-for="sub in ['전체', '오전', '오후']"
+          :key="sub"
+          :class="['tab-btn', { active: gxSubTab === sub }]"
+          @click="switchGxSubTab(sub)"
       >
         {{ sub }}
       </button>
@@ -95,31 +127,31 @@ onMounted(async () => {
 
     <div class="facility-list">
       <div
-        v-for="f in displayFacilities"
-        :key="f.facilityId"
-        class="facility-card"
-        @click="goToDetail(f)"
+          v-for="f in displayFacilities"
+          :key="f.facilityId"
+          class="facility-card"
+          @click="goToDetail(f)"
       >
         <div class="facility-img">
           <img
-            v-if="getFacilityImage(f.name)"
-            :src="getFacilityImage(f.name)"
-            :alt="f.name"
-            style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px"
+              v-if="getFacilityImage(f.name)"
+              :src="getFacilityImage(f.name)"
+              :alt="f.name"
+              style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px"
           />
           <svg
-            v-else
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#CBD5E0"
-            stroke-width="1"
+              v-else
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#CBD5E0"
+              stroke-width="1"
           >
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
           </svg>
         </div>
         <div class="facility-info">
@@ -142,48 +174,48 @@ onMounted(async () => {
           <div class="facility-meta">
             <span class="meta-item">
               <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
               >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
               </svg>
               운영 시간: {{ formatTime(f.openTime) }} ~ {{ formatTime(f.closeTime) }}
             </span>
             <span class="meta-item" v-if="topTab === 'facility'">
               <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
               >
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
               </svg>
               자리 예약 필수 ({{ f.maxCapacity }}석)
             </span>
             <span class="meta-item" v-if="topTab === 'gx'">
               <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
               >
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
               </svg>
               정원 {{ f.maxCapacity }}명
             </span>
             <span class="meta-item" v-if="topTab === 'gx'"
-              >예약 단위 {{ f.slotDuration }}분</span
+            >예약 단위 {{ f.slotDuration }}분</span
             >
           </div>
         </div>
@@ -197,13 +229,13 @@ onMounted(async () => {
 
     <!-- GX 탭일 때만 페이지네이션 표시 -->
     <Pagination
-      v-if="topTab === 'gx'"
-      :currentPage="gxPage"
-      :maxPage="gxMaxPage"
-      :totalAll="filteredGxFacilities.length"
-      :totalFiltered="filteredGxFacilities.length"
-      unit="개"
-      @change="gxPage = $event"
+        v-if="topTab === 'gx'"
+        :currentPage="gxPage"
+        :maxPage="gxMaxPage"
+        :totalAll="filteredGxFacilities.length"
+        :totalFiltered="filteredGxFacilities.length"
+        unit="개"
+        @change="gxPage = $event"
     />
   </FacilityLayout>
 </template>
@@ -214,12 +246,14 @@ onMounted(async () => {
   margin: 0;
   padding: 0;
 }
+
 .top-tab-bar {
   display: flex;
   gap: 0;
   margin-bottom: 20px;
   border-bottom: 2px solid #e2e8f0;
 }
+
 .top-tab-btn {
   padding: 10px 24px;
   border: none;
@@ -233,19 +267,23 @@ onMounted(async () => {
   margin-bottom: -2px;
   transition: all 0.15s;
 }
+
 .top-tab-btn.active {
   color: #4973e5;
   border-bottom-color: #4973e5;
 }
+
 .top-tab-btn:hover:not(.active) {
   color: #757575;
 }
+
 .tab-bar {
   display: flex;
   gap: 4px;
   margin-bottom: 16px;
   border-bottom: 1px solid #e2e8f0;
 }
+
 .tab-btn {
   padding: 6px 16px;
   border: none;
@@ -257,19 +295,23 @@ onMounted(async () => {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
+
 .tab-btn.active {
   color: #4973e5;
   font-weight: 700;
   border-bottom-color: #4973e5;
 }
+
 .tab-btn:hover:not(.active) {
   color: #4a5568;
 }
+
 .facility-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
 .facility-card {
   background: #fff;
   border-radius: 12px;
@@ -281,10 +323,12 @@ onMounted(async () => {
   transition: box-shadow 0.15s;
   align-items: center;
 }
+
 .facility-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border-color: #2b3a55;
 }
+
 .facility-img {
   width: 200px;
   height: 130px;
@@ -296,22 +340,26 @@ onMounted(async () => {
   flex-shrink: 0;
   overflow: hidden;
 }
+
 .facility-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .facility-header {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .facility-name {
   font-size: 28px;
   font-weight: 700;
   color: #1a202c;
 }
+
 .facility-desc {
   font-size: 15px;
   color: #718096;
@@ -321,7 +369,7 @@ onMounted(async () => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-} 
+}
 
 .facility-meta {
   display: flex;
@@ -329,6 +377,7 @@ onMounted(async () => {
   gap: 12px;
   margin-top: 4px;
 }
+
 .meta-item {
   display: flex;
   align-items: center;
@@ -336,11 +385,13 @@ onMounted(async () => {
   font-size: 12px;
   color: #718096;
 }
+
 .facility-arrow {
   font-size: 20px;
   color: #cbd5e0;
   flex-shrink: 0;
 }
+
 .status-badge {
   display: inline-block;
   padding: 3px 12px;
@@ -348,14 +399,17 @@ onMounted(async () => {
   font-size: 11px;
   font-weight: 600;
 }
+
 .status-badge.available {
   background: #e5f8eb;
   color: #50c878;
 }
+
 .status-badge.closed {
   background: #e0e0e0;
   color: #757575;
 }
+
 .empty-msg {
   text-align: center;
   padding: 40px;
