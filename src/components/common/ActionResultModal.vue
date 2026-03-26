@@ -1,127 +1,91 @@
 <script setup>
+import {computed} from 'vue'
 import BaseModal from '@/components/common/BeseModel.vue'
 
-// 결과 모달에 표시할 데이터
 const props = defineProps({
-  // 메인 제목
-  title: {
-    type: String,
-    default: '',
-  },
-  // 보조 제목
-  subtitle: {
-    type: String,
-    default: '',
-  },
-  // 설명 문구
-  desc: {
-    type: String,
-    default: '',
-  },
-  // 아이콘/색상 타입
+  title: {type: String, default: ''},
+  subtitle: {type: String, default: ''},
+  desc: {type: String, default: ''},
   // success | danger | warning
-  type: {
-    type: String,
-    default: 'success',
-  },
-  // 처리 대상 이름
-  itemName: {
-    type: String,
-    default: '',
-  },
-  // 처리 시각
-  time: {
-    type: String,
-    default: '',
-  },
-  // 처리 내용
-  actionLabel: {
-    type: String,
-    default: '',
-  },
-  // 처리자
-  actor: {
-    type: String,
-    default: '',
-  },
-  // 하단 확인 버튼 문구
-  confirmText: {
-    type: String,
-    default: '확인',
-  },
+  type: {type: String, default: 'success'},
+  itemName: {type: String, default: ''},
+  time: {type: String, default: ''},
+  actionLabel: {type: String, default: ''},
+  actor: {type: String, default: ''},
+  confirmText: {type: String, default: '확인'},
+  // 'admin'    → 버튼 네이비(#2B3A55) / 성공 아이콘 #4D8B5A / 배경 rgba(77,139,90,0.14)
+  // 'resident' → 버튼 파랑(#4973E5)  / 성공 아이콘 #48BB78 / 배경 #C6F6D5
+  theme: {type: String, default: 'admin'},
 })
 
-// 닫기 이벤트
-const emit = defineEmits(['close'])
+defineEmits(['close'])
+
+// theme에 따라 버튼 색 결정
+const btnColor = computed(() =>
+    props.theme === 'resident' ? '#4973E5' : '#2B3A55'
+)
+
+// 성공 아이콘 색
+const successColor = computed(() =>
+    props.theme === 'resident' ? '#48BB78' : '#4D8B5A'
+)
+
+// 성공 아이콘 배경색
+const successBg = computed(() =>
+    props.theme === 'resident' ? '#C6F6D5' : 'rgba(77, 139, 90, 0.14)'
+)
+
+// 경고 아이콘 색
+const warningColor = computed(() =>
+    props.theme === 'resident' ? '#E53E3E' : '#E53E3E'
+)
+
+// 경고 아이콘 배경색
+const warningBg = computed(() =>
+    props.theme === 'resident' ? '#FFF5F5' : '#FFF5F5'
+)
 </script>
 
 <template>
-  <!-- 공통 베이스 모달 재사용 -->
-  <BaseModal
-    :title="title"
-    :subtitle="subtitle"
-    :hide-header="true"
-    @close="$emit('close')"
-  >
+  <!-- hideFooter: true → body 안에 버튼 직접 배치 → 가운데 정렬 -->
+  <BaseModal :title="title" :subtitle="subtitle" :hide-header="true" :hide-footer="true" @close="$emit('close')">
     <div class="result-modal-wrap">
+
       <!-- 결과 타입별 아이콘 -->
       <div
-        class="result-icon"
-        :class="{
-          'result-icon-success': type === 'success',
-          'result-icon-danger': type === 'danger',
-          'result-icon-warning': type === 'warning',
+          class="result-icon"
+          :style="{
+          background: type === 'success' ? successBg
+                    : type === 'danger'  ? 'rgba(229, 62, 62, 0.12)'
+                    : warningBg
         }"
       >
-        <!-- 성공 아이콘 -->
-        <svg
-          v-if="type === 'success'"
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
+        <!-- 성공 아이콘: theme에 따라 색상 분기 -->
+        <svg v-if="type === 'success'" width="26" height="26" viewBox="0 0 24 24" fill="none">
           <path
-            d="M5 13L9 17L19 7"
-            stroke="#4D8B5A"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+              d="M5 13L9 17L19 7"
+              :stroke="successColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
           />
         </svg>
 
-        <!-- 실패/거부 아이콘 -->
-        <svg
-          v-else-if="type === 'danger'"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
-          <path
-            d="M18 6L6 18M6 6L18 18"
-            stroke="#E53E3E"
-            stroke-width="2.2"
-            stroke-linecap="round"
-          />
+        <!-- 실패/거부 아이콘: 공통 빨강 -->
+        <svg v-else-if="type === 'danger'" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="#E53E3E" stroke-width="2.2" stroke-linecap="round"/>
         </svg>
 
-        <!-- 경고 아이콘 -->
-        <svg
-          v-else
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
+        <!-- 경고 아이콘: theme에 따라 색상 분기 -->
+        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path
-            d="M12 8V12"
-            stroke="#C08B2D"
-            stroke-width="2.2"
-            stroke-linecap="round"
+              d="M12 8V12"
+              :stroke="warningColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
           />
-          <circle cx="12" cy="16" r="1" fill="#C08B2D" />
-          <circle cx="12" cy="12" r="9" stroke="#C08B2D" stroke-width="2" />
+          <circle cx="12" cy="16" r="1" :fill="warningColor"/>
+          <circle cx="12" cy="12" r="9" :stroke="warningColor" stroke-width="2"/>
         </svg>
       </div>
 
@@ -136,38 +100,32 @@ const emit = defineEmits(['close'])
           <span class="result-info-label">처리 항목</span>
           <span class="result-info-value">{{ itemName }}</span>
         </div>
-
         <div v-if="time" class="result-info-row">
           <span class="result-info-label">처리 시각</span>
           <span class="result-info-value">{{ time }}</span>
         </div>
-
         <div v-if="actionLabel" class="result-info-row">
           <span class="result-info-label">처리 내용</span>
           <span class="result-info-value">{{ actionLabel }}</span>
         </div>
-
         <div v-if="actor" class="result-info-row">
           <span class="result-info-label">처리자</span>
           <span class="result-info-value">{{ actor }}</span>
         </div>
       </div>
-    </div>
 
-    <!-- 하단 확인 버튼 -->
-    <template #footer>
-      <button class="btn-submit result-confirm-btn" @click="$emit('close')">
+      <!-- 확인 버튼: body 안에 배치 → 가운데 정렬, theme 색상 적용 -->
+      <button class="btn-confirm" :style="{ background: btnColor }" @click="$emit('close')">
         {{ confirmText }}
       </button>
-    </template>
+    </div>
   </BaseModal>
 </template>
 
 <style scoped>
 .result-modal-wrap {
-  padding: 20px 0;
+  padding: 20px 0 0;
   text-align: center;
-  font-family: 'Noto Sans KR', sans-serif;
 }
 
 .result-icon {
@@ -178,18 +136,6 @@ const emit = defineEmits(['close'])
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.result-icon-success {
-  background: rgba(77, 139, 90, 0.14);
-}
-
-.result-icon-danger {
-  background: rgba(229, 62, 62, 0.12);
-}
-
-.result-icon-warning {
-  background: rgba(192, 139, 45, 0.14);
 }
 
 .result-title {
@@ -217,6 +163,7 @@ const emit = defineEmits(['close'])
   border-radius: 8px;
   overflow: hidden;
   text-align: left;
+  margin: 16px 0 0;
 }
 
 .result-info-row {
@@ -243,23 +190,20 @@ const emit = defineEmits(['close'])
   text-align: right;
 }
 
-.result-confirm-btn {
-  min-width: 88px;
-}
-
-.btn-submit {
-  padding: 9px 24px;
-  background: #2B3A55;
+.btn-confirm {
+  display: inline-block;
+  margin: 20px auto 0;
+  padding: 10px 48px;
   color: #fff;
   border: none;
   border-radius: 7px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+  transition: filter 0.15s;
 }
 
-.btn-submit:hover {
-  background: #1E2A3E;
+.btn-confirm:hover {
+  filter: brightness(0.88);
 }
 </style>

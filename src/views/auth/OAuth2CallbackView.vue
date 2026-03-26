@@ -3,39 +3,33 @@ import {onMounted, ref} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/modules/auth.js'
 import axios from 'axios'
-import Modal from '@/components/Modal.vue'
+// 세대 정보 입력 모달 → BaseModal (폼 모달)
+import BaseModal from '@/components/common/BeseModel.vue'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
-// 세대 정보 입력 모달 표시 여부
 const showModal = ref(false)
-
-// 세대 정보 입력값
 const dong = ref('')
 const ho = ref('')
 const phone = ref('')
-
-// 에러 메시지
 const errorMsg = ref('')
 
-// 컴포넌트 마운트 시 로그인 상태 확인 후 분기 처리
-// - 로그인 O + PENDING + 동호수 없음 → 세대 정보 입력 모달
-// - 로그인 O + PENDING + 동호수 있음 → 대시보드로 이동 (라우터 가드가 대시보드/마이페이지만 허용)
-// - 로그인 O + REJECTED → 로그인 페이지로 이동
-// - 로그인 O + APPROVED → 대시보드로 이동
-// - 로그인 X → 로그인 페이지로 이동
+// 마운트 시 로그인 상태 확인 후 분기
+// - PENDING + 동호수 없음 → 세대 정보 입력 모달
+// - PENDING + 동호수 있음 → 대시보드로 이동
+// - REJECTED → 로그인 페이지로 이동
+// - APPROVED → 대시보드로 이동
+// - 비로그인 → 로그인 페이지로 이동
 onMounted(async () => {
   await auth.fetchMe()
 
   if (auth.isLoggedIn) {
     if (auth.user?.status === 'PENDING') {
       if (auth.user?.householdId) {
-        // 동호수 연결 완료 → 대시보드로 (라우터 가드가 대시보드/마이페이지만 허용)
         router.replace('/resident/dashboard')
       } else {
-        // 동호수 미연결 → 세대 정보 입력 모달
         showModal.value = true
       }
     } else if (auth.user?.status === 'REJECTED') {
@@ -48,7 +42,6 @@ onMounted(async () => {
   }
 })
 
-// role에 따라 대시보드로 이동
 function redirectToDashboard() {
   const role = route.query.role || auth.user?.role
   if (role === 'ADMIN') {
@@ -59,7 +52,6 @@ function redirectToDashboard() {
 }
 
 // 동호수 + 전화번호로 세대 연결 (PATCH /api/auth/link-household)
-// 백엔드에서 status는 PENDING 유지 → 관리자 승인 대기
 async function linkHousehold() {
   errorMsg.value = ''
 
@@ -77,14 +69,13 @@ async function linkHousehold() {
 
     await auth.fetchMe()
     showModal.value = false
-    // 동호수 연결 후 → 대시보드로 (PENDING 유지, 라우터 가드가 제한)
     router.replace('/resident/dashboard')
   } catch (e) {
     errorMsg.value = e.response?.data?.resultMessage || '존재하지 않는 동호수입니다'
   }
 }
 
-// 전화번호 자동 하이픈 포맷 (숫자만 입력 → 010-1234-5678)
+// 전화번호 자동 하이픈 포맷
 function formatPhone(e) {
   const nums = e.target.value.replace(/\D/g, '').slice(0, 11)
   if (nums.length < 4) phone.value = nums
@@ -92,12 +83,10 @@ function formatPhone(e) {
   else phone.value = `${nums.slice(0, 3)}-${nums.slice(3, 7)}-${nums.slice(7)}`
 }
 
-// 동 숫자만 입력받기
 function formatDong(e) {
   dong.value = e.target.value.replace(/\D/g, '')
 }
 
-// 호 숫자만 입력받기
 function formatHo(e) {
   ho.value = e.target.value.replace(/\D/g, '')
 }
@@ -112,14 +101,14 @@ function formatHo(e) {
       <p>소셜 로그인 처리 중...</p>
     </div>
 
-    <!-- 세대 정보 입력 모달 -->
-    <Modal
+    <!-- 세대 정보 입력 모달: BaseModal (입주민 폼 모달) -->
+    <BaseModal
         v-if="showModal"
         title="세대 정보 입력"
         subtitle="거주 중인 동호수와 전화번호를 입력해주세요"
+        :hide-footer="true"
         @close="showModal = false"
     >
-      <!-- 동/호 입력 (suffix 고정) -->
       <div class="input-group">
         <div class="input-row">
           <div class="input-item">
@@ -139,7 +128,6 @@ function formatHo(e) {
         </div>
       </div>
 
-      <!-- 전화번호 입력 (자동 하이픈) -->
       <div class="input-item phone-item">
         <label>전화번호</label>
         <input v-model="phone" type="text" placeholder="010-1234-5678" @input="formatPhone"/>
@@ -147,10 +135,10 @@ function formatHo(e) {
 
       <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
 
-      <template #footer>
-        <button class="btn-confirm" @click="linkHousehold">확인</button>
-      </template>
-    </Modal>
+      <!-- hide-footer라 footer 슬롯 대신 body 안에 버튼 배치 -->
+      <button class="btn-confirm" @click="linkHousehold">확인</button>
+    </BaseModal>
+
   </div>
 </template>
 
@@ -163,7 +151,6 @@ function formatHo(e) {
   background: #F5F6FA;
 }
 
-/* 로딩 */
 .loading-card {
   text-align: center;
 }
@@ -190,7 +177,6 @@ function formatHo(e) {
   }
 }
 
-/* 모달 입력 */
 .input-row {
   display: flex;
   gap: 12px;
@@ -214,7 +200,6 @@ function formatHo(e) {
   color: #333;
 }
 
-/* suffix 고정 (동/호) */
 .input-with-suffix {
   position: relative;
 }
@@ -269,6 +254,7 @@ function formatHo(e) {
 
 .btn-confirm {
   width: 100%;
+  margin-top: 20px;
   padding: 12px;
   background: #4973E5;
   color: #fff;

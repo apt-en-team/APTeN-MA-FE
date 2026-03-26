@@ -970,7 +970,7 @@ onMounted(() => {
 .vehicle-list-view {
   display: flex;
   flex-direction: column;
-  font-family: "Noto Sans KR", sans-serif;
+
   color: #333;
 }
 
@@ -1041,7 +1041,7 @@ onMounted(() => {
   outline: none;
   color: #333;
   width: 150px;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .search-input::placeholder {
   color: #cbd5e0;
@@ -1058,7 +1058,7 @@ onMounted(() => {
   appearance: none;
   cursor: pointer;
   outline: none;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 
 .status-badge {
@@ -1119,7 +1119,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-approve:hover {
   background: #d4edda;
@@ -1133,7 +1133,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-reject:hover {
   background: #fecaca;
@@ -1212,7 +1212,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
   margin-right: auto;
 }
 .btn-delete-vehicle:hover {
@@ -1247,7 +1247,7 @@ onMounted(() => {
   color: #333;
   outline: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-input:focus {
   border-color: #2b3a55;
@@ -1273,7 +1273,7 @@ onMounted(() => {
   appearance: none;
   outline: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-textarea {
   border: 1px solid #e2e8f0;
@@ -1284,7 +1284,7 @@ onMounted(() => {
   outline: none;
   resize: none;
   width: 100%;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .form-textarea:focus {
   border-color: #2b3a55;
@@ -1329,7 +1329,7 @@ onMounted(() => {
   color: #718096;
   background: #fff;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
   transition: all 0.15s;
 }
 .reason-chip.active {
@@ -1349,7 +1349,7 @@ onMounted(() => {
   font-size: 13px;
   color: #ffffff;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-cancel:hover {
   background: #121a27;
@@ -1363,7 +1363,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-submit-approve:hover:not(:disabled) {
   background: #1e2a3e;

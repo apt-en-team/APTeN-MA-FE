@@ -9,6 +9,9 @@ export default defineConfig({
             '@': path.resolve(__dirname, 'src')
         }
     },
+    build: {
+        outDir: 'C:/Users/kgee0/BE/be-apten/src/main/resources/static'
+    },
     server: {
         port: 5173,
         proxy: {

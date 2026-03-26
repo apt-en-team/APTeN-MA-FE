@@ -21,6 +21,7 @@ defineProps({
     type: Boolean,
     default: false
   }
+
 })
 
 // 닫기 이벤트 (x버튼 또는 외부 클릭 시)

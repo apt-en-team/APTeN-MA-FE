@@ -89,3 +89,9 @@ export const deleteAdminFixedVisitorVehicle = (fixedId) => {
     return api.delete(`/admin/visitor-vehicles/fixed/${fixedId}`)
         .then(res => ({ ...res, data: res.data.resultData }))
 }
+
+// 관리자 고정 방문차량 등록
+export const adminRegisterFixedVisitorVehicle = (data) => {
+    return api.post('/admin/visitor-vehicles/fixed', data)
+        .then(res => ({ ...res, data: res.data.resultData }))
+}

@@ -497,7 +497,7 @@ onMounted(() => {
 .panel-title {
   font-size: 18px;
   font-weight: 700;
-  color: #333333;
+  color: ;
 }
 
 .panel-more {
@@ -574,7 +574,7 @@ onMounted(() => {
 .visitor-plate {
   font-size: 14px;
   font-weight: 700;
-  color: #333333;
+  color: ;
 }
 
 .visitor-detail {
@@ -646,7 +646,7 @@ onMounted(() => {
 .facility-name {
   font-size: 14px;
   font-weight: 600;
-  color: #333333;
+  color: ;
 }
 
 .facility-time {
@@ -750,10 +750,6 @@ onMounted(() => {
 .type-unknown {
   background: #EDF2F7;
   color: #687282;
-}
-
-.plate-cell {
-  color: #333333;
 }
 
 .unit-cell {

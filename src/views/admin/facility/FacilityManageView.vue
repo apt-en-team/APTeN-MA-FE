@@ -677,7 +677,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  font-family: "Noto Sans KR", sans-serif;
+
   color: #333;
 }
 .table-section {
@@ -707,7 +707,7 @@ onMounted(() => {
   outline: none;
   color: #333;
   width: 150px;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .search-input::placeholder {
   color: #cbd5e0;
@@ -724,7 +724,7 @@ onMounted(() => {
   appearance: none;
   cursor: pointer;
   outline: none;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 
 .facility-grid {
@@ -784,7 +784,7 @@ onMounted(() => {
 .card-name {
   font-size: 15px;
   font-weight: 700;
-  color: #333333;
+
 }
 .card-id {
   font-size: 11px;
@@ -966,7 +966,7 @@ onMounted(() => {
   font-size: 13px;
   color: #718096;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-cancel:hover {
   background: #f5f6f8;
@@ -980,7 +980,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: "Noto Sans KR", sans-serif;
+
 }
 .btn-submit:hover {
   background: #1e2a3e;
