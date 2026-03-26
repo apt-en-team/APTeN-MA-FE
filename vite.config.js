@@ -10,7 +10,7 @@ export default defineConfig({
         }
     },
     build: {
-        outDir: '스프링 부트 프로젝트 static 폴더 절대 경로'
+        outDir: 'C:/Users/kgee0/BE/be-apten/src/main/resources/static'
     },
     server: {
         port: 5173,
