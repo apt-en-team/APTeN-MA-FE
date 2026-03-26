@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto++KR:wght@400;500;600;700&display=swap');
+
+* {
+    font-family: 'Noto KR', sans-serif;
+    color: #333;
+    box-sizing: border-box;
+}
+
+svg, svg * { color: inherit; }
+
+body { margin: 0; }
+
+html { scrollbar-gutter: stable; }
