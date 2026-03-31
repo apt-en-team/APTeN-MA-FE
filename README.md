@@ -31,7 +31,7 @@ Frontend (Vue.js) ↔ Backend (Spring Boot) ↔ Database (MySQL)
 
 Vite 빌드 결과물을 Spring Boot `resources/static/`에 포함하여 단일 서버로 서빙합니다.
 
-## 🛠 기술 스택
+## 기술 스택
 
 - Vue.js 3 (Composition API), Pinia, Vue Router
 - Axios, ApexCharts
