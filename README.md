@@ -53,7 +53,7 @@ src/
     └── resident/ # 입주민 페이지
 ```
 
-## ⚙️ 실행 방법
+## 실행 방법
 ```bash
 # 패키지 설치
 npm install
@@ -82,7 +82,7 @@ HTTP 기반 IP 주소로 배포 시 아래 기능은 동작하지 않습니다.
 JWT 토큰을 HttpOnly 쿠키로 관리합니다.  
 Access Token이 만료되면 Refresh Token으로 자동 재발급하며, Refresh Token까지 만료된 경우 로그인 페이지로 이동합니다.
 
-## 👥 팀원
+## 팀원
 
 | 이름 | 담당 |
 |---|---|
