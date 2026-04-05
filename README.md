@@ -1,3 +1,57 @@
+# APTeN - Frontend
+
+## 프로젝트 소개
+
+APTeN은 입주민과 관리자가 함께 사용하는 스마트 아파트 통합 관리 시스템입니다.
+방문차량 등록부터 주차 현황, 시설 예약, 게시판까지 아파트 생활 전반을 한 곳에서 관리할 수 있습니다.
+
+| 입주민 | 관리자 |
+|---|---|
+| ![입주민](https://github.com/user-attachments/assets/4f37a3ca-2ea4-4ae1-82df-44307f5ec994) | ![관리자](https://github.com/user-attachments/assets/d0561661-f91b-45ac-a1c4-5eddef495fa7) |
+
+### 주요 기능
+- 방문차량 사전등록 및 고정 방문차량 관리
+- 입출차 기록 생성 (번호판 입력 시 차량 유형 자동 판별) 및 실시간 주차 현황 조회
+- 시설 예약 및 GX 프로그램 승인 관리
+- 게시판 (공지사항 / 자유게시판) 및 댓글
+- 관리자 알림 (신규 회원가입, 차량 등록 신청 시 자동 발송)
+
+### 특징
+- 관리자/입주민 역할에 따라 레이아웃과 사이드바를 완전히 분리해 제공
+- 공통 모달 컴포넌트에 theme prop을 적용해 관리자/입주민 색상을 분리하면서 컴포넌트 재사용성을 유지
+- 401 발생 시 Refresh Token으로 자동 재발급 후 원래 요청을 재시도하는 Axios 인터셉터 적용
+- 주차 현황 실시간 갱신은 SSE/WebSocket 대비 구현 복잡도를 고려해 30초 폴링 방식으로 구현
+- Vue 3 기반 차트 라이브러리 중 커스터마이징 자유도가 높은 ApexCharts를 선택해 시간대별/일별 주차 통계 시각화
+
+## 아키텍처
+```
+Frontend (Vue.js) ↔ Backend (Spring Boot) ↔ Database (MySQL)
+```
+
+Vite 빌드 결과물을 Spring Boot `resources/static/`에 포함해 단일 서버로 서빙합니다.
+
+## 기술 스택
+
+- Vue.js 3 (Composition API), Pinia, Vue Router
+- Axios, ApexCharts
+- Vite
+
+## 프로젝트 구조
+```
+src/
+├── api/          # API 호출 모듈
+├── assets/       # 이미지, 전역 스타일
+├── components/   # 공통 컴포넌트 (모달, 레이아웃 등)
+├── composables/  # 재사용 로직
+├── router/       # 라우터 (role 기반 가드 포함)
+├── stores/       # Pinia 상태 관리
+├── utils/        # 유틸리티 함수
+└── views/
+    ├── auth/     # 로그인, 회원가입, 비밀번호 재설정
+    ├── admin/    # 관리자 페이지
+    └── resident/ # 입주민 페이지
+```
+
 ## 실행 방법
 ```bash
 # 패키지 설치
