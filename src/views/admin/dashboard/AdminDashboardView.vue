@@ -179,7 +179,7 @@ onMounted(() => {
       <section class="summary-section">
         <StatsCards :stats="dashboardStats" :showIcon="true"
                     @click-0="router.push({ name: 'AdminVisitorVehicleList' })"
-                    @click-1="router.push({ name: 'ParkingDashboardView' })"
+                    @click-1="router.push({ name: 'AdminParkingDashboard' })"
                     @click-2="router.push({ name: 'AdminReservationListView' })"
                     @click-3="router.push({ name: 'HouseholdManage' })"
         >
