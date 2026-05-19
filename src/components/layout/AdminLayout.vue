@@ -3,7 +3,7 @@ import {computed, ref, onMounted, onBeforeUnmount, provide} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useAuthStore} from "@/stores/modules/auth.js";
 import reservationAPI from "@/api/reservation";
-import notificationAPI from "@/api/notification.js";
+import notificationAPI from "@/api/Notification.js";
 
 const route = useRoute();
 const router = useRouter();
